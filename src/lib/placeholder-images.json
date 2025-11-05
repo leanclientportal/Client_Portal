@@ -1,0 +1,28 @@
+{
+  "placeholderImages": [
+    {
+      "id": "total-clients",
+      "description": "Abstract representation of many users",
+      "imageUrl": "https://images.unsplash.com/photo-1642367416545-45fd7287fc28?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxwZW9wbGUlMjBuZXR3b3JrfGVufDB8fHx8MTc1OTIyMTU4MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "people network"
+    },
+    {
+      "id": "revenue",
+      "description": "Currency or financial chart",
+      "imageUrl": "https://images.unsplash.com/photo-1739430630591-9380bdf1c798?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxtb25leSUyMGNoYXJ0fGVufDB8fHx8MTc1OTMxMTA2M3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "money chart"
+    },
+    {
+      "id": "new-leads",
+      "description": "Icon representing new contacts or growth",
+      "imageUrl": "https://images.unsplash.com/photo-1604158654225-996553e6e9b9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxncm93dGglMjBhcnJvd3xlbnwwfHx8fDE3NTkyMjM3NjN8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "growth arrow"
+    },
+    {
+      "id": "pending-tasks",
+      "description": "Checklist or to-do list icon",
+      "imageUrl": "https://images.unsplash.com/photo-1748609115191-c222eddc7a89?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxjaGVja2xpc3QlMjB0YXNrc3xlbnwwfHx8fDE3NTkyNTY5MTl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "checklist tasks"
+    }
+  ]
+}
