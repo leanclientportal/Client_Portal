@@ -248,21 +248,21 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
                       label="View"
                       className="text-blue-500 hover:bg-blue-500"
                     >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-[22px] w-[22px]" />
                     </ActionButton>
                     <ActionButton
                       onClick={(e) => handleActionClick(e, () => router.push(`/dashboard/clients/${getClientId(project)}/projects/${project._id}/edit`))}
                       label="Edit"
                       className="text-yellow-500 hover:bg-yellow-500"
                     >
-                        <Edit className="h-4 w-4" />
+                        <Edit className="h-[22px] w-[22px]" />
                     </ActionButton>
                      <ActionButton
                        onClick={(e) => handleDeleteClick(e, project)}
                        label="Delete"
                        className="text-red-500 hover:bg-red-500"
                      >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-[22px] w-[22px]" />
                     </ActionButton>
 
                     <Separator orientation="vertical" className="h-6 mx-1 bg-border" />
@@ -272,14 +272,14 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
                       label="Tasks"
                       className="text-green-500 hover:bg-green-500"
                     >
-                       <ListChecks className="h-4 w-4" />
+                       <ListChecks className="h-[22px] w-[22px]" />
                     </ActionButton>
                     <ActionButton
                       onClick={(e) => handleAddTaskClick(e, project)}
                       label="Add"
                       className="text-indigo-500 hover:bg-indigo-500"
                     >
-                        <PlusCircle className="h-4 w-4" />
+                        <PlusCircle className="h-[22px] w-[22px]" />
                     </ActionButton>
                 </div>
               </TableCell>
@@ -338,14 +338,14 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
                                         label="Edit"
                                         className="text-yellow-500 hover:bg-yellow-500"
                                     >
-                                        <Edit className="h-4 w-4" />
+                                        <Edit className="h-[22px] w-[22px]" />
                                     </ActionButton>
                                     <ActionButton
                                         onClick={(e) => handleDeleteTaskClick(e, task)}
                                         label="Delete"
                                         className="text-red-500 hover:bg-red-500"
                                     >
-                                        <Trash2 className="h-4 w-4" />
+                                        <Trash2 className="h-[22px] w-[22px]" />
                                     </ActionButton>
                                 </div>
                             </TableCell>
