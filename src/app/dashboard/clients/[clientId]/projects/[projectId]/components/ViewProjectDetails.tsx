@@ -2,7 +2,7 @@
 'use client';
 
 import { FC, useEffect, useState, useCallback, MouseEvent, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from '@/hooks/use-auth';
@@ -11,7 +11,7 @@ import type { Project, Task } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import { PlusCircle, Loader2, Edit, Trash2, Paperclip, Download } from 'lucide-react';
+import { ArrowLeft, PlusCircle, Loader2, Edit, Trash2, Paperclip, Download, Save, Link as LinkIcon } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -22,6 +22,8 @@ import {
 import AddTaskForm from './AddTaskForm';
 import EditTaskForm from '../../components/EditTaskForm';
 import AddFileDialog from './AddFileDialog';
+import AddInvoiceDialog from './AddInvoiceDialog';
+import EditInvoiceDialog from './EditInvoiceDialog';
 import {
   Table,
   TableBody,
@@ -41,6 +43,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from '@/lib/utils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import UpdatesTimeline from './UpdatesTimeline';
 
 interface ViewProjectDetailsProps {
   clientId: string;
@@ -76,16 +80,23 @@ export default function ViewProjectDetails({ clientId, projectId }: ViewProjectD
   const [project, setProject] = useState<Project | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projectFiles, setProjectFiles] = useState<any[]>([]);
+  const [projectInvoices, setProjectInvoices] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingTasks, setIsLoadingTasks] = useState(true);
   const [isLoadingFiles, setIsLoadingFiles] = useState(true);
+  const [isLoadingInvoices, setIsLoadingInvoices] = useState(true);
   const [isAddTaskOpen, setAddTaskOpen] = useState(false);
   const [isAddFileOpen, setAddFileOpen] = useState(false);
+  const [isAddInvoiceOpen, setAddInvoiceOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [fileToDelete, setFileToDelete] = useState<any | null>(null);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<any | null>(null);
   const [isDeletingTask, setIsDeletingTask] = useState(false);
   const [isDeletingFile, setIsDeletingFile] = useState(false);
+  const [isDeletingInvoice, setIsDeletingInvoice] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
+  const [invoiceToEdit, setInvoiceToEdit] = useState<any | null>(null);
+  const [activeTab, setActiveTab] = useState("details");
 
   const fetchProject = useCallback(async () => {
     if (!tenantId || !token || !clientId || !projectId) {
@@ -137,28 +148,48 @@ export default function ViewProjectDetails({ clientId, projectId }: ViewProjectD
     }
   }, [projectId, toast]);
 
+  const fetchProjectInvoices = useCallback(async () => {
+    if (!projectId) return;
+
+    setIsLoadingInvoices(true);
+    try {
+      const response = await fetch(`/api/projects/${projectId}/invoices`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch invoices');
+      }
+      const invoices = await response.json();
+      setProjectInvoices(invoices);
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to fetch project invoices.", variant: "destructive" });
+    } finally {
+      setIsLoadingInvoices(false);
+    }
+  }, [projectId, toast]);
+
   useEffect(() => {
     fetchProject();
     fetchTasks();
     fetchProjectFiles();
-  }, [fetchProject, fetchTasks, fetchProjectFiles]);
+    fetchProjectInvoices();
+  }, [fetchProject, fetchTasks, fetchProjectFiles, fetchProjectInvoices]);
 
   const handleDownload = async (fileName: string) => {
+    const url = `/api/projects/${projectId}/invoices?file=${fileName}`;
     try {
-      const response = await fetch(`/api/projects/${projectId}/files?file=${fileName}`);
+      const response = await fetch(url);
       if (!response.ok) {
-        throw new Error('File download failed');
+        throw new Error('Download failed');
       }
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      const downloadUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
+      a.href = downloadUrl;
       a.download = fileName;
       document.body.appendChild(a);
       a.click();
       a.remove();
     } catch (error) {
-      toast({ title: 'Error', description: 'Failed to download file.', variant: 'destructive' });
+      toast({ title: 'Error', description: `Failed to download file.`, variant: 'destructive' });
     }
   };
   
@@ -168,10 +199,27 @@ export default function ViewProjectDetails({ clientId, projectId }: ViewProjectD
         return acc;
     }, {} as Record<Task['status'], number>);
   }, [tasks]);
+  
+  const invoiceStatusCounts = useMemo(() => {
+    return projectInvoices.reduce((acc, invoice) => {
+        acc[invoice.status] = (acc[invoice.status] || 0) + 1;
+        return acc;
+    }, {} as Record<string, number>);
+  }, [projectInvoices]);
 
   const handleDeleteFileClick = (e: MouseEvent, file: any) => {
     e.stopPropagation();
     setFileToDelete(file);
+  };
+  
+  const handleDeleteInvoiceClick = (e: MouseEvent, invoice: any) => {
+    e.stopPropagation();
+    setInvoiceToDelete(invoice);
+  };
+  
+  const handleEditInvoiceClick = (e: MouseEvent, invoice: any) => {
+    e.stopPropagation();
+    setInvoiceToEdit(invoice);
   };
 
   const handleConfirmDeleteFile = async () => {
@@ -194,6 +242,29 @@ export default function ViewProjectDetails({ clientId, projectId }: ViewProjectD
       toast({ title: "Error", description: error.message || "Failed to delete file.", variant: "destructive" });
     } finally {
       setIsDeletingFile(false);
+    }
+  };
+
+  const handleConfirmDeleteInvoice = async () => {
+    if (!invoiceToDelete) return;
+
+    setIsDeletingInvoice(true);
+    try {
+      const response = await fetch(`/api/projects/${projectId}/invoices?id=${invoiceToDelete.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Invoice deletion failed');
+      }
+
+      toast({ title: "Success", description: "Invoice deleted successfully." });
+      fetchProjectInvoices();
+      setInvoiceToDelete(null);
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Failed to delete invoice.", variant: "destructive" });
+    } finally {
+      setIsDeletingInvoice(false);
     }
   };
 
@@ -236,6 +307,18 @@ export default function ViewProjectDetails({ clientId, projectId }: ViewProjectD
         return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     }
   };
+  
+  const getInvoiceStatusClasses = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      case 'overdue':
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+      case 'due':
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+    }
+  };
 
   if (isLoading) {
     return (
@@ -266,232 +349,358 @@ export default function ViewProjectDetails({ clientId, projectId }: ViewProjectD
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Project Not Found</CardTitle>
+          <CardTitle>Not Found</CardTitle>
           <CardDescription>The project you are looking for could not be found.</CardDescription>
         </CardHeader>
       </Card>
     );
   }
 
-  const clientName = typeof project.clientId === 'object' ? project.clientId.name : 'N/A';
-
   return (
     <>
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-start mb-4">
-            <div className="flex-grow">
-              <CardTitle className="text-2xl font-bold">{project.name}</CardTitle>
-              <CardDescription>Viewing details for project associated with {clientName}</CardDescription>
-            </div>
-            <Button onClick={() => router.push(`/dashboard/clients/${clientId}/projects/${projectId}/edit`)}>
-                Edit Project
+        <div className="flex items-center gap-4 mb-6">
+            <Button variant="ghost" size="icon" onClick={() => router.back()} className="">
+            <ArrowLeft className="h-5 w-5" />
             </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div>
-            <h3 className="font-semibold text-lg mb-2">Description</h3>
-            <p className="text-muted-foreground">{project.description}</p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                  <h3 className="font-semibold text-lg mb-2">Status</h3>
-                  <Badge
-                      variant={
-                      project.status === 'completed' ? 'default' : project.status === 'active' ? 'secondary' : 'outline'
-                      }
-                  >
-                      {project.status}
-                  </Badge>
-              </div>
-              <div>
-                  <h3 className="font-semibold text-lg mb-2">Active</h3>
-                  <p className="text-muted-foreground">{project.isActive ? 'Yes' : 'No'}</p>
-              </div>
-          </div>
+            <h1 className="text-2xl font-semibold">{project.name}</h1>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-semibold text-lg mb-2">Date Created</h3>
-              <p className="text-muted-foreground">{new Date(project.createdAt).toLocaleDateString()}</p>
-            </div>
-            <div>
-              <h3 className="font-semibold text-lg mb-2">Last Updated</h3>
-              <p className="text-muted-foreground">{new Date(project.updatedAt).toLocaleDateString()}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="details" className="mt-6" onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="details">Details</TabsTrigger>
+          <TabsTrigger value="tasks">Tasks</TabsTrigger>
+          <TabsTrigger value="files">Files</TabsTrigger>
+          <TabsTrigger value="invoices">Invoices</TabsTrigger>
+          <TabsTrigger value="updates">Updates</TabsTrigger>
+        </TabsList>
+        <TabsContent value="details">
+          <Card>
+            <CardContent className="space-y-6 pt-6">
+              <div>
+                <h3 className="font-semibold text-lg mb-2">Description</h3>
+                <p className="text-muted-foreground">{project.description}</p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                      <h3 className="font-semibold text-lg mb-2">Status</h3>
+                      <Badge
+                          variant={
+                          project.status === 'completed' ? 'default' : project.status === 'active' ? 'secondary' : 'outline'
+                          }
+                      >
+                          {project.status}
+                      </Badge>
+                  </div>
+                  <div>
+                      <h3 className="font-semibold text-lg mb-2">Active</h3>
+                      <p className="text-muted-foreground">{project.isActive ? 'Yes' : 'No'}</p>
+                  </div>
+              </div>
 
-      <Card className="mt-6">
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Tasks</CardTitle>
-            <Dialog open={isAddTaskOpen} onOpenChange={setAddTaskOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Add Task
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Add New Task</DialogTitle>
-                </DialogHeader>
-                <AddTaskForm 
-                  clientId={clientId}
-                  projectId={projectId}
-                  onTaskAdded={() => {
-                    fetchTasks();
-                    setAddTaskOpen(false);
-                  }}
-                  setOpen={setAddTaskOpen}
-                />
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardHeader>
-        <CardContent>
-            {isLoadingTasks ? (
-                <div className="flex justify-center items-center h-40">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">Date Created</h3>
+                  <p className="text-muted-foreground">{new Date(project.createdAt).toLocaleDateString()}</p>
                 </div>
-            ) : (
-            <>
-            <div className="flex items-center space-x-4 pb-4">
-                {Object.entries(taskStatusCounts).map(([status, count]) => (
-                    <div key={status} className="flex items-center">
-                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getTaskStatusClasses(status as Task['status'])}`}>
-                            {status}: {count}
-                        </span>
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">Last Updated</h3>
+                  <p className="text-muted-foreground">{new Date(project.updatedAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+                <Button onClick={() => router.push(`/dashboard/clients/${clientId}/projects/${projectId}/edit`)} className="bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-700 transition duration-300 ease-in-out">
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit
+                </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        <TabsContent value="tasks">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle>Tasks</CardTitle>
+                <Dialog open={isAddTaskOpen} onOpenChange={setAddTaskOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-700 transition duration-300 ease-in-out">
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Add Task
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Add New Task</DialogTitle>
+                    </DialogHeader>
+                    <AddTaskForm 
+                      clientId={clientId}
+                      projectId={projectId}
+                      onTaskAdded={() => {
+                        fetchTasks();
+                        setAddTaskOpen(false);
+                      }}
+                      setOpen={setAddTaskOpen}
+                    />
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </CardHeader>
+            <CardContent>
+                {isLoadingTasks ? (
+                    <div className="flex justify-center items-center h-40">
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                     </div>
-                ))}
-            </div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Due Date</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tasks.length > 0 ? tasks.map(task => (
-                  <TableRow key={task._id}>
-                    <TableCell>{task.title}</TableCell>
-                    <TableCell>
-                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getTaskStatusClasses(task.status)}`}>
-                            {task.status}
-                        </span>
-                    </TableCell>
-                    <TableCell>{new Date(task.dueDate).toLocaleDateString()}</TableCell>
-                    <TableCell className="text-right">
+                ) : (
+                <>
+                <div className="flex items-center space-x-4 pb-4">
+                    {Object.entries(taskStatusCounts).map(([status, count]) => (
+                        <div key={status} className="flex items-center">
+                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getTaskStatusClasses(status as Task['status'])}`}>
+                                {status}: {count}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Due Date</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {tasks.length > 0 ? tasks.map(task => (
+                      <TableRow key={task._id}>
+                        <TableCell>{task.title}</TableCell>
+                        <TableCell>
+                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getTaskStatusClasses(task.status)}`}>
+                                {task.status}
+                            </span>
+                        </TableCell>
+                        <TableCell>{new Date(task.dueDate).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-right">
+                            <div className="inline-flex justify-end items-center gap-1 rounded-full bg-muted p-1">
+                                <ActionButton
+                                    onClick={(e) => handleEditTaskClick(e, task)}
+                                    label="Edit"
+                                    className="text-yellow-500 hover:bg-yellow-500"
+                                >
+                                    <Edit className="h-5 w-5" />
+                                </ActionButton>
+                                <ActionButton
+                                    onClick={(e) => handleDeleteTaskClick(e, task)}
+                                    label="Delete"
+                                    className="text-red-500 hover:bg-red-500"
+                                >
+                                    <Trash2 className="h-5 w-5" />
+                                </ActionButton>
+                            </div>
+                        </TableCell>
+                      </TableRow>
+                    )) : (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center">No tasks found for this project.</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="files">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle>Files</CardTitle>
+                <Dialog open={isAddFileOpen} onOpenChange={setAddFileOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-700 transition duration-300 ease-in-out">
+                      <Paperclip className="mr-2 h-4 w-4" />
+                      Add File
+                    </Button>
+                  </DialogTrigger>
+                  <AddFileDialog 
+                    isOpen={isAddFileOpen}
+                    onClose={() => setAddFileOpen(false)}
+                    onFileUploaded={() => {
+                      fetchProjectFiles(); 
+                      setAddFileOpen(false);
+                    }}
+                    projectId={projectId}
+                  />
+                </Dialog>
+              </div>
+            </CardHeader>
+            <CardContent>
+            {isLoadingFiles ? (
+              <div className="flex justify-center items-center h-40">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>File Name</TableHead>
+                    <TableHead>Date Uploaded</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {projectFiles.length > 0 ? projectFiles.map((file, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{file.name}</TableCell>
+                      <TableCell>{file.date}</TableCell>
+                      <TableCell className="text-right">
                         <div className="inline-flex justify-end items-center gap-1 rounded-full bg-muted p-1">
                             <ActionButton
-                                onClick={(e) => handleEditTaskClick(e, task)}
-                                label="Edit"
-                                className="text-yellow-500 hover:bg-yellow-500"
+                                onClick={() => handleDownload(file.name)}
+                                label="Download"
+                                className="text-blue-500 hover:bg-blue-500"
                             >
-                                <Edit className="h-5 w-5" />
+                                <Download className="h-5 w-5" />
                             </ActionButton>
                             <ActionButton
-                                onClick={(e) => handleDeleteTaskClick(e, task)}
+                                onClick={(e) => handleDeleteFileClick(e, file)}
                                 label="Delete"
                                 className="text-red-500 hover:bg-red-500"
                             >
                                 <Trash2 className="h-5 w-5" />
                             </ActionButton>
                         </div>
-                    </TableCell>
-                  </TableRow>
-                )) : (
+                      </TableCell>
+                    </TableRow>
+                  )) : (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center">No files found for this project.</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="invoices">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle>Invoices</CardTitle>
+                <Dialog open={isAddInvoiceOpen} onOpenChange={setAddInvoiceOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-700 transition duration-300 ease-in-out">
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Add Invoice
+                    </Button>
+                  </DialogTrigger>
+                  <AddInvoiceDialog 
+                    isOpen={isAddInvoiceOpen}
+                    onClose={() => setAddInvoiceOpen(false)}
+                    onInvoiceUploaded={() => {
+                      fetchProjectInvoices(); 
+                      setAddInvoiceOpen(false);
+                    }}
+                    projectId={projectId}
+                  />
+                </Dialog>
+              </div>
+            </CardHeader>
+            <CardContent>
+            {isLoadingInvoices ? (
+              <div className="flex justify-center items-center h-40">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+                <>
+                <div className="flex items-center space-x-4 pb-4">
+                    {Object.entries(invoiceStatusCounts).map(([status, count]) => (
+                        <div key={status} className="flex items-center">
+                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getInvoiceStatusClasses(status)}`}>
+                                {status}: {count}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center">No tasks found for this project.</TableCell>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Due Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card className="mt-6">
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Project Files</CardTitle>
-            <Dialog open={isAddFileOpen} onOpenChange={setAddFileOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline">
-                  <Paperclip className="mr-2 h-4 w-4" />
-                  Add File
-                </Button>
-              </DialogTrigger>
-              <AddFileDialog 
-                isOpen={isAddFileOpen}
-                onClose={() => setAddFileOpen(false)}
-                onFileUploaded={() => {
-                  fetchProjectFiles(); 
-                  setAddFileOpen(false);
-                }}
-                projectId={projectId}
-              />
-            </Dialog>
-          </div>
-        </CardHeader>
-        <CardContent>
-        {isLoadingFiles ? (
-          <div className="flex justify-center items-center h-40">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>File Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Date Uploaded</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {projectFiles.length > 0 ? projectFiles.map((file, index) => (
-                <TableRow key={index}>
-                  <TableCell>{file.name}</TableCell>
-                  <TableCell>{file.type}</TableCell>
-                  <TableCell>{file.date}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="inline-flex justify-end items-center gap-1 rounded-full bg-muted p-1">
-                        <ActionButton
-                            onClick={(e) => handleDownload(file.name)}
-                            label="Download"
-                            className="text-blue-500 hover:bg-blue-500"
-                        >
-                            <Download className="h-5 w-5" />
-                        </ActionButton>
-                        <ActionButton
-                            onClick={(e) => handleDeleteFileClick(e, file)}
-                            label="Delete"
-                            className="text-red-500 hover:bg-red-500"
-                        >
-                            <Trash2 className="h-5 w-5" />
-                        </ActionButton>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )) : (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center">No files found for this project.</TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        )}
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {projectInvoices.length > 0 ? projectInvoices.map((invoice) => (
+                    <TableRow key={invoice.id}>
+                      <TableCell>${invoice.amount}</TableCell>
+                      <TableCell>{new Date(invoice.dueDate).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getInvoiceStatusClasses(invoice.status)}`}>
+                            {invoice.status}
+                        </span>
+                      </TableCell>
+                      <TableCell>{new Date(invoice.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="inline-flex justify-end items-center gap-1 rounded-full bg-muted p-1">
+                            <ActionButton
+                                onClick={(e) => handleEditInvoiceClick(e, invoice)}
+                                label="Edit"
+                                className="text-yellow-500 hover:bg-yellow-500"
+                            >
+                                <Edit className="h-5 w-5" />
+                            </ActionButton>
+                            {invoice.paymentLink && (
+                                <a href={invoice.paymentLink} target="_blank" rel="noopener noreferrer">
+                                    <ActionButton
+                                        onClick={(e) => e.stopPropagation()}
+                                        label="Payment Link"
+                                        className="text-green-500 hover:bg-green-500"
+                                    >
+                                        <LinkIcon className="h-5 w-5" />
+                                    </ActionButton>
+                                </a>
+                            )}
+                            {invoice.fileName && (
+                                <ActionButton
+                                    onClick={() => handleDownload(invoice.fileName)}
+                                    label="Download"
+                                    className="text-blue-500 hover:bg-blue-500"
+                                >
+                                    <Download className="h-5 w-5" />
+                                </ActionButton>
+                            )}
+                            <ActionButton
+                                onClick={(e) => handleDeleteInvoiceClick(e, invoice)}
+                                label="Delete"
+                                className="text-red-500 hover:bg-red-500"
+                            >
+                                <Trash2 className="h-5 w-5" />
+                            </ActionButton>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center">No invoices found for this project.</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+              </>
+            )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="updates">
+          <UpdatesTimeline projectId={projectId} />
+        </TabsContent>
+      </Tabs>
 
       {taskToEdit && (
         <Dialog open={!!taskToEdit} onOpenChange={(isOpen) => !isOpen && setTaskToEdit(null)}>
@@ -510,6 +719,19 @@ export default function ViewProjectDetails({ clientId, projectId }: ViewProjectD
                 />
             </DialogContent>
         </Dialog>
+      )}
+
+      {invoiceToEdit && (
+        <EditInvoiceDialog
+            isOpen={!!invoiceToEdit}
+            onClose={() => setInvoiceToEdit(null)}
+            onInvoiceUpdated={() => {
+                fetchProjectInvoices();
+                setInvoiceToEdit(null);
+            }}
+            invoice={invoiceToEdit}
+            projectId={projectId}
+        />
       )}
 
       <AlertDialog open={!!taskToDelete} onOpenChange={(isOpen) => !isOpen && setTaskToDelete(null)}>
@@ -541,6 +763,23 @@ export default function ViewProjectDetails({ clientId, projectId }: ViewProjectD
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction onClick={handleConfirmDeleteFile} disabled={isDeletingFile}>
                     {isDeletingFile ? 'Deleting...' : 'Delete'}
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!invoiceToDelete} onOpenChange={(isOpen) => !isOpen && setInvoiceToDelete(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure you want to delete this invoice?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the invoice from the project.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleConfirmDeleteInvoice} disabled={isDeletingInvoice}>
+                    {isDeletingInvoice ? 'Deleting...' : 'Delete'}
                 </AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>

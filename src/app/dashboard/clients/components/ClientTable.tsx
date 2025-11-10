@@ -1,8 +1,8 @@
-
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, FC } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Table,
   TableBody,
@@ -13,50 +13,52 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getClients } from '@/lib/api';
+import { getClients, deleteClient } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
 import type { Client, Pagination } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { MoreHorizontal } from 'lucide-react';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Edit, Trash2, Eye } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-const ClientRow = ({ client }: { client: Client }) => (
-  <TableRow key={client._id}>
-    <TableCell>
-       <Avatar>
-          <AvatarImage src={client.profileUrl} alt={client.name} />
-          <AvatarFallback>{client.name.charAt(0)}</AvatarFallback>
-        </Avatar>
-    </TableCell>
-    <TableCell>{client.name}</TableCell>
-    <TableCell>{client.email}</TableCell>
-    <TableCell>{client.phone || 'N/A'}</TableCell>
-    <TableCell>
-       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
-            <span className="sr-only">Open menu</span>
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem asChild>
-            <Link href={`/dashboard/clients/${client._id}/edit`}>Edit</Link>
-          </DropdownMenuItem>
-           <DropdownMenuItem asChild>
-            <Link href={`/dashboard/clients/${client._id}/projects`}>View Projects</Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem>Delete</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </TableCell>
-  </TableRow>
-);
+interface ActionButtonProps {
+  onClick: (e: React.MouseEvent) => void;
+  children: React.ReactNode;
+  label: string;
+  className?: string;
+}
+
+const ActionButton: FC<ActionButtonProps> = ({ onClick, children, label, className }) => {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "group/action relative flex h-9 w-9 items-center justify-center rounded-full bg-transparent transition-all duration-300 ease-in-out",
+        "hover:w-24",
+        className
+      )}
+    >
+      <div className="absolute flex h-full w-full items-center justify-center opacity-100 transition-opacity duration-300 group-hover/action:opacity-0">
+        {children}
+      </div>
+      <div className="absolute flex h-full w-full items-center justify-center opacity-0 transition-opacity duration-300 group-hover/action:opacity-100">
+        <span className="whitespace-nowrap text-xs font-semibold text-white">
+          {label}
+        </span>
+      </div>
+    </button>
+  );
+};
 
 const CLIENTS_PER_PAGE = 10;
 
@@ -67,6 +69,11 @@ export default function ClientTable() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { tenantId, token } = useAuth();
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (!tenantId || !token) return;
@@ -83,14 +90,14 @@ export default function ClientTable() {
 
         const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api/v1', '');
         const processedClients = fetchedClients.map(client => {
-            let imageUrl = '';
-            if (client.profileUrl && baseUrl) {
-                const pathParts = client.profileUrl.replace(/\\/g, '/').split('/public/');
-                if (pathParts.length > 1) {
-                    imageUrl = `${baseUrl}/${pathParts[1]}`;
-                }
+          let imageUrl = '';
+          if (client.profileUrl && baseUrl) {
+            imageUrl = client.profileUrl;
+            if (!imageUrl.startsWith('http')) {
+              imageUrl = `${baseUrl}/${imageUrl.replace(/^\//, '')}`;
             }
-            return { ...client, profileUrl: imageUrl };
+          }
+          return { ...client, profileUrl: imageUrl };
         });
 
         setClients(processedClients);
@@ -105,6 +112,36 @@ export default function ClientTable() {
 
     fetchClients();
   }, [tenantId, token, currentPage]);
+
+  const handleClientDeleted = (clientId: string) => {
+    setClients(currentClients => currentClients.filter(c => c._id !== clientId));
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent, client: Client) => {
+    e.stopPropagation();
+    setClientToDelete(client);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!clientToDelete || !tenantId || !token) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteClient(tenantId, token, clientToDelete._id);
+      toast({ title: "Success", description: "Client deleted successfully." });
+      handleClientDeleted(clientToDelete._id);
+      setClientToDelete(null);
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Failed to delete client.", variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleActionClick = (e: React.MouseEvent, action: () => void) => {
+    e.stopPropagation();
+    action();
+  };
 
   const handlePreviousPage = () => {
     if (pagination && pagination.current > 1) {
@@ -141,12 +178,52 @@ export default function ClientTable() {
             <TableHead>Name</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Phone</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {clients.length > 0 ? (
-            clients.map(client => <ClientRow key={client._id} client={client} />)
+            clients.map(client => (
+                 <TableRow key={client._id}>
+                    <TableCell>
+                    <Avatar>
+                        <AvatarImage src={client.profileUrl} alt={client.name} />
+                        <AvatarFallback>{client.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                    </TableCell>
+                    <TableCell>{client.name}</TableCell>
+                    <TableCell>{client.email}</TableCell>
+                    <TableCell>{client.phone || 'N/A'}</TableCell>
+                    <TableCell className="text-right">
+                        <div
+                        className="inline-flex justify-end items-center gap-1 rounded-full bg-muted p-1"
+                        onClick={(e) => e.stopPropagation()}
+                        >
+                            <ActionButton
+                                onClick={(e) => handleActionClick(e, () => router.push(`/dashboard/clients/${client._id}/projects`))}
+                                label="Projects"
+                                className="text-blue-500 hover:bg-blue-500"
+                            >
+                                <Eye className="h-[22px] w-[22px]" />
+                            </ActionButton>
+                            <ActionButton
+                                onClick={(e) => handleActionClick(e, () => router.push(`/dashboard/clients/${client._id}/edit`))}
+                                label="Edit"
+                                className="text-yellow-500 hover:bg-yellow-500"
+                            >
+                                <Edit className="h-[22px] w-[22px]" />
+                            </ActionButton>
+                            <ActionButton
+                                onClick={(e) => handleDeleteClick(e, client)}
+                                label="Delete"
+                                className="text-red-500 hover:bg-red-500"
+                            >
+                                <Trash2 className="h-[22px] w-[22px]" />
+                            </ActionButton>
+                        </div>
+                    </TableCell>
+                </TableRow>
+            ))
           ) : (
             <TableRow>
               <TableCell colSpan={5} className="text-center">No clients found.</TableCell>
@@ -182,6 +259,22 @@ export default function ClientTable() {
           </div>
         </div>
       )}
+      <AlertDialog open={!!clientToDelete} onOpenChange={(isOpen) => !isOpen && setClientToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this client?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the client and all of their associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} disabled={isDeleting}>
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

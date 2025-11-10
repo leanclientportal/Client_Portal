@@ -33,6 +33,12 @@ const nextConfig: NextConfig = {
         hostname: '39bd58c1b14c.ngrok-free.app',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'portalapi--leanclientportal-fe6d0.us-east4.hosted.app',
+        port: '',
+        pathname: '/**',
       }
     ],
   },

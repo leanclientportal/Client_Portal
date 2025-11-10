@@ -1,20 +1,16 @@
 'use client';
 
 import { FC, useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import { getClient, getProjects } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
 import type { Client, Project } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import ProjectList from './components/ProjectList';
 
-interface PageProps {
-  params: {
-    clientId: string;
-  };
-}
-
-const ClientProjectsPage: FC<PageProps> = ({ params }) => {
-  const { clientId } = params;
+const ClientProjectsPage: FC = () => {
+  const params = useParams();
+  const clientId = params.clientId as string;
   const [client, setClient] = useState<Client | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,7 +61,7 @@ const ClientProjectsPage: FC<PageProps> = ({ params }) => {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Projects for {client?.name}</h1>
+      <h1 className="text-2xl font-bold mb-6">{client?.name}</h1>
       <ProjectList projects={projects} onProjectDeleted={handleProjectDeleted} />
     </div>
   );

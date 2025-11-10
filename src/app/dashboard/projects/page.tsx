@@ -15,6 +15,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { PlusCircle } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export default function ProjectsPage() {
   const [clients, setClients] = useState<Client[]>([]);
@@ -91,9 +98,20 @@ export default function ProjectsPage() {
             </SelectContent>
           </Select>
         </div>
-        <Link href="/dashboard/projects/add">
-          <Button>Create Project</Button>
-        </Link>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link href="/dashboard/projects/add">
+                <Button variant="outline" size="icon">
+                  <PlusCircle className="h-4 w-4" />
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Create Project</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
       {loading ? (
          <div className="space-y-2">

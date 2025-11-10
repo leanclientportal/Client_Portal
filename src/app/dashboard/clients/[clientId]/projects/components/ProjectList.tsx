@@ -153,11 +153,11 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
 
     try {
       await deleteProject(tenantId, token, clientId, projectToDelete._id);
-      toast({ title: "Success", description: "Project deleted successfully." });
+      toast({ title: "Success", description: "Item deleted successfully." });
       onProjectDeleted(projectToDelete._id);
       setProjectToDelete(null);
     } catch (error: any) {
-      toast({ title: "Error", description: error.message || "Failed to delete project.", variant: "destructive" });
+      toast({ title: "Error", description: error.message || "Failed to delete item.", variant: "destructive" });
     } finally {
       setIsDeleting(false);
     }
@@ -208,7 +208,7 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Project Name</TableHead>
+            <TableHead>Name</TableHead>
             <TableHead>Client Name</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Last Updated</TableHead>
@@ -293,7 +293,7 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
           <DialogHeader>
             <DialogTitle>Tasks for {tasksToShow?.name}</DialogTitle>
             <DialogDescription>
-              Here are all the tasks associated with this project.
+              Here are all the tasks associated with this item.
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4">
@@ -352,7 +352,7 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
                         </TableRow>
                         )) : (
                             <TableRow>
-                                <TableCell colSpan={4} className="text-center">No tasks found for this project.</TableCell>
+                                <TableCell colSpan={4} className="text-center">No tasks found for this item.</TableCell>
                             </TableRow>
                         )}
                     </TableBody>
@@ -408,9 +408,9 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
       <AlertDialog open={!!projectToDelete} onOpenChange={(isOpen) => !isOpen && setProjectToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to delete this project?</AlertDialogTitle>
+            <AlertDialogTitle>Are you sure you want to delete this item?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the project and all of its associated data.
+              This action cannot be undone. This will permanently delete the item and all of its associated data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -26,7 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, PlusCircle } from 'lucide-react';
 
 const formSchema = z.object({
   clientId: z.string().min(1, { message: "Client is required." }),
@@ -174,7 +174,8 @@ export default function AddProjectForm() {
 
 
               <div className="flex gap-2">
-                <Button type="submit" disabled={isLoading}>
+                <Button type="submit" className="bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-700 transition duration-300 ease-in-out" disabled={isLoading}>
+                  <PlusCircle className="mr-2 h-4 w-4" />
                   {isLoading ? 'Adding Project...' : 'Add Project'}
                 </Button>
               </div>
