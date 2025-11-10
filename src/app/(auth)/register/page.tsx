@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { AuthResponse } from '@/lib/types';
 
 const emailSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
@@ -83,11 +84,14 @@ export default function RegisterPage() {
 
   const onPasswordSubmit = (data: PasswordFormValues) => {
     const [tenantId] = email.split('@');
-    registerMutation({ email, password: data.password, name: tenantId, tenantId }, {
-      onSuccess: (response) => {
-        login(response.jwt, tenantId);
-        toast({ title: 'Registration Successful', description: 'You have been successfully registered and logged in.' });
-        // push('/');
+    registerMutation({ email, password: data.password }, {
+      onSuccess: (response: AuthResponse) => {
+        if (response.success) {
+          login(response.data.token, response.data.tenant.id);
+          toast({ title: 'Registration Successful', description: response.message });
+        } else {
+          toast({ title: 'Registration Failed', description: response.message, variant: 'destructive' });
+        }
       },
       onError: () => {
         toast({ title: 'Registration Failed', description: 'Please try again.', variant: 'destructive' });
