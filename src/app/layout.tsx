@@ -3,12 +3,12 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/ui/theme-provider';
 import { ModeToggle } from '@/components/ui/theme-toggle';
+import QueryProvider from '@/providers/query-provider';
 
 export const metadata: Metadata = {
   title: 'ClientVerse',
   description: 'A modern portal for client management.',
 };
-//commented
 
 export default function RootLayout({
   children,
@@ -36,11 +36,13 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="absolute top-4 right-4">
-            <ModeToggle />
-          </div>
-          {children}
-          <Toaster />
+          <QueryProvider>
+            <div className="absolute top-4 right-4">
+              <ModeToggle />
+            </div>
+            {children}
+            <Toaster />
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>

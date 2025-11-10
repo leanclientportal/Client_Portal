@@ -2,15 +2,17 @@
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { useLogin } from '@/queries/auth';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { AuthResponse } from '@/lib/types';
 
 const schema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
@@ -25,17 +27,23 @@ export default function LoginPage() {
   const { push } = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const { mutate: loginMutation, isPending } = useLogin();
-  const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormValues>({
     resolver: zodResolver(schema),
   });
 
   const onSubmit = (data: FormValues) => {
-    const [tenantId] = data.email.split('@');
-    loginMutation({ ...data, tenantId }, {
-      onSuccess: (response) => {
-        login(response.jwt, tenantId);
-        toast({ title: 'Login Successful', description: 'You have been successfully logged in.' });
-        push('/');
+    loginMutation(data, {
+      onSuccess: (response: AuthResponse) => {
+        if (response.success) {
+          login(response.data.token, response.data.tenant.id);
+          toast({ title: 'Login Successful', description: response.message });
+        } else {
+          toast({ title: 'Login Failed', description: response.message, variant: 'destructive' });
+        }
       },
       onError: () => {
         toast({ title: 'Login Failed', description: 'Please check your credentials and try again.', variant: 'destructive' });
@@ -50,31 +58,39 @@ export default function LoginPage() {
         <p className="text-xl mt-4">A modern portal for client management.</p>
       </div>
       <div className="flex items-center justify-center">
-        <form className="w-full max-w-sm" onSubmit={handleSubmit(onSubmit)}>
-          <h2 className="text-3xl font-bold mb-8 text-center">Login</h2>
-          <div className="mb-4">
-            <Input {...register('email')} placeholder="Email" />
-            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
-          </div>
-          <div className="mb-6 relative">
-            <Input
-              {...register('password')}
-              placeholder="Password"
-              type={showPassword ? 'text' : 'password'}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2"
-            >
-              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-            </button>
-            {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
-          </div>
-          <Button type="submit" className="w-full" disabled={isPending}>
-            {isPending ? 'Logging in...' : 'Login'}
-          </Button>
-        </form>
+        <div className="w-full max-w-sm">
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <h2 className="text-3xl font-bold mb-8 text-center">Login</h2>
+            <div className="mb-4 space-y-2">
+              <Input {...register('email')} placeholder="Email" />
+              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
+            </div>
+            <div className="mb-4 space-y-2 relative">
+              <Input
+                {...register('password')}
+                placeholder="Password"
+                type={showPassword ? 'text' : 'password'}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
+            </div>
+            <Button type="submit" className="w-full" disabled={isPending}>
+              {isPending ? 'Logging in...' : 'Login'}
+            </Button>
+            <p className="text-center text-sm mt-4">
+              Don't have an account?{' '}
+              <Link href="/register" className="text-primary hover:underline">
+                Register
+              </Link>
+            </p>
+          </form>
+        </div>
       </div>
     </main>
   );

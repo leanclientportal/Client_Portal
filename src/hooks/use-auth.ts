@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
@@ -34,11 +34,10 @@ export const useAuth = () => {
       localStorage.setItem(JWT_TOKEN_KEY, jwt);
       setTenantId(tenant);
       setToken(jwt);
-      router.push('/dashboard');
     } catch (error) {
       console.error("Could not access local storage", error);
     }
-  }, [router]);
+  }, []);
 
   const logout = useCallback(() => {
     try {
@@ -46,19 +45,19 @@ export const useAuth = () => {
       localStorage.removeItem(JWT_TOKEN_KEY);
       setTenantId(null);
       setToken(null);
-      router.push('/');
+      router.push('/login');
     } catch (error) {
       console.error("Could not access local storage", error);
     }
   }, [router]);
-  
+
   useEffect(() => {
     if (!isLoading) {
-      const isAuthPage = pathname === '/';
+      const isAuthPage = pathname === '/login' || pathname === '/register';
       if (!tenantId && !isAuthPage) {
-        router.replace('/');
+        router.replace('/login');
       }
-      if (tenantId && isAuthPage) {
+      if (tenantId && (isAuthPage || pathname === '/')) {
         router.replace('/dashboard');
       }
     }

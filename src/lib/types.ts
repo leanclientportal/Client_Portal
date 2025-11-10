@@ -141,15 +141,31 @@ export interface NewDocument {
 export interface LoginCredentials {
     email: string;
     password:  string;
-    tenantId: string;
 }
 
-export interface AuthResponse {
-    jwt: string;
-    user: User;
-}
+export interface Tenant {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    isActive: boolean;
+  }
+  
+  export interface AuthResponse {
+    success: boolean;
+    message: string;
+    data: {
+      token: string;
+      tenant: Tenant;
+    };
+  }
 
 export interface UpdateUserPayload {
     name?: string;
     email?: string;
+}
+
+export interface RegisterCredentials {
+    email?: string;
+    password?: string;
 }
