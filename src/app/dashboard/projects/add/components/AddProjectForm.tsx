@@ -32,7 +32,7 @@ const formSchema = z.object({
   clientId: z.string().min(1, { message: "Client is required." }),
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   description: z.string().min(10, { message: "Description must be at least 10 characters." }),
-  status: z.enum(['active', 'inactive', 'completed']),
+  status: z.enum(['active', 'on-hold', 'completed']),
   isActive: z.boolean(),
 });
 
@@ -79,10 +79,8 @@ export default function AddProjectForm() {
     
     setIsLoading(true);
 
-    const { clientId, ...projectData } = data;
-
     try {
-      await addProject(tenantId, token, clientId, projectData);
+      await addProject(tenantId, token, data.clientId, data);
       toast({ title: "Success", description: "Project added successfully." });
       router.push('/dashboard/projects');
     } catch (error: any) {
@@ -148,7 +146,7 @@ export default function AddProjectForm() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="inactive">Inactive</SelectItem>
+                        <SelectItem value="on-hold">On Hold</SelectItem>
                         <SelectItem value="completed">Completed</SelectItem>
                       </SelectContent>
                     </Select>
