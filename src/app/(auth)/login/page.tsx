@@ -12,10 +12,9 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { AuthResponse } from '@/lib/types';
 
 const schema = z.object({
-  email: z.string().email({ message: 'Please enter a valid email address' }),
+  emailOrPhone: z.string().min(1, { message: 'Please enter a valid email address or phone number' }),
   password: z.string().min(1, { message: 'Password is required' }),
 });
 
@@ -37,10 +36,11 @@ export default function LoginPage() {
 
   const onSubmit = (data: FormValues) => {
     loginMutation(data, {
-      onSuccess: (response: AuthResponse) => {
-        if (response.success) {
-          login(response.data.token, response.data.tenant.id);
+      onSuccess: (response) => {
+        if (response.status === 200) {
+          login(response.token, response.userId);
           toast({ title: 'Login Successful', description: response.message });
+          push('/dashboard');
         } else {
           toast({ title: 'Login Failed', description: response.message, variant: 'destructive' });
         }
@@ -62,8 +62,8 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit(onSubmit)}>
             <h2 className="text-3xl font-bold mb-8 text-center">Login</h2>
             <div className="mb-4 space-y-2">
-              <Input {...register('email')} placeholder="Email" />
-              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
+              <Input {...register('emailOrPhone')} placeholder="Email or Phone" />
+              {errors.emailOrPhone && <p className="text-red-500 text-sm mt-1">{errors.emailOrPhone.message}</p>}
             </div>
             <div className="mb-4 space-y-2 relative">
               <Input

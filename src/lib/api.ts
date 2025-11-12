@@ -584,35 +584,6 @@ export async function updateTask(token: string, projectId: string, taskId: strin
     }
 }
 
-export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-    if (!baseUrl) {
-        throw new Error("API base URL is not configured.");
-    }
-
-    const url = `${baseUrl}/auth/login`;
-
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(credentials),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => null);
-            throw new Error(errorData?.message || 'Login failed');
-        }
-
-        return await response.json();
-    } catch (error) {
-        console.error('Login error:', error);
-        throw error;
-    }
-}
-
 export async function updateUser(token: string, payload: UpdateUserPayload): Promise<{ success: boolean; data: User }> {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (!baseUrl) {

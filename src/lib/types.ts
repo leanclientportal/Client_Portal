@@ -7,7 +7,7 @@ export interface Client {
     email: string;
     phone: string;
     address: string;
-    profileUrl?: string; 
+    profileUrl?: string;
     createdAt: string;
     updatedAt: string;
     profileImageBinary?: string;
@@ -32,7 +32,7 @@ export interface ProjectFile {
 }
 
 export interface Project {
-    _id:string;
+    _id: string;
     clientId: string | Client;
     tenantId: string;
     name: string;
@@ -61,7 +61,7 @@ export interface NewClient {
     email: string;
     phone?: string;
     address?: string;
-    profileImageBinary?: string; 
+    profileImageBinary?: string;
     isActive?: boolean;
 }
 
@@ -88,7 +88,7 @@ export interface User {
     id: string;
     name: string;
     email: string;
-    
+
 }
 
 export interface AuthState {
@@ -139,8 +139,8 @@ export interface NewDocument {
     uploaderId: string;
 }
 export interface LoginCredentials {
-    email: string;
-    password:  string;
+    emailOrPhone: string;
+    password: string;
 }
 
 export interface Tenant {
@@ -149,16 +149,24 @@ export interface Tenant {
     email: string;
     phone: string;
     isActive: boolean;
-  }
-  
-  export interface AuthResponse {
+}
+
+export interface AuthResponse {
     success: boolean;
     message: string;
     data: {
-      token: string;
-      tenant: Tenant;
+        token: string;
+        userId: string;
     };
-  }
+    status: number;
+}
+export interface LoginResponse {
+    success: boolean;
+    message: string;
+    token: string;
+    userId: string;
+    status: number;
+}
 
 export interface UpdateUserPayload {
     name?: string;

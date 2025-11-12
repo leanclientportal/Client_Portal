@@ -3,11 +3,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 
-const TENANT_ID_KEY = 'clientverse_tenant_id';
+const USER_ID_KEY = 'clientverse_user_id';
 const JWT_TOKEN_KEY = 'clientverse_jwt';
 
 export const useAuth = () => {
-  const [tenantId, setTenantId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
@@ -15,10 +15,10 @@ export const useAuth = () => {
 
   useEffect(() => {
     try {
-      const storedTenantId = localStorage.getItem(TENANT_ID_KEY);
+      const storedUserId = localStorage.getItem(USER_ID_KEY);
       const storedToken = localStorage.getItem(JWT_TOKEN_KEY);
-      if (storedTenantId && storedToken) {
-        setTenantId(storedTenantId);
+      if (storedToken && storedUserId) {
+        setUserId(storedUserId);
         setToken(storedToken);
       }
     } catch (error) {
@@ -28,11 +28,11 @@ export const useAuth = () => {
     }
   }, []);
 
-  const login = useCallback((jwt: string, tenant: string) => {
+  const login = useCallback((jwt: string, user: string) => {
     try {
-      localStorage.setItem(TENANT_ID_KEY, tenant);
+      localStorage.setItem(USER_ID_KEY, user);
       localStorage.setItem(JWT_TOKEN_KEY, jwt);
-      setTenantId(tenant);
+      setUserId(user);
       setToken(jwt);
     } catch (error) {
       console.error("Could not access local storage", error);
@@ -41,9 +41,9 @@ export const useAuth = () => {
 
   const logout = useCallback(() => {
     try {
-      localStorage.removeItem(TENANT_ID_KEY);
+      localStorage.removeItem(USER_ID_KEY);
       localStorage.removeItem(JWT_TOKEN_KEY);
-      setTenantId(null);
+      setUserId(null);
       setToken(null);
       router.push('/login');
     } catch (error) {
@@ -54,14 +54,14 @@ export const useAuth = () => {
   useEffect(() => {
     if (!isLoading) {
       const isAuthPage = pathname === '/login' || pathname === '/register';
-      if (!tenantId && !isAuthPage) {
+      if (!token && !isAuthPage) {
         router.replace('/login');
       }
-      if (tenantId && (isAuthPage || pathname === '/')) {
+      if (token && (isAuthPage || pathname === '/')) {
         router.replace('/dashboard');
       }
     }
-  }, [tenantId, isLoading, pathname, router]);
+  }, [token, isLoading, pathname, router]);
 
-  return { tenantId, token, isLoading, login, logout };
+  return { userId, token, isLoading, login, logout };
 };

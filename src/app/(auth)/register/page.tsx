@@ -36,6 +36,7 @@ type PasswordFormValues = z.infer<typeof passwordSchema>;
 export default function RegisterPage() {
   const { toast } = useToast();
   const { login } = useAuth();
+  const { push } = useRouter();
   const [step, setStep] = useState('email');
   const [email, setEmail] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -61,8 +62,12 @@ export default function RegisterPage() {
     setEmail(data.email);
     sendOtpMutation(data.email, {
       onSuccess: (response) => {
-        setStep('otp');
-        toast({ title: 'OTP Sent', description: response.message });
+        if (response.status === 200) {
+          setStep('otp');
+          toast({ title: 'OTP Sent', description: response.message });
+        } else {
+          toast({ title: 'Error', description: response.message || 'Failed to send OTP. Please try again.', variant: 'destructive' });
+        }
       },
       onError: () => {
         toast({ title: 'Error', description: 'Failed to send OTP. Please try again.', variant: 'destructive' });
@@ -72,9 +77,13 @@ export default function RegisterPage() {
 
   const onOtpSubmit = (data: OtpFormValues) => {
     verifyOtpMutation({ email, otp: data.otp }, {
-      onSuccess: () => {
-        setStep('password');
-        toast({ title: 'OTP Verified', description: 'Your email has been successfully verified.' });
+      onSuccess: (response) => {
+        if (response.status === 200) {
+          setStep('password');
+          toast({ title: 'OTP Verified', description: 'Your email has been successfully verified.' });
+        } else {
+          toast({ title: 'Error', description: response.message || 'Invalid OTP. Please try again.', variant: 'destructive' });
+        }
       },
       onError: () => {
         toast({ title: 'Error', description: 'Invalid OTP. Please try again.', variant: 'destructive' });
@@ -85,10 +94,10 @@ export default function RegisterPage() {
   const onPasswordSubmit = (data: PasswordFormValues) => {
     const [tenantId] = email.split('@');
     registerMutation({ email, password: data.password }, {
-      onSuccess: (response: AuthResponse) => {
-        if (response.success) {
-          login(response.data.token, response.data.tenant.id);
+      onSuccess: (response) => {
+        if (response.status === 200) {
           toast({ title: 'Registration Successful', description: response.message });
+          push('/login');
         } else {
           toast({ title: 'Registration Failed', description: response.message, variant: 'destructive' });
         }
