@@ -12,6 +12,8 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { AuthResponse } from '@/lib/types';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 
 const emailSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
@@ -41,6 +43,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [profileType, setProfileType] = useState('User');
 
   const { mutate: sendOtpMutation, isPending: isSendingOtp } = useSendOtp();
   const { mutate: verifyOtpMutation, isPending: isVerifyingOtp } = useVerifyOtp();
@@ -92,8 +95,7 @@ export default function RegisterPage() {
   };
 
   const onPasswordSubmit = (data: PasswordFormValues) => {
-    const [tenantId] = email.split('@');
-    registerMutation({ email, password: data.password }, {
+    registerMutation({ email, password: data.password, activeProfile: profileType }, {
       onSuccess: (response) => {
         if (response.status === 200) {
           toast({ title: 'Registration Successful', description: response.message });
@@ -123,6 +125,16 @@ export default function RegisterPage() {
                 <Input {...emailForm.register('email')} placeholder="Email" />
                 {emailForm.formState.errors.email && <p className="text-red-500 text-sm mt-1">{emailForm.formState.errors.email.message}</p>}
               </div>
+              <RadioGroup defaultValue="User" onValueChange={setProfileType} className="flex gap-4 mb-4">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="User" id="user" />
+                  <Label htmlFor="user">User</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Tenant" id="tenant" />
+                  <Label htmlFor="tenant">Tenant</Label>
+                </div>
+              </RadioGroup>
               <Button type="submit" className="w-full" disabled={isSendingOtp}>
                 {isSendingOtp ? 'Sending OTP...' : 'Send OTP'}
               </Button>

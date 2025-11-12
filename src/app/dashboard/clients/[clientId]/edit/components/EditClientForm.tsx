@@ -42,7 +42,7 @@ interface EditClientFormProps {
 
 export default function EditClientForm({ clientId }: EditClientFormProps) {
   const router = useRouter();
-  const { tenantId, token } = useAuth();
+  const { token } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -64,11 +64,11 @@ export default function EditClientForm({ clientId }: EditClientFormProps) {
   };
 
   useEffect(() => {
-    if (!tenantId || !token) return;
+    if (!token) return;
 
     const fetchClientData = async () => {
       try {
-        const client = await getClient(tenantId, token, clientId);
+        const client = await getClient(token, clientId);
         form.reset({
           name: client.name,
           email: client.email,
@@ -90,7 +90,7 @@ export default function EditClientForm({ clientId }: EditClientFormProps) {
     };
 
     fetchClientData();
-  }, [tenantId, token, clientId, form, toast]);
+  }, [token, clientId, form, toast]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -107,7 +107,7 @@ export default function EditClientForm({ clientId }: EditClientFormProps) {
   };
 
   const onSubmit: SubmitHandler<NewClient> = async (data) => {
-    if (!tenantId || !token) {
+    if (!token) {
       toast({ title: "Authentication Error", description: "Authentication details are missing.", variant: "destructive" });
       return;
     }
@@ -120,7 +120,7 @@ export default function EditClientForm({ clientId }: EditClientFormProps) {
     }
 
     try {
-      const response = await updateClient(tenantId, token, clientId, submissionData);
+      const response = await updateClient(token, clientId, submissionData);
       toast({ title: "Success", description: response.message });
       router.push('/dashboard/clients');
     } catch (err: any) {

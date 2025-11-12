@@ -15,17 +15,17 @@ const ClientProjectsPage: FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { tenantId, token } = useAuth();
+  const { activeProfile, token, activeProfileId } = useAuth();
 
   useEffect(() => {
-    if (!tenantId || !token || !clientId) return;
+    if (!token || !clientId) return;
 
     const fetchData = async () => {
       try {
         setLoading(true);
         const [clientData, projectsData] = await Promise.all([
-          getClient(tenantId, token, clientId),
-          getProjects(tenantId, token, clientId)
+          getClient(token, clientId),
+          getProjects(activeProfile, token, activeProfileId)
         ]);
         setClient(clientData);
         setProjects(projectsData.projects);
@@ -38,7 +38,7 @@ const ClientProjectsPage: FC = () => {
     };
 
     fetchData();
-  }, [tenantId, token, clientId]);
+  }, [activeProfile, token, activeProfileId, clientId]);
 
   const handleProjectDeleted = (projectId: string) => {
     setProjects(currentProjects => currentProjects.filter(p => p._id !== projectId));

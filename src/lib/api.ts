@@ -80,13 +80,13 @@ export async function getClients(tenantId: string, token: string, page: number, 
 }
 
 // Function to get projects for a specific client
-export async function getProjects(tenantId: string, token: string, clientId?: string): Promise<GetProjectsResponse> {
+export async function getProjects(activeProfile: string, token: string, activeProfileId: string): Promise<GetProjectsResponse> {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (!baseUrl) {
         throw new Error("API base URL is not configured.");
     }
 
-    const url = clientId ? `${baseUrl}/projects/${tenantId}/${clientId}` : `${baseUrl}/projects/${tenantId}`;
+    const url =  `${baseUrl}/projects/${activeProfile}/${activeProfileId}`;
 
     try {
         const response = await fetch(url, {
@@ -113,7 +113,7 @@ export async function getProjects(tenantId: string, token: string, clientId?: st
 
         return responseData.data;
     } catch (error) {
-        console.error(`Error getting projects for client ${clientId}:`, error);
+        console.error(`Error getting projects for client ${activeProfileId}:`, error);
         throw error instanceof Error ? error : new Error("An unknown error occurred while fetching projects.");
     }
 }
@@ -305,13 +305,13 @@ export async function addTask(tenantId: string, token: string, clientId: string,
 
 
 // Function to retrieve a single client by ID
-export async function getClient(tenantId: string, token: string, clientId: string): Promise<Client> {
+export async function getClient(token: string, clientId: string): Promise<Client> {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (!baseUrl) {
         throw new Error("API base URL is not configured.");
     }
 
-    const url = `${baseUrl}/clients/${tenantId}/${clientId}`;
+    const url = `${baseUrl}/clients/${clientId}`;
 
     try {
         const response = await fetch(url, {
@@ -340,13 +340,13 @@ export async function getClient(tenantId: string, token: string, clientId: strin
 }
 
 // Function to retrieve a single project by ID
-export async function getProject(tenantId: string, token: string, clientId: string, projectId: string): Promise<Project> {
+export async function getProject(token: string, projectId: string): Promise<Project> {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (!baseUrl) {
         throw new Error("API base URL is not configured.");
     }
 
-    const url = `${baseUrl}/projects/${tenantId}/${clientId}/${projectId}`;
+    const url = `${baseUrl}/projects/${projectId}`;
 
     try {
         const response = await fetch(url, {
@@ -446,13 +446,13 @@ export async function updateClient(tenantId: string, token: string, clientId: st
 }
 
 // Function to update an existing project
-export async function updateProject(tenantId: string, token: string, clientId: string, projectId: string, updatedProject: Partial<NewProject>): Promise<ApiAddResponse> {
+export async function updateProject(token: string, projectId: string, updatedProject: Partial<NewProject>): Promise<ApiAddResponse> {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (!baseUrl) {
         throw new Error("API base URL is not configured.");
     }
 
-    const url = `${baseUrl}/projects/${tenantId}/${clientId}/${projectId}`;
+    const url = `${baseUrl}/projects/${projectId}`;
 
     try {
         const response = await fetch(url, {
@@ -482,13 +482,13 @@ export async function updateProject(tenantId: string, token: string, clientId: s
 }
 
 // Function to delete an existing project
-export async function deleteProject(tenantId: string, token: string, clientId: string, projectId: string): Promise<ApiAddResponse> {
+export async function deleteProject(token: string, projectId: string): Promise<ApiAddResponse> {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (!baseUrl) {
         throw new Error("API base URL is not configured.");
     }
 
-    const url = `${baseUrl}/projects/${tenantId}/${clientId}/${projectId}`;
+    const url = `${baseUrl}/projects/${projectId}`;
 
     try {
         const response = await fetch(url, {

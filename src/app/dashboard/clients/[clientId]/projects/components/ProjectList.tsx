@@ -30,13 +30,12 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Button } from '@/components/ui/button';
 import { Edit, ListChecks, Loader2, Trash2, Eye } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
-import EditTaskForm from '../../projects/components/EditTaskForm';
+import EditTaskForm from './EditTaskForm';
 
 interface ActionButtonProps {
   onClick: (e: React.MouseEvent) => void;
@@ -73,7 +72,7 @@ interface ProjectListProps {
 }
 
 const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
-  const { tenantId, token } = useAuth();
+  const { token, tenantId } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -138,13 +137,12 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
   };
 
   const handleConfirmDelete = async () => {
-    if (!projectToDelete || !tenantId || !token) return;
+    if (!projectToDelete || !token) return;
 
     setIsDeleting(true);
-    const clientId = getClientId(projectToDelete);
 
     try {
-      await deleteProject(tenantId, token, clientId, projectToDelete._id);
+      await deleteProject(token, projectToDelete._id);
       toast({ title: "Success", description: "Item deleted successfully." });
       onProjectDeleted(projectToDelete._id);
       setProjectToDelete(null);

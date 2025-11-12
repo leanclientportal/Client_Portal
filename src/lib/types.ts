@@ -165,6 +165,9 @@ export interface LoginResponse {
     message: string;
     token: string;
     userId: string;
+    activeProfile: string;
+    activeProfileId: string;
+    email: string;
     status: number;
 }
 
@@ -176,4 +179,5 @@ export interface UpdateUserPayload {
 export interface RegisterCredentials {
     email?: string;
     password?: string;
+    activeProfile?: string;
 }

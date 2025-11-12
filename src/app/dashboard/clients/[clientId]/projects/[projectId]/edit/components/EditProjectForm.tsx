@@ -32,7 +32,7 @@ interface EditProjectFormProps {
 export default function EditProjectForm({ clientId, projectId }: EditProjectFormProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const { tenantId, token } = useAuth();
+  const { token } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<FormValues>({
@@ -45,11 +45,11 @@ export default function EditProjectForm({ clientId, projectId }: EditProjectForm
   });
 
   useEffect(() => {
-    if (!tenantId || !token || !clientId || !projectId) return;
+    if (!token || !projectId) return;
 
     const fetchProjectData = async () => {
       try {
-        const project = await getProject(tenantId, token, clientId, projectId);
+        const project = await getProject(token, projectId);
         form.reset({
           name: project.name,
           description: project.description,
@@ -61,10 +61,10 @@ export default function EditProjectForm({ clientId, projectId }: EditProjectForm
     };
 
     fetchProjectData();
-  }, [tenantId, token, clientId, projectId, form, toast]);
+  }, [token, projectId, form, toast]);
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
-    if (!tenantId || !token || !clientId) {
+    if (!token) {
       toast({ title: "Error", description: "Required information is missing to update the project.", variant: "destructive" });
       return;
     }
@@ -75,7 +75,7 @@ export default function EditProjectForm({ clientId, projectId }: EditProjectForm
 
   const saveProject = async (data: FormValues) => {
     try {
-        await updateProject(tenantId!, token!, clientId, projectId, data);
+        await updateProject(token!, projectId, data);
         toast({ title: "Success", description: "Project updated successfully." });
         router.push(`/dashboard/clients/${clientId}/projects/${projectId}`);
     } catch (error: any) {

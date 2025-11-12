@@ -18,6 +18,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { menuConfig } from "@/lib/menu-config";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -161,7 +162,8 @@ const Sidebar = React.forwardRef<
   React.ComponentProps<"div"> & {
     side?: "left" | "right"
     variant?: "sidebar" | "floating" | "inset"
-    collapsible?: "offcanvas" | "icon" | "none"
+    collapsible?: "offcanvas" | "icon" | "none",
+    role: "client" | "tenant"
   }
 >(
   (
@@ -171,11 +173,13 @@ const Sidebar = React.forwardRef<
       collapsible = "offcanvas",
       className,
       children,
+      role,
       ...props
     },
     ref
   ) => {
     const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+    const menuItems = menuConfig[role] || [];
 
     if (collapsible === "none") {
       return (

@@ -4,12 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Briefcase,
-  Home,
-  Users,
-  Settings,
   LogOut,
-  PlusCircle,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -36,21 +31,19 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Logo from "@/components/Logo";
 import { ModeToggle } from "@/components/ui/theme-toggle";
-
-const navItems = [
-  { href: "/dashboard", icon: Home, label: "Dashboard" },
-  { href: "/dashboard/clients", icon: Users, label: "Clients" },
-  { href: "/dashboard/projects", icon: Briefcase, label: "Projects" },
-  { href: "/dashboard/settings", icon: Settings, label: "Settings" },
-];
+import { useUserRole } from "@/hooks/use-user-role";
+import { menuConfig } from "@/lib/menu-config";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { tenantId, isLoading, logout } = useAuth();
+  const { isLoading, logout } = useAuth();
   const pathname = usePathname();
+  const role = useUserRole();
+
+  const navItems = role ? menuConfig[role] : [];
 
   const activeItem = (() => {
     if (pathname.includes('/projects')) {
@@ -62,9 +55,9 @@ export default function DashboardLayout({
       .find((item) => pathname.startsWith(item.href));
   })();
 
-  const pageTitle = activeItem ? activeItem.label : 'Dashboard';
+  const pageTitle = activeItem ? activeItem.title : 'Dashboard';
 
-  if (isLoading || !tenantId) {
+  if (isLoading || !role) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
@@ -74,7 +67,7 @@ export default function DashboardLayout({
 
   return (
     <SidebarProvider>
-      <Sidebar>
+      <Sidebar role={role}>
         <SidebarHeader>
           <div className="p-2">
             <Logo />
@@ -88,10 +81,10 @@ export default function DashboardLayout({
                   <Link href={item.href} passHref>
                     <SidebarMenuButton
                       isActive={activeItem?.href === item.href}
-                      tooltip={item.label}
+                      tooltip={item.title}
                     >
                       <item.icon />
-                      <span>{item.label}</span>
+                      <span>{item.title}</span>
                     </SidebarMenuButton>
                   </Link>
                 </SidebarMenuItem>
@@ -132,6 +125,9 @@ export default function DashboardLayout({
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/switch-profile">Switch Profile</Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem>Settings</DropdownMenuItem>
                 <DropdownMenuItem>Support</DropdownMenuItem>
                 <DropdownMenuSeparator />

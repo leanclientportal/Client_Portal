@@ -38,7 +38,7 @@ export default function LoginPage() {
     loginMutation(data, {
       onSuccess: (response) => {
         if (response.status === 200) {
-          login(response.token, response.userId);
+          login(response.token, response.userId, response.activeProfile, response.activeProfileId);
           toast({ title: 'Login Successful', description: response.message });
           push('/dashboard');
         } else {
