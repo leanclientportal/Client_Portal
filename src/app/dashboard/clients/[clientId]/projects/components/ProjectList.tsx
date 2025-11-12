@@ -1,4 +1,3 @@
-
 'use client';
 
 import { FC, useState, MouseEvent, useCallback, useMemo } from 'react';
@@ -32,12 +31,11 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
-import { Edit, ListChecks, PlusCircle, Loader2, Trash2, Eye } from 'lucide-react';
+import { Edit, ListChecks, Loader2, Trash2, Eye } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
-import AddTaskForm from '../../projects/[projectId]/components/AddTaskForm';
 import EditTaskForm from '../../projects/components/EditTaskForm';
 
 interface ActionButtonProps {
@@ -87,7 +85,6 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
   const [tasksToShow, setTasksToShow] = useState<Project | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
-  const [projectForNewTask, setProjectForNewTask] = useState<Project | null>(null);
 
   const taskStatusCounts = useMemo(() => {
     return tasks.reduce((acc, task) => {
@@ -108,11 +105,6 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
   const handleActionClick = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation();
     action();
-  }
-
-  const handleAddTaskClick = (e: React.MouseEvent, project: Project) => {
-    e.stopPropagation();
-    setProjectForNewTask(project);
   }
 
   const handleRowClick = (project: Project) => {
@@ -274,13 +266,6 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
                     >
                        <ListChecks className="h-[22px] w-[22px]" />
                     </ActionButton>
-                    <ActionButton
-                      onClick={(e) => handleAddTaskClick(e, project)}
-                      label="Add"
-                      className="text-indigo-500 hover:bg-indigo-500"
-                    >
-                        <PlusCircle className="h-[22px] w-[22px]" />
-                    </ActionButton>
                 </div>
               </TableCell>
             </TableRow>
@@ -363,27 +348,6 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
         </DialogContent>
       </Dialog>
 
-      {projectForNewTask && (
-        <Dialog open={!!projectForNewTask} onOpenChange={(isOpen) => !isOpen && setProjectForNewTask(null)}>
-            <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-                <DialogTitle>Add New Task to {projectForNewTask.name}</DialogTitle>
-            </DialogHeader>
-            <AddTaskForm
-                clientId={getClientId(projectForNewTask)}
-                projectId={projectForNewTask._id}
-                onTaskAdded={() => {
-                  if (tasksToShow && tasksToShow._id === projectForNewTask._id) {
-                    fetchTasksForProject(projectForNewTask);
-                  }
-                  setProjectForNewTask(null);
-                }}
-                setOpen={(isOpen) => !isOpen && setProjectForNewTask(null)}
-            />
-            </DialogContent>
-        </Dialog>
-      )}
-      
       {taskToEdit && (
         <Dialog open={!!taskToEdit} onOpenChange={(isOpen) => !isOpen && setTaskToEdit(null)}>
             <DialogContent className="sm:max-w-[425px]">

@@ -16,12 +16,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PlusCircle } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 
 export default function ProjectsPage() {
   const [clients, setClients] = useState<Client[]>([]);
@@ -45,6 +39,8 @@ export default function ProjectsPage() {
           setSelectedClientId(firstClientId);
           const { projects: fetchedProjects } = await getProjects(tenantId, token, firstClientId);
           setProjects(fetchedProjects);
+        } else {
+          setProjects([]);
         }
         setError(null);
       } catch (err: any) {
@@ -67,6 +63,7 @@ export default function ProjectsPage() {
       setError(null);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch projects');
+      setProjects([]);
     } finally {
       setLoading(false);
     }
@@ -98,20 +95,14 @@ export default function ProjectsPage() {
             </SelectContent>
           </Select>
         </div>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link href="/dashboard/projects/add">
-                <Button variant="outline" size="icon">
-                  <PlusCircle className="h-4 w-4" />
+        {selectedClientId && (
+            <Link href={`/dashboard/projects/add?clientId=${selectedClientId}`}>
+                <Button className="bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-700 transition duration-300 ease-in-out">
+                    <PlusCircle className="h-4 w-4 mr-2" />
+                    Add Project
                 </Button>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Create Project</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+            </Link>
+        )}
       </div>
       {loading ? (
          <div className="space-y-2">
@@ -121,8 +112,13 @@ export default function ProjectsPage() {
          </div>
       ) : error ? (
         <div className="text-red-500 text-center">Error: {error}</div>
-      ) : (
+      ) : projects.length > 0 ? (
         <ProjectList projects={projects} onProjectDeleted={handleProjectDeleted} />
+      ) : (
+        <div className="text-center py-10">
+            <h3 className="text-lg font-semibold">No projects found for this client.</h3>
+            <p className="text-muted-foreground">Get started by adding a new project.</p>
+        </div>
       )}
     </div>
   );

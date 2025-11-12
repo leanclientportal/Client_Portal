@@ -201,6 +201,7 @@ export async function addProject(tenantId: string, token: string, clientId: stri
     }
 
     const url = `${baseUrl}/projects/${tenantId}/${clientId}`;
+    const { clientId: _, ...projectData } = newProject;
 
     try {
         const response = await fetch(url, {
@@ -209,7 +210,7 @@ export async function addProject(tenantId: string, token: string, clientId: stri
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`,
             },
-            body: JSON.stringify(newProject),
+            body: JSON.stringify(projectData),
         });
 
         if (!response.ok) {
