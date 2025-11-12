@@ -33,7 +33,6 @@ function EditProjectPageContent({ params }: { params: Promise<{ clientId: string
         <Button variant="ghost" size="icon" onClick={handleBackClick}>
             <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-2xl font-semibold">Edit Project</h1>
       </div>
       <EditProjectForm clientId={resolvedParams.clientId} projectId={resolvedParams.projectId} />
       <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>

@@ -52,10 +52,15 @@ export default function DashboardLayout({
   const { tenantId, isLoading, logout } = useAuth();
   const pathname = usePathname();
 
-  const activeItem = navItems
-    .slice()
-    .reverse()
-    .find((item) => pathname.startsWith(item.href));
+  const activeItem = (() => {
+    if (pathname.includes('/projects')) {
+      return navItems.find((item) => item.href === '/dashboard/projects');
+    }
+    return navItems
+      .slice()
+      .reverse()
+      .find((item) => pathname.startsWith(item.href));
+  })();
 
   const pageTitle = activeItem ? activeItem.label : 'Dashboard';
 
@@ -90,19 +95,6 @@ export default function DashboardLayout({
                     </SidebarMenuButton>
                   </Link>
                 </SidebarMenuItem>
-                {item.href === '/dashboard/clients' && (
-                  <SidebarMenuItem className="ml-4">
-                     <Link href="/dashboard/clients/add" passHref>
-                        <SidebarMenuButton
-                          isActive={pathname === '/dashboard/clients/add'}
-                           tooltip="Create Client"
-                        >
-                          <PlusCircle size={18} />
-                          <span>Create Client</span>
-                        </SidebarMenuButton>
-                      </Link>
-                  </SidebarMenuItem>
-                )}
             </React.Fragment>
             ))}
           </SidebarMenu>
@@ -122,7 +114,7 @@ export default function DashboardLayout({
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 sm:py-4">
+        <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-background sm:px-6 sm:py-4 shadow-md">
           <SidebarTrigger className="sm:hidden" />
           <h1 className="text-xl font-semibold sm:text-2xl font-headline">
             {pageTitle}
@@ -148,7 +140,7 @@ export default function DashboardLayout({
             </DropdownMenu>
           </div>
         </header>
-        <main className="flex-1 p-4 sm:px-6 sm:py-0">{children}</main>
+        <main className="flex-1 p-4 sm:px-6 sm:py-4">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );

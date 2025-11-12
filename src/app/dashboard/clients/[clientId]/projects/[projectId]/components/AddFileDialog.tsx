@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 interface AddFileDialogProps {
   isOpen: boolean;
@@ -23,6 +25,7 @@ interface AddFileDialogProps {
 export default function AddFileDialog({ isOpen, onClose, onFileUploaded, projectId }: AddFileDialogProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [notifyClient, setNotifyClient] = useState(false);
   const { toast } = useToast();
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -43,6 +46,7 @@ export default function AddFileDialog({ isOpen, onClose, onFileUploaded, project
     selectedFiles.forEach(file => {
       formData.append('files', file);
     });
+    formData.append('notifyClient', JSON.stringify(notifyClient));
 
     try {
       const response = await fetch(`/api/projects/${projectId}/files`, {
@@ -62,6 +66,7 @@ export default function AddFileDialog({ isOpen, onClose, onFileUploaded, project
     } finally {
       setIsUploading(false);
       setSelectedFiles([]);
+      setNotifyClient(false);
     }
   };
 
@@ -71,13 +76,19 @@ export default function AddFileDialog({ isOpen, onClose, onFileUploaded, project
         <DialogHeader>
           <DialogTitle>Add Files</DialogTitle>
         </DialogHeader>
-        <div>
-          <Input type="file" onChange={handleFileChange} multiple />
-          {selectedFiles.length > 0 && (
-            <div className="mt-2 text-sm text-muted-foreground">
-              {selectedFiles.length} file(s) selected
-            </div>
-          )}
+        <div className="space-y-4">
+          <div>
+            <Input type="file" onChange={handleFileChange} multiple />
+            {selectedFiles.length > 0 && (
+              <div className="mt-2 text-sm text-muted-foreground">
+                {selectedFiles.length} file(s) selected
+              </div>
+            )}
+          </div>
+          <div className="flex items-center space-x-2">
+            <Switch id="notify-client" checked={notifyClient} onCheckedChange={setNotifyClient} />
+            <Label htmlFor="notify-client">Notify client</Label>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={isUploading}>

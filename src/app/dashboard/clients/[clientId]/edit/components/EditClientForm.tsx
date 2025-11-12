@@ -76,8 +76,13 @@ export default function EditClientForm({ clientId }: EditClientFormProps) {
         });
         if (client.profileUrl) {
           const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api/v1', '');
-          const fullImageUrl = `${baseUrl}${client.profileUrl.replace(/\\/g, '/').split('public')[1]}`;
-          setImagePreview(fullImageUrl);
+          if (baseUrl) {
+            let imageUrl = client.profileUrl;
+            if (!imageUrl.startsWith('http')) {
+              imageUrl = `${baseUrl}/${imageUrl.replace(/^\//, '')}`;
+            }
+            setImagePreview(imageUrl);
+          }
         }
       } catch (err: any) {
         toast({ title: "Error", description: err.message || "Failed to fetch client data.", variant: "destructive" });

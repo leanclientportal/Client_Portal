@@ -1,6 +1,5 @@
 
 
-
 import type { Client, GetClientsResponse, GetProjectsResponse, GetTasksResponse, NewClient, NewProject, NewTask, Project, Task, ProjectFile, User, AuthResponse, LoginCredentials, UpdateUserPayload } from "./types";
 
 interface ApiListResponse {
@@ -202,6 +201,7 @@ export async function addProject(tenantId: string, token: string, clientId: stri
     }
 
     const url = `${baseUrl}/projects/${tenantId}/${clientId}`;
+    const { clientId: _, ...projectData } = newProject;
 
     try {
         const response = await fetch(url, {
@@ -210,7 +210,7 @@ export async function addProject(tenantId: string, token: string, clientId: stri
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`,
             },
-            body: JSON.stringify(newProject),
+            body: JSON.stringify(projectData),
         });
 
         if (!response.ok) {
@@ -511,6 +511,39 @@ export async function deleteProject(tenantId: string, token: string, clientId: s
         return responseData;
     } catch (error) {
         console.error("Error deleting project:", error);
+        throw error instanceof Error ? error : new Error("An unknown error occurred.");
+    }
+}
+
+export async function deleteClient(tenantId: string, token: string, clientId: string): Promise<ApiAddResponse> {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!baseUrl) {
+        throw new Error("API base URL is not configured.");
+    }
+
+    const url = `${baseUrl}/clients/${tenantId}/${clientId}`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Failed to delete client. Status: ${response.status}`);
+        }
+
+        const responseData: ApiAddResponse = await response.json();
+        if (!responseData.success) {
+            throw new Error(responseData.message || "API returned a non-successful response.");
+        }
+
+        return responseData;
+    } catch (error) {
+        console.error("Error deleting client:", error);
         throw error instanceof Error ? error : new Error("An unknown error occurred.");
     }
 }

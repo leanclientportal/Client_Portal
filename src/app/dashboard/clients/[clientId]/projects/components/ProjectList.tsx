@@ -1,4 +1,3 @@
-
 'use client';
 
 import { FC, useState, MouseEvent, useCallback, useMemo } from 'react';
@@ -32,12 +31,11 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
-import { Edit, ListChecks, PlusCircle, Loader2, Trash2, Eye } from 'lucide-react';
+import { Edit, ListChecks, Loader2, Trash2, Eye } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
-import AddTaskForm from '../../projects/[projectId]/components/AddTaskForm';
 import EditTaskForm from '../../projects/components/EditTaskForm';
 
 interface ActionButtonProps {
@@ -87,7 +85,6 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
   const [tasksToShow, setTasksToShow] = useState<Project | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
-  const [projectForNewTask, setProjectForNewTask] = useState<Project | null>(null);
 
   const taskStatusCounts = useMemo(() => {
     return tasks.reduce((acc, task) => {
@@ -108,11 +105,6 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
   const handleActionClick = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation();
     action();
-  }
-
-  const handleAddTaskClick = (e: React.MouseEvent, project: Project) => {
-    e.stopPropagation();
-    setProjectForNewTask(project);
   }
 
   const handleRowClick = (project: Project) => {
@@ -153,11 +145,11 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
 
     try {
       await deleteProject(tenantId, token, clientId, projectToDelete._id);
-      toast({ title: "Success", description: "Project deleted successfully." });
+      toast({ title: "Success", description: "Item deleted successfully." });
       onProjectDeleted(projectToDelete._id);
       setProjectToDelete(null);
     } catch (error: any) {
-      toast({ title: "Error", description: error.message || "Failed to delete project.", variant: "destructive" });
+      toast({ title: "Error", description: error.message || "Failed to delete item.", variant: "destructive" });
     } finally {
       setIsDeleting(false);
     }
@@ -208,7 +200,7 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Project Name</TableHead>
+            <TableHead>Name</TableHead>
             <TableHead>Client Name</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Last Updated</TableHead>
@@ -248,21 +240,21 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
                       label="View"
                       className="text-blue-500 hover:bg-blue-500"
                     >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-[22px] w-[22px]" />
                     </ActionButton>
                     <ActionButton
                       onClick={(e) => handleActionClick(e, () => router.push(`/dashboard/clients/${getClientId(project)}/projects/${project._id}/edit`))}
                       label="Edit"
                       className="text-yellow-500 hover:bg-yellow-500"
                     >
-                        <Edit className="h-4 w-4" />
+                        <Edit className="h-[22px] w-[22px]" />
                     </ActionButton>
                      <ActionButton
                        onClick={(e) => handleDeleteClick(e, project)}
                        label="Delete"
                        className="text-red-500 hover:bg-red-500"
                      >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-[22px] w-[22px]" />
                     </ActionButton>
 
                     <Separator orientation="vertical" className="h-6 mx-1 bg-border" />
@@ -272,14 +264,7 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
                       label="Tasks"
                       className="text-green-500 hover:bg-green-500"
                     >
-                       <ListChecks className="h-4 w-4" />
-                    </ActionButton>
-                    <ActionButton
-                      onClick={(e) => handleAddTaskClick(e, project)}
-                      label="Add"
-                      className="text-indigo-500 hover:bg-indigo-500"
-                    >
-                        <PlusCircle className="h-4 w-4" />
+                       <ListChecks className="h-[22px] w-[22px]" />
                     </ActionButton>
                 </div>
               </TableCell>
@@ -293,7 +278,7 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
           <DialogHeader>
             <DialogTitle>Tasks for {tasksToShow?.name}</DialogTitle>
             <DialogDescription>
-              Here are all the tasks associated with this project.
+              Here are all the tasks associated with this item.
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4">
@@ -338,21 +323,21 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
                                         label="Edit"
                                         className="text-yellow-500 hover:bg-yellow-500"
                                     >
-                                        <Edit className="h-4 w-4" />
+                                        <Edit className="h-[22px] w-[22px]" />
                                     </ActionButton>
                                     <ActionButton
                                         onClick={(e) => handleDeleteTaskClick(e, task)}
                                         label="Delete"
                                         className="text-red-500 hover:bg-red-500"
                                     >
-                                        <Trash2 className="h-4 w-4" />
+                                        <Trash2 className="h-[22px] w-[22px]" />
                                     </ActionButton>
                                 </div>
                             </TableCell>
                         </TableRow>
                         )) : (
                             <TableRow>
-                                <TableCell colSpan={4} className="text-center">No tasks found for this project.</TableCell>
+                                <TableCell colSpan={4} className="text-center">No tasks found for this item.</TableCell>
                             </TableRow>
                         )}
                     </TableBody>
@@ -363,27 +348,6 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
         </DialogContent>
       </Dialog>
 
-      {projectForNewTask && (
-        <Dialog open={!!projectForNewTask} onOpenChange={(isOpen) => !isOpen && setProjectForNewTask(null)}>
-            <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-                <DialogTitle>Add New Task to {projectForNewTask.name}</DialogTitle>
-            </DialogHeader>
-            <AddTaskForm
-                clientId={getClientId(projectForNewTask)}
-                projectId={projectForNewTask._id}
-                onTaskAdded={() => {
-                  if (tasksToShow && tasksToShow._id === projectForNewTask._id) {
-                    fetchTasksForProject(projectForNewTask);
-                  }
-                  setProjectForNewTask(null);
-                }}
-                setOpen={(isOpen) => !isOpen && setProjectForNewTask(null)}
-            />
-            </DialogContent>
-        </Dialog>
-      )}
-      
       {taskToEdit && (
         <Dialog open={!!taskToEdit} onOpenChange={(isOpen) => !isOpen && setTaskToEdit(null)}>
             <DialogContent className="sm:max-w-[425px]">
@@ -408,9 +372,9 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
       <AlertDialog open={!!projectToDelete} onOpenChange={(isOpen) => !isOpen && setProjectToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to delete this project?</AlertDialogTitle>
+            <AlertDialogTitle>Are you sure you want to delete this item?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the project and all of its associated data.
+              This action cannot be undone. This will permanently delete the item and all of its associated data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

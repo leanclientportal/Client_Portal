@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/use-auth';
 import { getProject, updateProject } from '@/lib/api';
+import { Save } from 'lucide-react';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -88,7 +89,7 @@ export default function EditProjectForm({ clientId, projectId }: EditProjectForm
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Edit Project Details</CardTitle>
+          <CardTitle>Edit Details</CardTitle>
         </CardHeader>
         <CardContent>
           <FormProvider {...form}>
@@ -127,8 +128,9 @@ export default function EditProjectForm({ clientId, projectId }: EditProjectForm
               </div>
 
               <div className="flex gap-2">
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? 'Updating Project...' : 'Update Project'}
+                <Button type="submit" className="bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-700 transition duration-300 ease-in-out" disabled={isLoading}>
+                  <Save className="mr-2 h-4 w-4" />
+                  {isLoading ? 'Saving...' : 'Save Changes'}
                 </Button>
               </div>
             </form>
