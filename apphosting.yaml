@@ -1,7 +1,9 @@
-# Settings to manage and configure a Firebase App Hosting backend.
-# https://firebase.google.com/docs/app-hosting/configure
-
+env:
+  - variable: GEMINI_API_KEY
+    value: AIzaSyDwtYv2Ti0EN8OOBhz3hNxLVD4VUNR8mhk
+  - variable: NEXT_PUBLIC_API_BASE_URL
+    value: https://portalapi--leanclientportal-fe6d0.us-east4.hosted.app/api/v1
+  - variable: NODE_ENV
+    value: production
 runConfig:
-  # Increase this value if you'd like to automatically spin up
-  # more instances in response to increased traffic.
   maxInstances: 1
