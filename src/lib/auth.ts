@@ -2,7 +2,7 @@
 import { AuthResponse, LoginCredentials, LoginResponse, RegisterCredentials } from "./types";
 
 export async function login(credentials: LoginCredentials): Promise<LoginResponse> {
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const baseUrl = "https://portalapi--leanclientportal-fe6d0.us-east4.hosted.app/api/v1";
     if (!baseUrl) {
         throw new Error("API base URL is not configured.");
     }
