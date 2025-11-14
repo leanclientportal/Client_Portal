@@ -1,21 +1,28 @@
 'use client';
 
-import { useMutation } from '@tanstack/react-query';
-import { login, register, sendOtp, verifyOtp } from '@/lib/auth';
-import { LoginCredentials, RegisterCredentials } from '@/lib/types';
-
-export function useLogin() {
-  return useMutation({ mutationFn: (credentials: LoginCredentials) => login(credentials) });
-}
-
-export function useRegister() {
-  return useMutation({ mutationFn: (credentials: RegisterCredentials) => register(credentials) });
-}
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { sendOtp, verifyOtp } from '@/lib/auth';
+import { switchAccount } from '@/lib/api';
+import { useAuth } from '@/hooks/use-auth';
+import { SwitchAccountPayload, SwitchAccountResponse } from '@/lib/types';
 
 export function useSendOtp() {
-  return useMutation({ mutationFn: (email: string) => sendOtp(email) });
+  return useMutation({ mutationFn: (data: { email: string; type: 'registration' | 'login' }) => sendOtp(data.email, data.type) });
 }
 
 export function useVerifyOtp() {
-  return useMutation({ mutationFn: (data: { email: string; otp: string; }) => verifyOtp(data.email, data.otp) });
+  return useMutation({ mutationFn: (data: { email: string; otp: string; type: 'registration' | 'login'; name?: string; phone?: string; profileType?: string }) => verifyOtp(data.email, data.otp, data.type, { name: data.name, phone: data.phone, activeProfile: data.profileType }) });
+}
+
+export function useSwitchAccount() {
+  const { login } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation<SwitchAccountResponse, Error, { userId: string; token: string; payload: SwitchAccountPayload }>({
+    mutationFn: ({ userId, token, payload }) => switchAccount(userId, token, payload),
+    onSuccess: (data) => {
+      login(data.token, data.userId, data.activeProfile, data.activeProfileId);
+      queryClient.invalidateQueries({ queryKey: ['accounts', data.userId] });
+    },
+  });
 }

@@ -4,66 +4,56 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import { useRegister, useSendOtp, useVerifyOtp } from '@/queries/auth';
+import { useSendOtp, useVerifyOtp } from '@/queries/auth';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, FormProvider } from 'react-hook-form';
 import { z } from 'zod';
-import { AuthResponse } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import Link from 'next/link';
+import { PhoneNumberInput } from '@/components/ui/phone-number-input';
+import { isValidPhoneNumber } from 'react-phone-number-input';
 
-const emailSchema = z.object({
+const formSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: 'Please enter a valid email address' }),
+  phone: z.string().refine(val => !val || isValidPhoneNumber(val), {
+    message: "Invalid phone number."
+  }).optional(),
+  otp: z.string().optional(), 
 });
 
-const otpSchema = z.object({
-  otp: z.string().min(6, { message: 'OTP must be 6 characters' }),
-});
-
-const passwordSchema = z.object({
-  password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
-
-type EmailFormValues = z.infer<typeof emailSchema>;
-type OtpFormValues = z.infer<typeof otpSchema>;
-type PasswordFormValues = z.infer<typeof passwordSchema>;
+type FormValues = z.infer<typeof formSchema>;
 
 export default function RegisterPage() {
   const { toast } = useToast();
-  const { login } = useAuth();
   const { push } = useRouter();
   const [step, setStep] = useState('email');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [phone, setPhone] = useState<string | undefined>('');
   const [profileType, setProfileType] = useState('User');
 
   const { mutate: sendOtpMutation, isPending: isSendingOtp } = useSendOtp();
   const { mutate: verifyOtpMutation, isPending: isVerifyingOtp } = useVerifyOtp();
-  const { mutate: registerMutation, isPending: isRegistering } = useRegister();
 
-  const emailForm = useForm<EmailFormValues>({
-    resolver: zodResolver(emailSchema),
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
   });
 
-  const otpForm = useForm<OtpFormValues>({
-    resolver: zodResolver(otpSchema),
-  });
+  const handleSendOtp = async () => {
+    const emailValue = form.getValues('email');
+    const nameValue = form.getValues('name');
+    const phoneValue = form.getValues('phone');
+    const isValid = await form.trigger(['email', 'name', 'phone']);
+    if (!isValid) return;
 
-  const passwordForm = useForm<PasswordFormValues>({
-    resolver: zodResolver(passwordSchema),
-  });
-
-  const onEmailSubmit = (data: EmailFormValues) => {
-    setEmail(data.email);
-    sendOtpMutation(data.email, {
+    setName(nameValue);
+    setEmail(emailValue);
+    setPhone(phoneValue);
+    sendOtpMutation({ email: emailValue, type: 'registration' }, {
       onSuccess: (response) => {
         if (response.status === 200) {
           setStep('otp');
@@ -78,12 +68,14 @@ export default function RegisterPage() {
     });
   };
 
-  const onOtpSubmit = (data: OtpFormValues) => {
-    verifyOtpMutation({ email, otp: data.otp }, {
+  const onOtpSubmit = (data: FormValues) => {
+    if (!data.otp) return;
+
+    verifyOtpMutation({ email, otp: data.otp, type: 'registration', name, phone, profileType: profileType.toLowerCase() }, {
       onSuccess: (response) => {
         if (response.status === 200) {
-          setStep('password');
-          toast({ title: 'OTP Verified', description: 'Your email has been successfully verified.' });
+          toast({ title: 'OTP Verified', description: 'Your account has been successfully created.' });
+          push('/login');
         } else {
           toast({ title: 'Error', description: response.message || 'Invalid OTP. Please try again.', variant: 'destructive' });
         }
@@ -93,21 +85,9 @@ export default function RegisterPage() {
       },
     });
   };
-
-  const onPasswordSubmit = (data: PasswordFormValues) => {
-    registerMutation({ email, password: data.password, activeProfile: profileType }, {
-      onSuccess: (response) => {
-        if (response.status === 200) {
-          toast({ title: 'Registration Successful', description: response.message });
-          push('/login');
-        } else {
-          toast({ title: 'Registration Failed', description: response.message, variant: 'destructive' });
-        }
-      },
-      onError: () => {
-        toast({ title: 'Registration Failed', description: 'Please try again.', variant: 'destructive' });
-      },
-    });
+  
+  const handleEditEmail = () => {
+    setStep('email');
   };
 
   return (
@@ -118,78 +98,68 @@ export default function RegisterPage() {
       </div>
       <div className="flex items-center justify-center">
         <div className="w-full max-w-sm">
-          {step === 'email' && (
-            <form onSubmit={emailForm.handleSubmit(onEmailSubmit)}>
-              <h2 className="text-3xl font-bold mb-8 text-center">Register</h2>
-              <div className="mb-4">
-                <Input {...emailForm.register('email')} placeholder="Email" />
-                {emailForm.formState.errors.email && <p className="text-red-500 text-sm mt-1">{emailForm.formState.errors.email.message}</p>}
-              </div>
-              <RadioGroup defaultValue="User" onValueChange={setProfileType} className="flex gap-4 mb-4">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="User" id="user" />
-                  <Label htmlFor="user">User</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Tenant" id="tenant" />
-                  <Label htmlFor="tenant">Tenant</Label>
-                </div>
+        <FormProvider {...form}>
+          <form onSubmit={form.handleSubmit(onOtpSubmit)}>
+            <h2 className="text-3xl font-bold mb-8 text-center">Register</h2>
+            
+            <div className="mb-4">
+              <Input {...form.register('name')} placeholder="Name" disabled={step === 'otp'} />
+              {form.formState.errors.name && <p className="text-red-500 text-sm mt-1">{form.formState.errors.name.message}</p>}
+            </div>
+
+            <div className="mb-4">
+              <Input {...form.register('email')} placeholder="Email" disabled={step === 'otp'} />
+              {form.formState.errors.email && <p className="text-red-500 text-sm mt-1">{form.formState.errors.email.message}</p>}
+            </div>
+
+            <div className="mb-4">
+                <PhoneNumberInput name="phone" disabled={step === 'otp'} />
+                 {form.formState.errors.phone && <p className="text-red-500 text-xs mt-1">{form.formState.errors.phone.message}</p>}
+            </div>
+
+            {step === 'email' && (
+                 <RadioGroup defaultValue="User" onValueChange={setProfileType} className="flex gap-4 mb-4">
+                    <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="User" id="user" />
+                    <Label htmlFor="user">User</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="Tenant" id="tenant" />
+                    <Label htmlFor="tenant">Tenant</Label>
+                    </div>
               </RadioGroup>
-              <Button type="submit" className="w-full" disabled={isSendingOtp}>
+            )}
+
+            {step === 'otp' && (
+              <div className="mb-4">
+                <Input {...form.register('otp')} placeholder="Enter OTP" />
+                {form.formState.errors.otp && <p className="text-red-500 text-sm mt-1">{form.formState.errors.otp.message}</p>}
+                 <div className="flex justify-between items-center mt-2">
+                    <Button variant="link" size="sm" onClick={handleSendOtp} disabled={isSendingOtp}>
+                        {isSendingOtp ? 'Resending...' : 'Resend OTP'}
+                    </Button>
+                    <Button variant="link" size="sm" onClick={handleEditEmail}>Edit Details</Button>
+                </div>
+              </div>
+            )}
+
+            {step === 'email' ? (
+              <Button type="button" className="w-full" onClick={handleSendOtp} disabled={isSendingOtp}>
                 {isSendingOtp ? 'Sending OTP...' : 'Send OTP'}
               </Button>
-            </form>
-          )}
-          {step === 'otp' && (
-            <form onSubmit={otpForm.handleSubmit(onOtpSubmit)}>
-              <h2 className="text-3xl font-bold mb-8 text-center">Verify OTP</h2>
-              <div className="mb-4">
-                <Input {...otpForm.register('otp')} placeholder="Enter OTP" />
-                {otpForm.formState.errors.otp && <p className="text-red-500 text-sm mt-1">{otpForm.formState.errors.otp.message}</p>}
-              </div>
+            ) : (
               <Button type="submit" className="w-full" disabled={isVerifyingOtp}>
-                {isVerifyingOtp ? 'Verifying OTP...' : 'Verify OTP'}
+                {isVerifyingOtp ? 'Verifying...' : 'Verify & Register'}
               </Button>
-            </form>
-          )}
-          {step === 'password' && (
-            <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}>
-              <h2 className="text-3xl font-bold mb-8 text-center">Set Password</h2>
-              <div className="mb-4 relative">
-                <Input
-                  {...passwordForm.register('password')}
-                  placeholder="Password"
-                  type={showPassword ? 'text' : 'password'}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2"
-                >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-                {passwordForm.formState.errors.password && <p className="text-red-500 text-sm mt-1">{passwordForm.formState.errors.password.message}</p>}
-              </div>
-              <div className="mb-6 relative">
-                <Input
-                  {...passwordForm.register('confirmPassword')}
-                  placeholder="Confirm Password"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2"
-                >
-                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-                {passwordForm.formState.errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{passwordForm.formState.errors.confirmPassword.message}</p>}
-              </div>
-              <Button type="submit" className="w-full" disabled={isRegistering}>
-                {isRegistering ? 'Registering...' : 'Register'}
-              </Button>
-            </form>
-          )}
+            )}
+             <p className="text-center text-sm text-gray-600 mt-4">
+                Already have an account?{" "}
+                <Link href="/login" className="font-semibold text-primary hover:underline">
+                    Login
+                </Link>
+            </p>
+          </form>
+          </FormProvider>
         </div>
       </div>
     </main>

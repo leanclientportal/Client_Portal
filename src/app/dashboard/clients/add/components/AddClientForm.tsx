@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from '@/hooks/use-auth';
 import { addClient } from '@/lib/api';
+import { uploadImageAndGetURL } from '@/lib/storage';
 import type { NewClient } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { PhoneNumberInput } from '@/components/ui/phone-number-input';
@@ -33,12 +34,13 @@ const formSchema = z.object({
   phone: z.string().refine(val => !val || isValidPhoneNumber(val), {
     message: "Invalid phone number."
   }).optional(),
-  profileImageBinary: z.string().min(1, { message: "Profile image is required." }),
+  profileImageBinary: z.string().optional(),
+  profileImageName: z.string().optional(),
 });
 
 export default function AddClientForm() {
   const router = useRouter();
-  const { tenantId, token } = useAuth();
+  const { activeProfileId: tenantId, token } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -51,6 +53,7 @@ export default function AddClientForm() {
       email: '',
       phone: '',
       profileImageBinary: '',
+      profileImageName: '',
     },
   });
 
@@ -72,11 +75,13 @@ export default function AddClientForm() {
         const base64String = reader.result as string;
         setImagePreview(base64String);
         form.setValue('profileImageBinary', base64String, { shouldValidate: true });
+        form.setValue('profileImageName', file.name, { shouldValidate: true });
       };
       reader.readAsDataURL(file);
     } else {
-        form.setValue('profileImageBinary', '', { shouldValidate: true });
-        setImagePreview(null);
+      form.setValue('profileImageBinary', '', { shouldValidate: true });
+      form.setValue('profileImageName', '', { shouldValidate: true });
+      setImagePreview(null);
     }
   };
 
@@ -89,10 +94,27 @@ export default function AddClientForm() {
     setIsLoading(true);
 
     try {
-      const response = await addClient(tenantId, token, data);
-      toast({ title: "Success", description: response.message });
-      form.reset();
-      router.push('/dashboard/clients'); // Optional: redirect on success
+      let profileImageUrl: string | undefined = undefined;
+      const { profileImageBinary, profileImageName, ...clientDetails } = data;
+
+      if (profileImageBinary && profileImageName) {
+        profileImageUrl = await uploadImageAndGetURL(tenantId, profileImageBinary, profileImageName);
+      }
+
+      const newClientData = {
+        ...clientDetails,
+        ...(profileImageUrl && { profileImageUrl }),
+      };
+
+      const response = await addClient(tenantId, token, newClientData);
+
+      if (response.success) {
+        toast({ title: "Success", description: "Client added successfully." });
+        form.reset();
+        router.push('/dashboard/clients');
+      } else {
+        throw new Error(response.message || "Failed to create client.");
+      }
     } catch (err: any) {
       toast({ title: "Error", description: err.message || "An unexpected error occurred.", variant: "destructive" });
     } finally {
@@ -109,19 +131,19 @@ export default function AddClientForm() {
         <CardContent>
           <FormProvider {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="flex items-center space-x-4">
-                    <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                    {imagePreview ? (
-                        <Image src={imagePreview} alt="Profile Preview" width={96} height={96} className="object-cover" />
-                    ) : (
-                        <span className="text-xs text-gray-500">Image Preview</span>
-                    )}
-                    </div>
-                    <div>
-                      <Input type="file" onChange={handleFileChange} accept="image/*" />
-                      {form.formState.errors.profileImageBinary && <p className="text-red-500 text-xs mt-1">{form.formState.errors.profileImageBinary.message}</p>}
-                    </div>
+              <div className="flex items-center space-x-4">
+                <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                  {imagePreview ? (
+                    <Image src={imagePreview} alt="Profile Preview" width={96} height={96} className="object-cover" />
+                  ) : (
+                    <span className="text-xs text-gray-500">Image Preview</span>
+                  )}
                 </div>
+                <div>
+                  <Input type="file" onChange={handleFileChange} accept="image/*" />
+                  {form.formState.errors.profileImageBinary && <p className="text-red-500 text-xs mt-1">{form.formState.errors.profileImageBinary.message}</p>}
+                </div>
+              </div>
 
               <div>
                 <Input placeholder="Name" {...form.register("name")} />

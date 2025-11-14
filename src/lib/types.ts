@@ -1,5 +1,3 @@
-
-
 export interface Client {
     _id: string;
     tenantId: string;
@@ -7,7 +5,7 @@ export interface Client {
     email: string;
     phone: string;
     address: string;
-    profileUrl?: string;
+    profileImageUrl?: string;
     createdAt: string;
     updatedAt: string;
     profileImageBinary?: string;
@@ -61,7 +59,9 @@ export interface NewClient {
     email: string;
     phone?: string;
     address?: string;
+    profileImageUrl?: string;
     profileImageBinary?: string;
+    profileImageName?: string;
     isActive?: boolean;
 }
 
@@ -180,4 +180,37 @@ export interface RegisterCredentials {
     email?: string;
     password?: string;
     activeProfile?: string;
+}
+
+export interface Account {
+  type: 'client' | 'tenant';
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface GetAccountsResponse {
+    accounts: Account[];
+}
+
+export interface SwitchAccountPayload {
+  activeProfile: 'client' | 'tenant';
+  masterId: string;
+}
+
+export interface SwitchAccountResponse {
+  token: string;
+  userId: string;
+  activeProfile: string;
+  activeProfileId: string;
+}
+
+export interface VerifyOtpResponse {
+    status: number;
+    success: boolean;
+    message: string;
+    token: string;
+    userId: string;
+    activeProfile: string;
+    activeProfileId: string;
 }

@@ -1,6 +1,6 @@
 
 
-import type { Client, GetClientsResponse, GetProjectsResponse, GetTasksResponse, NewClient, NewProject, NewTask, Project, Task, ProjectFile, User, AuthResponse, LoginCredentials, UpdateUserPayload } from "./types";
+import type { Client, GetClientsResponse, GetProjectsResponse, GetTasksResponse, NewClient, NewProject, NewTask, Project, Task, ProjectFile, User, AuthResponse, LoginCredentials, UpdateUserPayload, GetAccountsResponse, SwitchAccountPayload, SwitchAccountResponse, Tenant } from "./types";
 
 interface ApiListResponse {
     success: boolean;
@@ -42,6 +42,7 @@ interface ApiSingleTaskResponse {
 interface ApiAddResponse {
     success: boolean;
     message: string;
+    clientId?: string;
 }
 
 // Function to retrieve a paginated list of clients
@@ -51,15 +52,18 @@ export async function getClients(tenantId: string, token: string, page: number, 
         throw new Error("API base URL is not configured.");
     }
 
-    const url = `${baseUrl}/clients/${tenantId}?page=${page}&limit=${limit}`;
+    const url = new URL(`${baseUrl}/clients/${tenantId}`);
+    url.searchParams.append('page', page.toString());
+    url.searchParams.append('limit', limit.toString());
 
     try {
-        const response = await fetch(url, {
+        const response = await fetch(url.toString(), {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`,
             },
+            cache: 'no-store',
         });
 
         if (!response.ok) {
@@ -305,13 +309,13 @@ export async function addTask(tenantId: string, token: string, clientId: string,
 
 
 // Function to retrieve a single client by ID
-export async function getClient(token: string, clientId: string): Promise<Client> {
+export async function getClient(token: string, tenantId: string, clientId: string): Promise<Client> {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (!baseUrl) {
         throw new Error("API base URL is not configured.");
     }
 
-    const url = `${baseUrl}/clients/${clientId}`;
+    const url = `${baseUrl}/clients/${tenantId}/${clientId}`;
 
     try {
         const response = await fetch(url, {
@@ -648,3 +652,105 @@ export async function updateUser(token: string, payload: UpdateUserPayload): Pro
 }
 
     
+// Function to get accounts for a user
+export async function getAccounts(token: string, userId: string): Promise<GetAccountsResponse> {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!baseUrl) {
+        throw new Error("API base URL is not configured.");
+    }
+
+    const url = new URL(`${baseUrl}/auth/get-accounts/${userId}`);
+    url.searchParams.append('timestamp', Date.now().toString());
+
+    try {
+        const response = await fetch(url.toString(), {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            cache: 'no-store',
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Failed to fetch accounts. Status: ${response.status}`);
+        }
+
+        const responseData = await response.json();
+
+        return responseData;
+    } catch (error) {
+        console.error("Error getting accounts:", error);
+        throw error instanceof Error ? error : new Error("An unknown error occurred.");
+    }
+}
+
+export async function switchAccount(userId: string, token: string, payload: SwitchAccountPayload): Promise<SwitchAccountResponse> {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!baseUrl) {
+        throw new Error("API base URL is not configured.");
+    }
+
+    const url = `${baseUrl}/auth/switch-account/${userId}`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Failed to switch account. Status: ${response.status}`);
+        }
+
+        const responseData: SwitchAccountResponse = await response.json();
+
+
+        return responseData;
+    } catch (error) {
+        console.error("Error switching account:", error);
+        throw error instanceof Error ? error : new Error("An unknown error occurred.");
+    }
+}
+
+// Function to retrieve a paginated list of tenants by client
+export async function getTenantsByClient(clientId: string, token: string): Promise<Tenant[]> {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!baseUrl) {
+        throw new Error("API base URL is not configured.");
+    }
+
+    const url = new URL(`${baseUrl}/tenant/by-client/${clientId}`);
+
+    try {
+        const response = await fetch(url.toString(), {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            cache: 'no-store',
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Failed to fetch tenants. Status: ${response.status}`);
+        }
+
+        const responseData: { success: boolean, count: number, message?: string, data: Tenant[] } = await response.json();
+        if (!responseData.success) {
+            throw new Error(responseData.message || "API returned a non-successful response.");
+        }
+
+        return responseData.data;
+    } catch (error) {
+        console.error("Error getting tenants:", error);
+        throw error instanceof Error ? error : new Error("An unknown error occurred.");
+    }
+}

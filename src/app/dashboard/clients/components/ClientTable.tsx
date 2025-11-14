@@ -68,7 +68,7 @@ export default function ClientTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { tenantId, token } = useAuth();
+  const { activeProfileId: tenantId, token } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
 
@@ -88,16 +88,8 @@ export default function ClientTable() {
           CLIENTS_PER_PAGE
         );
 
-        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api/v1', '');
         const processedClients = fetchedClients.map(client => {
-          let imageUrl = '';
-          if (client.profileUrl && baseUrl) {
-            imageUrl = client.profileUrl;
-            if (!imageUrl.startsWith('http')) {
-              imageUrl = `${baseUrl}/${imageUrl.replace(/^\//, '')}`;
-            }
-          }
-          return { ...client, profileUrl: imageUrl };
+          return { ...client };
         });
 
         setClients(processedClients);
@@ -184,45 +176,45 @@ export default function ClientTable() {
         <TableBody>
           {clients.length > 0 ? (
             clients.map(client => (
-                 <TableRow key={client._id}>
-                    <TableCell>
-                    <Avatar>
-                        <AvatarImage src={client.profileUrl} alt={client.name} />
-                        <AvatarFallback>{client.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                    </TableCell>
-                    <TableCell>{client.name}</TableCell>
-                    <TableCell>{client.email}</TableCell>
-                    <TableCell>{client.phone || 'N/A'}</TableCell>
-                    <TableCell className="text-right">
-                        <div
-                        className="inline-flex justify-end items-center gap-1 rounded-full bg-muted p-1"
-                        onClick={(e) => e.stopPropagation()}
-                        >
-                            <ActionButton
-                                onClick={(e) => handleActionClick(e, () => router.push(`/dashboard/clients/${client._id}/projects`))}
-                                label="Projects"
-                                className="text-blue-500 hover:bg-blue-500"
-                            >
-                                <Eye className="h-[22px] w-[22px]" />
-                            </ActionButton>
-                            <ActionButton
-                                onClick={(e) => handleActionClick(e, () => router.push(`/dashboard/clients/${client._id}/edit`))}
-                                label="Edit"
-                                className="text-yellow-500 hover:bg-yellow-500"
-                            >
-                                <Edit className="h-[22px] w-[22px]" />
-                            </ActionButton>
-                            <ActionButton
-                                onClick={(e) => handleDeleteClick(e, client)}
-                                label="Delete"
-                                className="text-red-500 hover:bg-red-500"
-                            >
-                                <Trash2 className="h-[22px] w-[22px]" />
-                            </ActionButton>
-                        </div>
-                    </TableCell>
-                </TableRow>
+              <TableRow key={client._id}>
+                <TableCell>
+                  <Avatar>
+                    <AvatarImage src={client.profileImageUrl} alt={client.name} />
+                    <AvatarFallback>{client.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                </TableCell>
+                <TableCell>{client.name}</TableCell>
+                <TableCell>{client.email}</TableCell>
+                <TableCell>{client.phone || 'N/A'}</TableCell>
+                <TableCell className="text-right">
+                  <div
+                    className="inline-flex justify-end items-center gap-1 rounded-full bg-muted p-1"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ActionButton
+                      onClick={(e) => handleActionClick(e, () => router.push(`/dashboard/clients/${client._id}/projects`))}
+                      label="Projects"
+                      className="text-blue-500 hover:bg-blue-500"
+                    >
+                      <Eye className="h-[22px] w-[22px]" />
+                    </ActionButton>
+                    <ActionButton
+                      onClick={(e) => handleActionClick(e, () => router.push(`/dashboard/clients/${client._id}/edit`))}
+                      label="Edit"
+                      className="text-yellow-500 hover:bg-yellow-500"
+                    >
+                      <Edit className="h-[22px] w-[22px]" />
+                    </ActionButton>
+                    <ActionButton
+                      onClick={(e) => handleDeleteClick(e, client)}
+                      label="Delete"
+                      className="text-red-500 hover:bg-red-500"
+                    >
+                      <Trash2 className="h-[22px] w-[22px]" />
+                    </ActionButton>
+                  </div>
+                </TableCell>
+              </TableRow>
             ))
           ) : (
             <TableRow>

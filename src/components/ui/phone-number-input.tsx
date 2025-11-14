@@ -7,9 +7,10 @@ import { Input } from './input';
 
 interface PhoneNumberInputProps {
   name: string;
+  disabled?: boolean;
 }
 
-export function PhoneNumberInput({ name }: PhoneNumberInputProps) {
+export function PhoneNumberInput({ name, disabled }: PhoneNumberInputProps) {
   const { control } = useFormContext();
 
   return (
@@ -22,6 +23,7 @@ export function PhoneNumberInput({ name }: PhoneNumberInputProps) {
           placeholder="Enter phone number"
           defaultCountry="US"
           inputComponent={Input}
+          disabled={disabled}
         />
       )}
     />

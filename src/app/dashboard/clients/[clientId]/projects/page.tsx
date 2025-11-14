@@ -24,8 +24,8 @@ const ClientProjectsPage: FC = () => {
       try {
         setLoading(true);
         const [clientData, projectsData] = await Promise.all([
-          getClient(token, clientId),
-          getProjects(activeProfile, token, activeProfileId)
+          getClient(token, activeProfileId as string, clientId),
+          getProjects(activeProfile as string, token, activeProfileId as string)
         ]);
         setClient(clientData);
         setProjects(projectsData.projects);

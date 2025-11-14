@@ -21,9 +21,13 @@ export const useAuth = () => {
     try {
       const storedUserId = localStorage.getItem(USER_ID_KEY);
       const storedToken = localStorage.getItem(JWT_TOKEN_KEY);
+      const activeProfile = localStorage.getItem(USER_ACTIVEPROFILE_KEY);
+      const activeProfileId = localStorage.getItem(USER_ACTIVEPROFILEID_KEY);
       if (storedToken && storedUserId) {
         setUserId(storedUserId);
         setToken(storedToken);
+        setActiveProfile(activeProfile);
+        setActiveProfileId(activeProfileId);
       }
     } catch (error) {
       console.error("Could not access local storage", error);

@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from '@/hooks/use-auth';
-import { getClient, updateClient } from '@/lib/api';
+import { updateClient } from '@/lib/api';
+import { uploadImageAndGetURL } from '@/lib/storage';
 import type { Client, NewClient } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { PhoneNumberInput } from '@/components/ui/phone-number-input';
@@ -25,6 +26,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Avatar } from '@radix-ui/react-avatar';
+import { AvatarImage } from '@/components/ui/avatar';
 
 // Validation schema for updating a client
 const formSchema = z.object({
@@ -34,23 +37,28 @@ const formSchema = z.object({
     message: "Invalid phone number."
   }).optional(),
   profileImageBinary: z.string().optional(),
+  profileImageName: z.string().optional(),
 });
 
 interface EditClientFormProps {
-  clientId: string;
+  client: Client;
 }
 
-export default function EditClientForm({ clientId }: EditClientFormProps) {
+export default function EditClientForm({ client }: EditClientFormProps) {
   const router = useRouter();
-  const { token } = useAuth();
+  const { activeProfileId: tenantId, token } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isNewImage, setIsNewImage] = useState(false);
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
 
   const form = useForm<NewClient>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: client.name,
+      email: client.email,
+      phone: client.phone || '',
+    }
   });
 
   const { formState: { isDirty } } = form;
@@ -63,35 +71,6 @@ export default function EditClientForm({ clientId }: EditClientFormProps) {
     }
   };
 
-  useEffect(() => {
-    if (!token) return;
-
-    const fetchClientData = async () => {
-      try {
-        const client = await getClient(token, clientId);
-        form.reset({
-          name: client.name,
-          email: client.email,
-          phone: client.phone || '',
-        });
-        if (client.profileUrl) {
-          const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api/v1', '');
-          if (baseUrl) {
-            let imageUrl = client.profileUrl;
-            if (!imageUrl.startsWith('http')) {
-              imageUrl = `${baseUrl}/${imageUrl.replace(/^\//, '')}`;
-            }
-            setImagePreview(imageUrl);
-          }
-        }
-      } catch (err: any) {
-        toast({ title: "Error", description: err.message || "Failed to fetch client data.", variant: "destructive" });
-      }
-    };
-
-    fetchClientData();
-  }, [token, clientId, form, toast]);
-
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -100,27 +79,34 @@ export default function EditClientForm({ clientId }: EditClientFormProps) {
         const base64String = reader.result as string;
         setImagePreview(base64String);
         form.setValue('profileImageBinary', base64String, { shouldDirty: true });
-        setIsNewImage(true);
+        form.setValue('profileImageName', file.name, { shouldDirty: true });
       };
       reader.readAsDataURL(file);
     }
   };
 
   const onSubmit: SubmitHandler<NewClient> = async (data) => {
-    if (!token) {
+    if (!tenantId || !token) {
       toast({ title: "Authentication Error", description: "Authentication details are missing.", variant: "destructive" });
       return;
     }
 
     setIsLoading(true);
 
-    const submissionData: Partial<NewClient> = { ...data };
-    if (!isNewImage) {
-      delete submissionData.profileImageBinary;
-    }
-
     try {
-      const response = await updateClient(token, clientId, submissionData);
+      let profileImageUrl: string | undefined = undefined;
+      const { profileImageBinary, profileImageName, ...clientDetails } = data;
+
+      if (profileImageBinary && profileImageName) {
+        profileImageUrl = await uploadImageAndGetURL(tenantId, profileImageBinary, profileImageName);
+      }
+
+      const updatedClientData = {
+        ...clientDetails,
+        ...(profileImageUrl && { profileImageUrl }),
+      };
+
+      const response = await updateClient(tenantId, token, client._id, updatedClientData);
       toast({ title: "Success", description: response.message });
       router.push('/dashboard/clients');
     } catch (err: any) {
@@ -139,16 +125,18 @@ export default function EditClientForm({ clientId }: EditClientFormProps) {
         <CardContent>
           <FormProvider {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="flex items-center space-x-4">
-                    <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                    {imagePreview ? (
-                        <Image src={imagePreview} alt="Profile Preview" width={96} height={96} className="object-cover" />
-                    ) : (
-                        <span className="text-xs text-gray-500">Image Preview</span>
-                    )}
-                    </div>
-                    <Input type="file" onChange={handleFileChange} accept="image/*" />
+              <div className="flex items-center space-x-4">
+                <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                  {imagePreview ? (
+                    <Image src={imagePreview} alt="Profile Preview" width={96} height={96} className="object-cover" />
+                  ) : (
+                    <Avatar>
+                      <AvatarImage src={client.profileImageUrl || '/images/default-profile.png'} alt="Profile Preview" width={96} height={96} className="object-cover" />
+                    </Avatar>
+                  )}
                 </div>
+                <Input type="file" onChange={handleFileChange} accept="image/*" />
+              </div>
 
               <div>
                 <Input placeholder="Name" {...form.register("name")} />
@@ -162,9 +150,9 @@ export default function EditClientForm({ clientId }: EditClientFormProps) {
 
               <div>
                 <PhoneNumberInput name="phone" />
-                 {form.formState.errors.phone && <p className="text-red-500 text-xs mt-1">{form.formState.errors.phone.message}</p>}
+                {form.formState.errors.phone && <p className="text-red-500 text-xs mt-1">{form.formState.errors.phone.message}</p>}
               </div>
-              
+
               <div className="flex gap-2">
                 <Button type="submit" disabled={isLoading}>
                   {isLoading ? 'Updating Client...' : 'Update Client'}

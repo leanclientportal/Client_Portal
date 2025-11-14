@@ -1,8 +1,8 @@
 
-import { AuthResponse, LoginCredentials, LoginResponse, RegisterCredentials } from "./types";
+import { AuthResponse, LoginCredentials, LoginResponse, RegisterCredentials, VerifyOtpResponse } from "./types";
 
 export async function login(credentials: LoginCredentials): Promise<LoginResponse> {
-    const baseUrl = "https://portalapi--leanclientportal-fe6d0.us-east4.hosted.app/api/v1";
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (!baseUrl) {
         throw new Error("API base URL is not configured.");
     }
@@ -51,7 +51,7 @@ export async function register(credentials: RegisterCredentials): Promise<AuthRe
     }
 }
 
-export async function sendOtp(email: string): Promise<{ message: string, status: number }> {
+export async function sendOtp(email: string, type: 'registration' | 'login'): Promise<{ message: string, status: number }> {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (!baseUrl) {
         throw new Error("API base URL is not configured.");
@@ -65,7 +65,7 @@ export async function sendOtp(email: string): Promise<{ message: string, status:
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ email }),
+            body: JSON.stringify({ email, type }),
         });
 
         const data = await response.json();
@@ -76,7 +76,7 @@ export async function sendOtp(email: string): Promise<{ message: string, status:
     }
 }
 
-export async function verifyOtp(email: string, otp: string): Promise<{ message: string, status: number }> {
+export async function verifyOtp(email: string, otp: string, type: 'registration' | 'login', options?: { name?: string; phone?: string; activeProfile?: string }): Promise<VerifyOtpResponse> {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (!baseUrl) {
         throw new Error("API base URL is not configured.");
@@ -90,7 +90,7 @@ export async function verifyOtp(email: string, otp: string): Promise<{ message: 
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ email, otp }),
+            body: JSON.stringify({ email, otp, type, ...options }),
         });
 
         const data = await response.json();
