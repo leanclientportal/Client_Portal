@@ -53,7 +53,7 @@ export default function AddProjectForm() {
       try {
         if (activeProfile === 'client') {
           const tenants = await getTenantsByClient(activeProfileId, token);
-          setOwners(tenants.map(tenant => ({ id: tenant.id, name: tenant.name })));
+          setOwners(tenants.map(tenant => ({ id: tenant._id, name: tenant.companyName })));
         } else {
           const { clients } = await getClients(activeProfileId, token, 1, 100);
           setOwners(clients.map(client => ({ id: client._id, name: client.name })));
@@ -76,9 +76,10 @@ export default function AddProjectForm() {
 
     const tenantId = activeProfile === 'tenant' ? activeProfileId : data.ownerId;
     const clientId = activeProfile === 'client' ? activeProfileId : data.ownerId;
+    const { ownerId, ...projectData } = data;
 
     try {
-      await addProject(tenantId, token, clientId, { ...data, clientId });
+      await addProject(tenantId, token, clientId, { ...projectData, clientId });
       toast({ title: "Success", description: "Project added successfully." });
       router.push('/dashboard/projects');
     } catch (error: any) {

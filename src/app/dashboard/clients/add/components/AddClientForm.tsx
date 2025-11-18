@@ -109,7 +109,7 @@ export default function AddClientForm() {
       const response = await addClient(tenantId, token, newClientData);
 
       if (response.success) {
-        toast({ title: "Success", description: "Client added successfully." });
+        toast({ title: "Success", description: response.message });
         form.reset();
         router.push('/dashboard/clients');
       } else {
@@ -162,7 +162,7 @@ export default function AddClientForm() {
 
               <div className="flex gap-2">
                 <Button type="submit" disabled={isLoading}>
-                  {isLoading ? 'Adding Client...' : 'Add Client'}
+                  {isLoading ? 'Sending Invitation...' : 'Send Invitation'}
                 </Button>
                 <Button type="button" variant="outline" onClick={handleBackClick}>
                   Back

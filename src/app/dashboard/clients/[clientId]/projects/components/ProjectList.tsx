@@ -69,10 +69,11 @@ const ActionButton: FC<ActionButtonProps> = ({ onClick, children, label, classNa
 interface ProjectListProps {
     projects: Project[];
     onProjectDeleted: (projectId: string) => void;
+    activeProfile: string | null;
 }
 
-const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
-  const { token, tenantId } = useAuth();
+const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeProfile }) => {
+  const { token, activeProfileId: tenantId } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -93,8 +94,25 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
   }, [tasks]);
 
   const getClientId = (project: Project) => {
-    return typeof project.clientId === 'object' ? project.clientId._id : project.clientId;
+    if (typeof project.clientId === 'object' && project.clientId !== null) {
+        return project.clientId._id;
+    }
+    return project.clientId;
   }
+  
+  const getTenantName = (project: Project) => {
+      if (typeof project.tenantId === 'object' && project.tenantId !== null) {
+          return project.tenantId.companyName;
+      }
+      return 'N/A';
+  };
+  
+  const getClientName = (project: Project) => {
+      if (typeof project.clientId === 'object' && project.clientId !== null) {
+          return project.clientId.name;
+      }
+      return 'N/A';
+  };
 
   const handleDeleteClick = (e: React.MouseEvent, project: Project) => {
     e.stopPropagation();
@@ -199,7 +217,7 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
-            <TableHead>Client Name</TableHead>
+            <TableHead>{activeProfile === 'client' ? 'Tenant Name' : 'Client Name'}</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Last Updated</TableHead>
             <TableHead className="text-right w-[240px]">Actions</TableHead>
@@ -214,7 +232,7 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted }) => {
             >
               <TableCell>{project.name}</TableCell>
               <TableCell>
-                {typeof project.clientId === 'object' ? project.clientId.name : 'N/A'}
+                {activeProfile === 'client' ? getTenantName(project) : getClientName(project)}
               </TableCell>
               <TableCell>
                 <Badge

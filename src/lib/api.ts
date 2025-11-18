@@ -1,6 +1,5 @@
 
-
-import type { Client, GetClientsResponse, GetProjectsResponse, GetTasksResponse, NewClient, NewProject, NewTask, Project, Task, ProjectFile, User, AuthResponse, LoginCredentials, UpdateUserPayload, GetAccountsResponse, SwitchAccountPayload, SwitchAccountResponse, Tenant } from "./types";
+import type { Client, GetClientsResponse, GetProjectsResponse, GetTasksResponse, NewClient, NewProject, NewTask, Project, Task, ProjectFile, User, AuthResponse, LoginCredentials, UpdateUserPayload, GetAccountsResponse, SwitchAccountPayload, SwitchAccountResponse, Tenant, NewProfile, CreateProfileResponse } from "./types";
 
 interface ApiListResponse {
     success: boolean;
@@ -90,7 +89,7 @@ export async function getProjects(activeProfile: string, token: string, activePr
         throw new Error("API base URL is not configured.");
     }
 
-    const url =  `${baseUrl}/projects/${activeProfile}/${activeProfileId}`;
+    const url = `${baseUrl}/projects/${activeProfile}/${activeProfileId}`;
 
     try {
         const response = await fetch(url, {
@@ -105,7 +104,7 @@ export async function getProjects(activeProfile: string, token: string, activePr
             const errorData = await response.json().catch(() => ({}));
             // Provide a more specific error for 404
             if (response.status === 404) {
-                 return { projects: [], pagination: { current: 1, total: 0, count: 0, totalRecords: 0 } };
+                return { projects: [], pagination: { current: 1, total: 0, count: 0, totalRecords: 0 } };
             }
             throw new Error(errorData?.message || `Failed to fetch projects. Status: ${response.status}`);
         }
@@ -552,7 +551,7 @@ export async function deleteClient(tenantId: string, token: string, clientId: st
     }
 }
 
-export async function deleteTask( token: string, projectId: string, taskId: string): Promise<ApiAddResponse> {
+export async function deleteTask(token: string, projectId: string, taskId: string): Promise<ApiAddResponse> {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (!baseUrl) {
         throw new Error("API base URL is not configured.");
@@ -651,7 +650,7 @@ export async function updateUser(token: string, payload: UpdateUserPayload): Pro
     }
 }
 
-    
+
 // Function to get accounts for a user
 export async function getAccounts(token: string, userId: string): Promise<GetAccountsResponse> {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -751,6 +750,76 @@ export async function getTenantsByClient(clientId: string, token: string): Promi
         return responseData.data;
     } catch (error) {
         console.error("Error getting tenants:", error);
+        throw error instanceof Error ? error : new Error("An unknown error occurred.");
+    }
+}
+
+// Function to create a new profile
+export async function createProfile(userId: string, token: string, newProfile: NewProfile): Promise<CreateProfileResponse> {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!baseUrl) {
+        throw new Error("API base URL is not configured.");
+    }
+
+    const url = `${baseUrl}/auth/create-profile/${userId}`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify(newProfile),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Failed to create profile. Status: ${response.status}`);
+        }
+
+        const responseData: CreateProfileResponse = await response.json();
+        if (!responseData.success) {
+            throw new Error(responseData.message || "API returned a non-successful response.");
+        }
+
+        return responseData;
+    } catch (error) {
+        console.error("Error creating profile:", error);
+        throw error instanceof Error ? error : new Error("An unknown error occurred.");
+    }
+}
+
+// Function to verify an invitation token
+export async function verifyInvitation(token: string): Promise<{ success: boolean; message: string }> {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!baseUrl) {
+        throw new Error("API base URL is not configured.");
+    }
+
+    const url = `${baseUrl}/auth/verify-invitation?token=${token}`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Failed to verify invitation. Status: ${response.status}`);
+        }
+
+        const responseData: { success: boolean; message: string } = await response.json();
+        if (!responseData.success) {
+            throw new Error(responseData.message || "API returned a non-successful response.");
+        }
+
+        return responseData;
+    } catch (error) {
+        console.error("Error verifying invitation:", error);
         throw error instanceof Error ? error : new Error("An unknown error occurred.");
     }
 }

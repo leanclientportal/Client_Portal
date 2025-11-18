@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -55,7 +56,7 @@ export default function ProjectsPage() {
       ) : error ? (
         <div className="text-red-500 text-center">Error: {error}</div>
       ) : (
-        <ProjectList projects={projects} onProjectDeleted={handleProjectDeleted} />
+        <ProjectList projects={projects} onProjectDeleted={handleProjectDeleted} activeProfile={activeProfile} />
       )}
     </div>
   );

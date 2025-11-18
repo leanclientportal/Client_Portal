@@ -32,7 +32,7 @@ export interface ProjectFile {
 export interface Project {
     _id: string;
     clientId: string | Client;
-    tenantId: string;
+    tenantId: string | Tenant;
     name: string;
     description: string;
     status: 'active' | 'completed' | 'on-hold';
@@ -144,8 +144,8 @@ export interface LoginCredentials {
 }
 
 export interface Tenant {
-    id: string;
-    name: string;
+    _id: string;
+    companyName: string;
     email: string;
     phone: string;
     isActive: boolean;
@@ -214,3 +214,14 @@ export interface VerifyOtpResponse {
     activeProfile: string;
     activeProfileId: string;
 }
+export interface NewProfile {
+  name: string;
+  email: string;
+  profileType: 'client' | 'tenant';
+}
+
+export interface CreateProfileResponse {
+  success: boolean;
+  message: string;
+}
+''
