@@ -1,5 +1,5 @@
 
-import type { Client, GetClientsResponse, GetProjectsResponse, GetTasksResponse, NewClient, NewProject, NewTask, Project, Task, ProjectFile, User, AuthResponse, LoginCredentials, UpdateUserPayload, GetAccountsResponse, SwitchAccountPayload, SwitchAccountResponse, Tenant, NewProfile, CreateProfileResponse } from "./types";
+import type { Client, GetClientsResponse, GetProjectsResponse, GetTasksResponse, NewClient, NewProject, NewTask, Project, Task, ProjectFile, User, AuthResponse, LoginCredentials, UpdateUserPayload, GetAccountsResponse, SwitchAccountPayload, SwitchAccountResponse, Tenant, NewProfile, CreateProfileResponse, MergeProfilesPayload, MergeProfilesResponse } from "./types";
 
 interface ApiListResponse {
     success: boolean;
@@ -790,6 +790,42 @@ export async function createProfile(userId: string, token: string, newProfile: N
     }
 }
 
+// Function to update an existing profile
+export async function updateProfile(userId: string, token: string, accountId: string, updatedProfile: Partial<NewProfile>): Promise<CreateProfileResponse> {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!baseUrl) {
+        throw new Error("API base URL is not configured.");
+    }
+
+    const url = `${baseUrl}/auth/update-profile/${userId}/${accountId}`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify(updatedProfile),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Failed to update profile. Status: ${response.status}`);
+        }
+
+        const responseData: CreateProfileResponse = await response.json();
+        if (!responseData.success) {
+            throw new Error(responseData.message || "API returned a non-successful response.");
+        }
+
+        return responseData;
+    } catch (error) {
+        console.error("Error updating profile:", error);
+        throw error instanceof Error ? error : new Error("An unknown error occurred.");
+    }
+}
+
 // Function to verify an invitation token
 export async function verifyInvitation(token: string): Promise<{ success: boolean; message: string }> {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -820,6 +856,42 @@ export async function verifyInvitation(token: string): Promise<{ success: boolea
         return responseData;
     } catch (error) {
         console.error("Error verifying invitation:", error);
+        throw error instanceof Error ? error : new Error("An unknown error occurred.");
+    }
+}
+
+// Function to merge profiles
+export async function mergeProfiles(userId: string, token: string, payload: MergeProfilesPayload): Promise<MergeProfilesResponse> {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!baseUrl) {
+        throw new Error("API base URL is not configured.");
+    }
+
+    const url = `${baseUrl}/auth/merge-profiles/${userId}`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Failed to merge profiles. Status: ${response.status}`);
+        }
+
+        const responseData: MergeProfilesResponse = await response.json();
+        if (!responseData.success) {
+            throw new Error(responseData.message || "API returned a non-successful response.");
+        }
+
+        return responseData;
+    } catch (error) {
+        console.error("Error merging profiles:", error);
         throw error instanceof Error ? error : new Error("An unknown error occurred.");
     }
 }

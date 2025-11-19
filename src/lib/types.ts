@@ -187,6 +187,8 @@ export interface Account {
   id: string;
   name: string;
   email: string;
+  phone: string;
+  profileImageUrl?: string;
 }
 
 export interface GetAccountsResponse {
@@ -218,10 +220,24 @@ export interface NewProfile {
   name: string;
   email: string;
   profileType: 'client' | 'tenant';
+  phone?: string;
+  profileImageUrl?: string;
+  profileImageBinary?: string;
+  profileImageName?: string;
 }
 
 export interface CreateProfileResponse {
   success: boolean;
   message: string;
 }
-''
+
+export interface MergeProfilesPayload {
+  sourceProfileId: string;
+  targetProfileId: string;
+  profileType: 'client' | 'tenant';
+}
+
+export interface MergeProfilesResponse {
+  success: boolean;
+  message: string;
+}
