@@ -39,7 +39,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isLoading, logout } = useAuth();
+  const { isLoading, logout, activeProfile, activeProfileImage } = useAuth(); // Updated useAuth hook
   const pathname = usePathname();
   const role = useUserRole();
 
@@ -88,7 +88,7 @@ export default function DashboardLayout({
                     </SidebarMenuButton>
                   </Link>
                 </SidebarMenuItem>
-            </React.Fragment>
+              </React.Fragment>
             ))}
           </SidebarMenu>
         </SidebarContent>
@@ -117,13 +117,14 @@ export default function DashboardLayout({
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon" className="overflow-hidden rounded-full">
                   <Avatar>
-                    <AvatarImage src="https://picsum.photos/seed/user/32/32" alt="User Avatar" />
-                    <AvatarFallback>U</AvatarFallback>
+                    {/* Use user's avatar image and fallback to their initial */}
+                    <AvatarImage src={activeProfileImage || '/images/avatar.png'} alt={activeProfile || 'Profile'} />
+                    <AvatarFallback>{activeProfile}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuLabel>{activeProfile || 'My Account'}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard/switch-profile">Switch Profile</Link>

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import AddProfileForm from '@/app/dashboard/add-profile/components/AddProfileForm';
+import AddProfileForm from '@/app/dashboard/switch-profile/add-profile/components/AddProfileForm';
 import { useAuth } from '@/hooks/use-auth';
 import { getAccounts } from '@/queries/accounts';
 import { useParams } from 'next/navigation';

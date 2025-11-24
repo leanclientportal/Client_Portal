@@ -31,7 +31,7 @@ export default function SwitchProfilePage() {
   };
 
   const handleEdit = (accountId: string) => {
-    router.push(`/dashboard/edit-profile/${accountId}`);
+    router.push(`/dashboard/switch-profile/edit-profile/${accountId}`);
   };
 
   const handleMerge = (account: Account) => {
@@ -47,7 +47,7 @@ export default function SwitchProfilePage() {
   return (
     <div>
       <div className="flex justify-end mb-4">
-        <Button onClick={() => router.push('/dashboard/add-profile')}>
+        <Button onClick={() => router.push('/dashboard/switch-profile/add-profile')}>
           Add New Profile
         </Button>
       </div>

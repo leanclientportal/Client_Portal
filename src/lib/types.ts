@@ -205,6 +205,7 @@ export interface SwitchAccountResponse {
   userId: string;
   activeProfile: string;
   activeProfileId: string;
+  activeProfileImage: string;
 }
 
 export interface VerifyOtpResponse {
@@ -215,6 +216,7 @@ export interface VerifyOtpResponse {
     userId: string;
     activeProfile: string;
     activeProfileId: string;
+    activeProfileImage: string;
 }
 export interface NewProfile {
   name: string;

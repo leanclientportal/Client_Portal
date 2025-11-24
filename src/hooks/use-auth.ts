@@ -7,11 +7,13 @@ const USER_ID_KEY = 'clientverse_user_id';
 const JWT_TOKEN_KEY = 'clientverse_jwt';
 const USER_ACTIVEPROFILE_KEY = 'user_activeProfile';
 const USER_ACTIVEPROFILEID_KEY = 'user_activeProfileId';
+const USER_ACTIVEPROFILEIMAGE_KEY = 'user_activeProfileImage';
 
 export const useAuth = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [activeProfile, setActiveProfile] = useState<string | null>(null);
   const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
+  const [activeProfileImage, setActiveProfileImage] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
@@ -23,11 +25,13 @@ export const useAuth = () => {
       const storedToken = localStorage.getItem(JWT_TOKEN_KEY);
       const activeProfile = localStorage.getItem(USER_ACTIVEPROFILE_KEY);
       const activeProfileId = localStorage.getItem(USER_ACTIVEPROFILEID_KEY);
+      const activeProfileImage = localStorage.getItem(USER_ACTIVEPROFILEIMAGE_KEY);
       if (storedToken && storedUserId) {
         setUserId(storedUserId);
         setToken(storedToken);
         setActiveProfile(activeProfile);
         setActiveProfileId(activeProfileId);
+        setActiveProfileImage(activeProfileImage);
       }
     } catch (error) {
       console.error("Could not access local storage", error);
@@ -36,16 +40,18 @@ export const useAuth = () => {
     }
   }, []);
 
-  const login = useCallback((jwt: string, userId: string, activeProfile: string, activeProfileId: string) => {
+  const login = useCallback((jwt: string, userId: string, activeProfile: string, activeProfileId: string, activeProfileImage: string) => {
     try {
       localStorage.setItem(JWT_TOKEN_KEY, jwt);
       localStorage.setItem(USER_ID_KEY, userId);
       localStorage.setItem(USER_ACTIVEPROFILE_KEY, activeProfile);
       localStorage.setItem(USER_ACTIVEPROFILEID_KEY, activeProfileId);
+      localStorage.setItem(USER_ACTIVEPROFILEIMAGE_KEY, activeProfileImage);
       setToken(jwt);
       setUserId(userId);
       setActiveProfile(activeProfile);
       setActiveProfileId(activeProfileId);
+      setActiveProfileImage(activeProfileImage);
     } catch (error) {
       console.error("Could not access local storage", error);
     }
@@ -57,10 +63,12 @@ export const useAuth = () => {
       localStorage.removeItem(JWT_TOKEN_KEY);
       localStorage.removeItem(USER_ACTIVEPROFILE_KEY);
       localStorage.removeItem(USER_ACTIVEPROFILEID_KEY);
+      localStorage.removeItem(USER_ACTIVEPROFILEIMAGE_KEY);
       setUserId(null);
       setToken(null);
       setActiveProfile(null);
       setActiveProfileId(null);
+      setActiveProfileImage(null);
       router.push('/login');
     } catch (error) {
       console.error("Could not access local storage", error);
@@ -79,5 +87,5 @@ export const useAuth = () => {
     }
   }, [token, isLoading, pathname, router]);
 
-  return { userId, token, isLoading, login, logout, activeProfile, activeProfileId };
+  return { userId, token, isLoading, login, logout, activeProfile, activeProfileId, activeProfileImage };
 };
