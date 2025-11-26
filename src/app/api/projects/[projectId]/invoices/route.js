@@ -1,4 +1,6 @@
+
 import { NextResponse } from 'next/server';
+import { uploadFile, deleteFileFromStorage } from '@/lib/storage';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -65,16 +67,14 @@ export async function POST(request, { params }) {
     dueDate,
     status,
     paymentLink: paymentLink || '',
-    fileName: file ? file.name : '',
     createdAt: new Date().toISOString(),
   };
 
-  if (file) {
-    const projectInvoicePath = path.join(invoicesPath, projectId);
-    await ensureDirectoryExists(projectInvoicePath);
-    const filePath = path.join(projectInvoicePath, file.name);
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await fs.writeFile(filePath, buffer);
+  if (file && file.name) {
+    const { downloadURL, storagePath } = await uploadFile('invoices', projectId, file);
+    newInvoice.fileName = file.name;
+    newInvoice.downloadURL = downloadURL;
+    newInvoice.storagePath = storagePath;
   }
 
   metadata[projectId].push(newInvoice);
@@ -101,14 +101,11 @@ export async function DELETE(request, { params }) {
     return NextResponse.json({ message: 'Invoice not found.' }, { status: 404 });
   }
 
-  if (invoiceToDelete.fileName) {
-    const projectInvoicePath = path.join(invoicesPath, projectId);
-    const filePath = path.join(projectInvoicePath, invoiceToDelete.fileName);
+  if (invoiceToDelete.storagePath) {
     try {
-        await fs.unlink(filePath);
+        await deleteFileFromStorage(invoiceToDelete.storagePath);
     } catch (err) {
-        // Log error but proceed to remove metadata
-        console.error(`Failed to delete invoice file: ${filePath}`, err);
+        console.error(`Failed to delete invoice file from storage: ${invoiceToDelete.storagePath}`, err);
     }
   }
 

@@ -1,3 +1,4 @@
+
 export interface Client {
     _id: string;
     tenantId: string;
@@ -54,6 +55,16 @@ export interface Task {
     visibleToClient: boolean;
 }
 
+export interface Documents {
+    _id: string;
+    projectId: string;
+    title: string;
+    description: string;
+    createdDate: string;
+    updatedBy: string;
+    docUrl: string;
+}
+
 export interface NewClient {
     name: string;
     email: string;
@@ -84,6 +95,14 @@ export interface NewTask {
     visibleToClient: boolean;
 }
 
+
+export interface NewDocument {
+    title: string;
+    description: string;
+    docUrl: string;
+}
+
+
 export interface User {
     id: string;
     name: string;
@@ -110,6 +129,11 @@ export interface GetProjectsResponse {
 }
 export interface GetTasksResponse {
     tasks: Task[];
+    pagination: Pagination;
+}
+
+export interface GetDocumentsResponse {
+    documents: Documents[];
     pagination: Pagination;
 }
 
@@ -183,12 +207,12 @@ export interface RegisterCredentials {
 }
 
 export interface Account {
-  type: 'client' | 'tenant';
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  profileImageUrl?: string;
+    type: 'client' | 'tenant';
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    profileImageUrl?: string;
 }
 
 export interface GetAccountsResponse {
@@ -196,16 +220,16 @@ export interface GetAccountsResponse {
 }
 
 export interface SwitchAccountPayload {
-  activeProfile: 'client' | 'tenant';
-  masterId: string;
+    activeProfile: 'client' | 'tenant';
+    masterId: string;
 }
 
 export interface SwitchAccountResponse {
-  token: string;
-  userId: string;
-  activeProfile: string;
-  activeProfileId: string;
-  activeProfileImage: string;
+    token: string;
+    userId: string;
+    activeProfile: string;
+    activeProfileId: string;
+    activeProfileImage: string;
 }
 
 export interface VerifyOtpResponse {
@@ -219,27 +243,54 @@ export interface VerifyOtpResponse {
     activeProfileImage: string;
 }
 export interface NewProfile {
-  name: string;
-  email: string;
-  profileType: 'client' | 'tenant';
-  phone?: string;
-  profileImageUrl?: string;
-  profileImageBinary?: string;
-  profileImageName?: string;
+    name: string;
+    email: string;
+    profileType: 'client' | 'tenant';
+    phone?: string;
+    profileImageUrl?: string;
+    profileImageBinary?: string;
+    profileImageName?: string;
 }
 
 export interface CreateProfileResponse {
-  success: boolean;
-  message: string;
+    success: boolean;
+    message: string;
 }
 
 export interface MergeProfilesPayload {
-  sourceProfileId: string;
-  targetProfileId: string;
-  profileType: 'client' | 'tenant';
+    sourceProfileId: string;
+    targetProfileId: string;
+    profileType: 'client' | 'tenant';
 }
 
 export interface MergeProfilesResponse {
-  success: boolean;
-  message: string;
+    success: boolean;
+    message: string;
+}
+
+export interface ProjectDocument {
+    name: string;
+    storagePath: string;
+    downloadURL: string;
+    date: string;
+    type: string;
+}
+
+export interface Invoice {
+    id: string;
+    projectId: string;
+    amount: string;
+    dueDate: string;
+    status: string;
+    paymentLink?: string;
+    createdAt: string;
+    updatedAt?: string;
+    fileName?: string;
+    downloadURL?: string;
+    storagePath?: string;
+}
+
+export interface GetInvoicesResponse {
+    invoices: Invoice[];
+    pagination: Pagination;
 }

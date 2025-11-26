@@ -35,7 +35,7 @@ import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
-import EditTaskForm from './EditTaskForm';
+import EditTaskForm from '../[projectId]/view/components/EditTaskForm';
 
 interface ActionButtonProps {
   onClick: (e: React.MouseEvent) => void;
@@ -67,9 +67,9 @@ const ActionButton: FC<ActionButtonProps> = ({ onClick, children, label, classNa
 };
 
 interface ProjectListProps {
-    projects: Project[];
-    onProjectDeleted: (projectId: string) => void;
-    activeProfile: string | null;
+  projects: Project[];
+  onProjectDeleted: (projectId: string) => void;
+  activeProfile: string | null;
 }
 
 const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeProfile }) => {
@@ -88,30 +88,30 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeP
 
   const taskStatusCounts = useMemo(() => {
     return tasks.reduce((acc, task) => {
-        acc[task.status] = (acc[task.status] || 0) + 1;
-        return acc;
+      acc[task.status] = (acc[task.status] || 0) + 1;
+      return acc;
     }, {} as Record<Task['status'], number>);
   }, [tasks]);
 
   const getClientId = (project: Project) => {
     if (typeof project.clientId === 'object' && project.clientId !== null) {
-        return project.clientId._id;
+      return project.clientId._id;
     }
     return project.clientId;
   }
-  
+
   const getTenantName = (project: Project) => {
-      if (typeof project.tenantId === 'object' && project.tenantId !== null) {
-          return project.tenantId.companyName;
-      }
-      return 'N/A';
+    if (typeof project.tenantId === 'object' && project.tenantId !== null) {
+      return project.tenantId.companyName;
+    }
+    return 'N/A';
   };
-  
+
   const getClientName = (project: Project) => {
-      if (typeof project.clientId === 'object' && project.clientId !== null) {
-          return project.clientId.name;
-      }
-      return 'N/A';
+    if (typeof project.clientId === 'object' && project.clientId !== null) {
+      return project.clientId.name;
+    }
+    return 'N/A';
   };
 
   const handleDeleteClick = (e: React.MouseEvent, project: Project) => {
@@ -126,23 +126,23 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeP
 
   const handleRowClick = (project: Project) => {
     const clientId = getClientId(project);
-    router.push(`/dashboard/clients/${clientId}/projects/${project._id}`);
+    router.push(`/dashboard/projects/${project._id}`);
   };
 
   const fetchTasksForProject = useCallback(async (project: Project) => {
-     if (!tenantId || !token) {
-        toast({ title: "Error", description: "Authentication details missing.", variant: "destructive" });
-        setIsLoadingTasks(false);
-        return;
+    if (!tenantId || !token) {
+      toast({ title: "Error", description: "Authentication details missing.", variant: "destructive" });
+      setIsLoadingTasks(false);
+      return;
     }
     const clientId = getClientId(project);
     try {
-        const { tasks: fetchedTasks } = await getTasks(tenantId, token, clientId, project._id);
-        setTasks(fetchedTasks);
+      const { tasks: fetchedTasks } = await getTasks(token, project?._id);
+      setTasks(fetchedTasks);
     } catch (error: any) {
-        toast({ title: "Error", description: error.message || "Failed to fetch tasks.", variant: "destructive" });
+      toast({ title: "Error", description: error.message || "Failed to fetch tasks.", variant: "destructive" });
     } finally {
-        setIsLoadingTasks(false);
+      setIsLoadingTasks(false);
     }
   }, [tenantId, token, toast]);
 
@@ -175,7 +175,7 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeP
     e.stopPropagation();
     setTaskToDelete(task);
   };
-  
+
   const handleEditTaskClick = (e: React.MouseEvent, task: Task) => {
     e.stopPropagation();
     setTaskToEdit(task);
@@ -186,14 +186,14 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeP
 
     setIsDeletingTask(true);
     try {
-        await deleteTask(token, tasksToShow._id, taskToDelete._id);
-        toast({ title: "Success", description: "Task deleted successfully." });
-        fetchTasksForProject(tasksToShow);
-        setTaskToDelete(null);
+      await deleteTask(token, tasksToShow._id, taskToDelete._id);
+      toast({ title: "Success", description: "Task deleted successfully." });
+      fetchTasksForProject(tasksToShow);
+      setTaskToDelete(null);
     } catch (error: any) {
-        toast({ title: "Error", description: error.message || "Failed to delete task.", variant: "destructive" });
+      toast({ title: "Error", description: error.message || "Failed to delete task.", variant: "destructive" });
     } finally {
-        setIsDeletingTask(false);
+      setIsDeletingTask(false);
     }
   };
 
@@ -251,37 +251,37 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeP
                   className="inline-flex justify-end items-center gap-1 rounded-full bg-muted p-1"
                   onClick={(e) => e.stopPropagation()}
                 >
-                    <ActionButton
-                      onClick={(e) => handleActionClick(e, () => router.push(`/dashboard/clients/${getClientId(project)}/projects/${project._id}`))}
-                      label="View"
-                      className="text-blue-500 hover:bg-blue-500"
-                    >
-                        <Eye className="h-[22px] w-[22px]" />
-                    </ActionButton>
-                    <ActionButton
-                      onClick={(e) => handleActionClick(e, () => router.push(`/dashboard/clients/${getClientId(project)}/projects/${project._id}/edit`))}
-                      label="Edit"
-                      className="text-yellow-500 hover:bg-yellow-500"
-                    >
-                        <Edit className="h-[22px] w-[22px]" />
-                    </ActionButton>
-                     <ActionButton
-                       onClick={(e) => handleDeleteClick(e, project)}
-                       label="Delete"
-                       className="text-red-500 hover:bg-red-500"
-                     >
-                        <Trash2 className="h-[22px] w-[22px]" />
-                    </ActionButton>
+                  <ActionButton
+                    onClick={(e) => handleActionClick(e, () => router.push(`/dashboard/projects/${project._id}/view`))}
+                    label="View"
+                    className="text-blue-500 hover:bg-blue-500"
+                  >
+                    <Eye className="h-[22px] w-[22px]" />
+                  </ActionButton>
+                  <ActionButton
+                    onClick={(e) => handleActionClick(e, () => router.push(`/dashboard/projects/${project._id}`))}
+                    label="Edit"
+                    className="text-yellow-500 hover:bg-yellow-500"
+                  >
+                    <Edit className="h-[22px] w-[22px]" />
+                  </ActionButton>
+                  <ActionButton
+                    onClick={(e) => handleDeleteClick(e, project)}
+                    label="Delete"
+                    className="text-red-500 hover:bg-red-500"
+                  >
+                    <Trash2 className="h-[22px] w-[22px]" />
+                  </ActionButton>
 
-                    <Separator orientation="vertical" className="h-6 mx-1 bg-border" />
+                  <Separator orientation="vertical" className="h-6 mx-1 bg-border" />
 
-                    <ActionButton
-                      onClick={(e) => handleViewTasks(e, project)}
-                      label="Tasks"
-                      className="text-green-500 hover:bg-green-500"
-                    >
-                       <ListChecks className="h-[22px] w-[22px]" />
-                    </ActionButton>
+                  <ActionButton
+                    onClick={(e) => handleViewTasks(e, project)}
+                    label="Tasks"
+                    className="text-green-500 hover:bg-green-500"
+                  >
+                    <ListChecks className="h-[22px] w-[22px]" />
+                  </ActionButton>
                 </div>
               </TableCell>
             </TableRow>
@@ -298,90 +298,90 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeP
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4">
-             {isLoadingTasks ? (
-                <div className="flex justify-center items-center h-40">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                </div>
-             ) : (
-                <>
-                    <div className="flex items-center space-x-4 pb-4">
-                        {Object.entries(taskStatusCounts).map(([status, count]) => (
-                            <div key={status} className="flex items-center">
-                                <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getTaskStatusClasses(status as Task['status'])}`}>
-                                    {status}: {count}
-                                </span>
-                            </div>
-                        ))}
+            {isLoadingTasks ? (
+              <div className="flex justify-center items-center h-40">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center space-x-4 pb-4">
+                  {Object.entries(taskStatusCounts).map(([status, count]) => (
+                    <div key={status} className="flex items-center">
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getTaskStatusClasses(status as Task['status'])}`}>
+                        {status}: {count}
+                      </span>
                     </div>
-                    <Table>
-                    <TableHeader>
-                        <TableRow>
-                        <TableHead>Title</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Due Date</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {tasks.length > 0 ? tasks.map((task) => (
-                        <TableRow key={task._id}>
-                            <TableCell>{task.title}</TableCell>
-                            <TableCell>
-                                <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getTaskStatusClasses(task.status)}`}>
-                                    {task.status}
-                                </span>
-                            </TableCell>
-                            <TableCell>{new Date(task.dueDate).toLocaleDateString()}</TableCell>
-                            <TableCell className="text-right">
-                                <div className="inline-flex gap-1">
-                                    <ActionButton
-                                        onClick={(e) => handleEditTaskClick(e, task)}
-                                        label="Edit"
-                                        className="text-yellow-500 hover:bg-yellow-500"
-                                    >
-                                        <Edit className="h-[22px] w-[22px]" />
-                                    </ActionButton>
-                                    <ActionButton
-                                        onClick={(e) => handleDeleteTaskClick(e, task)}
-                                        label="Delete"
-                                        className="text-red-500 hover:bg-red-500"
-                                    >
-                                        <Trash2 className="h-[22px] w-[22px]" />
-                                    </ActionButton>
-                                </div>
-                            </TableCell>
-                        </TableRow>
-                        )) : (
-                            <TableRow>
-                                <TableCell colSpan={4} className="text-center">No tasks found for this item.</TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                    </Table>
-                </>
-             )}
+                  ))}
+                </div>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Due Date</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {tasks.length > 0 ? tasks.map((task) => (
+                      <TableRow key={task._id}>
+                        <TableCell>{task.title}</TableCell>
+                        <TableCell>
+                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getTaskStatusClasses(task.status)}`}>
+                            {task.status}
+                          </span>
+                        </TableCell>
+                        <TableCell>{new Date(task.dueDate).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="inline-flex gap-1">
+                            <ActionButton
+                              onClick={(e) => handleEditTaskClick(e, task)}
+                              label="Edit"
+                              className="text-yellow-500 hover:bg-yellow-500"
+                            >
+                              <Edit className="h-[22px] w-[22px]" />
+                            </ActionButton>
+                            <ActionButton
+                              onClick={(e) => handleDeleteTaskClick(e, task)}
+                              label="Delete"
+                              className="text-red-500 hover:bg-red-500"
+                            >
+                              <Trash2 className="h-[22px] w-[22px]" />
+                            </ActionButton>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )) : (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center">No tasks found for this item.</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </>
+            )}
           </div>
         </DialogContent>
       </Dialog>
 
       {taskToEdit && (
         <Dialog open={!!taskToEdit} onOpenChange={(isOpen) => !isOpen && setTaskToEdit(null)}>
-            <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-                <DialogTitle>Edit Task</DialogTitle>
+              <DialogTitle>Edit Task</DialogTitle>
             </DialogHeader>
             <EditTaskForm
-                projectId={tasksToShow!._id}
-                task={taskToEdit}
-                onTaskUpdated={() => {
-                  if (tasksToShow) {
-                    fetchTasksForProject(tasksToShow);
-                  }
-                  setTaskToEdit(null);
-                }}
-                setOpen={(isOpen) => !isOpen && setTaskToEdit(null)}
+              projectId={tasksToShow!._id}
+              task={taskToEdit}
+              onTaskUpdated={() => {
+                if (tasksToShow) {
+                  fetchTasksForProject(tasksToShow);
+                }
+                setTaskToEdit(null);
+              }}
+              setOpen={(isOpen) => !isOpen && setTaskToEdit(null)}
             />
-            </DialogContent>
+          </DialogContent>
         </Dialog>
       )}
 
@@ -404,20 +404,20 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeP
 
       <AlertDialog open={!!taskToDelete} onOpenChange={(isOpen) => !isOpen && setTaskToDelete(null)}>
         <AlertDialogContent>
-            <AlertDialogHeader>
-                <AlertDialogTitle>Are you sure you want to delete this task?</AlertDialogTitle>
-                <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete the task.
-                </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleConfirmDeleteTask} disabled={isDeletingTask}>
-                    {isDeletingTask ? 'Deleting...' : 'Delete'}
-                </AlertDialogAction>
-            </AlertDialogFooter>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this task?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the task.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDeleteTask} disabled={isDeletingTask}>
+              {isDeletingTask ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
         </AlertDialogContent>
-    </AlertDialog>
+      </AlertDialog>
     </>
   );
 };

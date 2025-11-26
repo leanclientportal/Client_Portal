@@ -77,7 +77,7 @@ export default function EditProjectForm({ clientId, projectId }: EditProjectForm
     try {
         await updateProject(token!, projectId, data);
         toast({ title: "Success", description: "Project updated successfully." });
-        router.push(`/dashboard/clients/${clientId}/projects/${projectId}`);
+        router.push(`/dashboard/projects/${projectId}`);
     } catch (error: any) {
         toast({ title: "Error", description: error.message || "Failed to update project.", variant: "destructive" });
     } finally {

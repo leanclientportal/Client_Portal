@@ -45,7 +45,7 @@ interface AddProfileFormProps {
 export default function AddProfileForm({ account }: AddProfileFormProps) {
   const { toast } = useToast();
   const router = useRouter();
-  const { userId, token } = useAuth();
+  const { activeProfileId, token } = useAuth();
   const isEditMode = !!account;
   const [imagePreview, setImagePreview] = useState<string | null>(account?.profileImageUrl || null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -87,7 +87,7 @@ export default function AddProfileForm({ account }: AddProfileFormProps) {
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!userId || !token) {
+    if (!activeProfileId || !token) {
       toast({
         title: 'Error',
         description: 'Authentication details are missing. Please log in again.',
@@ -101,7 +101,7 @@ export default function AddProfileForm({ account }: AddProfileFormProps) {
       let activeProfile = account?.type;
 
       if (imageFile && imagePreview) {
-        profileImageUrl = await uploadImageAndGetURL(userId, imagePreview, imageFile.name);
+        profileImageUrl = await uploadImageAndGetURL(activeProfileId, imagePreview, imageFile.name);
       }
 
       const profileData = {
@@ -111,7 +111,7 @@ export default function AddProfileForm({ account }: AddProfileFormProps) {
       };
 
       if (isEditMode && account) {
-        const response = await updateProfile(userId, token, account.id, profileData);
+        const response = await updateProfile(activeProfileId, token, account.id, profileData);
 
         if (response.success) {
           toast({
@@ -135,7 +135,7 @@ export default function AddProfileForm({ account }: AddProfileFormProps) {
           profileImageUrl,
         };
 
-        const response = await createProfile(userId, token, newProfile);
+        const response = await createProfile(activeProfileId, token, newProfile);
 
         if (response.success) {
           toast({

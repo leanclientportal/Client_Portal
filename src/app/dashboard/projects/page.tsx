@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getProjects } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
 import type { Project } from '@/lib/types';
-import ProjectList from '../clients/[clientId]/projects/components/ProjectList';
+import ProjectList from './components/ProjectList';
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);

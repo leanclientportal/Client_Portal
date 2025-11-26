@@ -1,5 +1,11 @@
 
-import type { Client, GetClientsResponse, GetProjectsResponse, GetTasksResponse, NewClient, NewProject, NewTask, Project, Task, ProjectFile, User, AuthResponse, LoginCredentials, UpdateUserPayload, GetAccountsResponse, SwitchAccountPayload, SwitchAccountResponse, Tenant, NewProfile, CreateProfileResponse, MergeProfilesPayload, MergeProfilesResponse } from "./types";
+import type { Client, GetClientsResponse, GetProjectsResponse, GetTasksResponse, NewClient, NewProject, NewTask, Project, Task, ProjectFile, User, AuthResponse, LoginCredentials, UpdateUserPayload, GetAccountsResponse, SwitchAccountPayload, SwitchAccountResponse, Tenant, NewProfile, CreateProfileResponse, MergeProfilesPayload, MergeProfilesResponse, NewDocument, GetDocumentsResponse } from "./types";
+
+interface Invoice {
+    id: string;
+    projectId: string;
+    // Add other invoice properties as needed
+}
 
 interface ApiListResponse {
     success: boolean;
@@ -19,6 +25,12 @@ interface ApiTasksListResponse {
     data: GetTasksResponse;
 }
 
+interface ApiDocumentsListResponse {
+    success: boolean;
+    message: string;
+    data: GetDocumentsResponse;
+}
+
 
 interface ApiSingleResponse {
     success: boolean;
@@ -36,6 +48,12 @@ interface ApiSingleTaskResponse {
     success: boolean;
     message: string;
     data: Task;
+}
+
+interface ApiSingleInvoiceResponse {
+    success: boolean;
+    message: string;
+    data: Invoice;
 }
 
 interface ApiAddResponse {
@@ -122,7 +140,7 @@ export async function getProjects(activeProfile: string, token: string, activePr
 }
 
 // Function to get tasks for a specific project
-export async function getTasks(tenantId: string, token: string, clientId: string, projectId: string): Promise<GetTasksResponse> {
+export async function getTasks(token: string, projectId: string): Promise<GetTasksResponse> {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (!baseUrl) {
         throw new Error("API base URL is not configured.");
@@ -148,6 +166,45 @@ export async function getTasks(tenantId: string, token: string, clientId: string
         }
 
         const responseData: ApiTasksListResponse = await response.json();
+        if (!responseData.success) {
+            throw new Error(responseData.message || "API returned a non-successful response.");
+        }
+
+        return responseData.data;
+    } catch (error) {
+        console.error(`Error getting tasks for project ${projectId}:`, error);
+        throw error instanceof Error ? error : new Error("An unknown error occurred while fetching tasks.");
+    }
+}
+
+
+// Function to get documents for a specific project
+export async function getDocuments(token: string, projectId: string): Promise<GetDocumentsResponse> {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!baseUrl) {
+        throw new Error("API base URL is not configured.");
+    }
+
+    const url = `${baseUrl}/document/${projectId}`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            if (response.status === 404) {
+                return { documents: [], pagination: { current: 1, total: 0, count: 0, totalRecords: 0 } };
+            }
+            throw new Error(errorData?.message || `Failed to fetch tasks. Status: ${response.status}`);
+        }
+
+        const responseData: ApiDocumentsListResponse = await response.json();
         if (!responseData.success) {
             throw new Error(responseData.message || "API returned a non-successful response.");
         }
@@ -271,7 +328,7 @@ export async function addProjectFiles(tenantId: string, token: string, clientId:
 
 
 // Function to add a new task to a project
-export async function addTask(tenantId: string, token: string, clientId: string, projectId: string, newTask: NewTask): Promise<ApiAddResponse> {
+export async function addTask(token: string, projectId: string, newTask: NewTask): Promise<ApiAddResponse> {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (!baseUrl) {
         throw new Error("API base URL is not configured.");
@@ -287,6 +344,43 @@ export async function addTask(tenantId: string, token: string, clientId: string,
                 'Authorization': `Bearer ${token}`,
             },
             body: JSON.stringify(newTask),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Failed to add task. Status: ${response.status}`);
+        }
+
+        const responseData: ApiAddResponse = await response.json();
+        if (!responseData.success) {
+            throw new Error(responseData.message || "API returned a non-successful response.");
+        }
+
+        return responseData;
+    } catch (error) {
+        console.error("Error adding task:", error);
+        throw error instanceof Error ? error : new Error("An unknown error occurred.");
+    }
+}
+
+
+// Function to add a new task to a project
+export async function addDocument(token: string, projectId: string, newDocument: NewDocument): Promise<ApiAddResponse> {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!baseUrl) {
+        throw new Error("API base URL is not configured.");
+    }
+
+    const url = `${baseUrl}/document/${projectId}`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify(newDocument),
         });
 
         if (!response.ok) {
@@ -408,6 +502,41 @@ export async function getTask(token: string, taskId: string): Promise<Task> {
         return responseData.data;
     } catch (error) {
         console.error("Error getting task:", error);
+        throw error instanceof Error ? error : new Error("An unknown error occurred.");
+    }
+}
+
+// Function to retrieve a single invoice by ID
+export async function getInvoice(token: string, invoiceId: string): Promise<Invoice> {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!baseUrl) {
+        throw new Error("API base URL is not configured.");
+    }
+
+    const url = `${baseUrl}/invoices/${invoiceId}`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Failed to fetch invoice. Status: ${response.status}`);
+        }
+
+        const responseData: ApiSingleInvoiceResponse = await response.json();
+        if (!responseData.success) {
+            throw new Error(responseData.message || "API returned a non-successful response.");
+        }
+
+        return responseData.data;
+    } catch (error) {
+        console.error("Error getting invoice:", error);
         throw error instanceof Error ? error : new Error("An unknown error occurred.");
     }
 }
