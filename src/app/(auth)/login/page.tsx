@@ -59,7 +59,7 @@ export default function LoginPage() {
     verifyOtpMutation({ email: emailOrPhone, otp: data.otp, type: 'login' }, {
       onSuccess: (response) => {
         if (response.status === 200 && response.token) {
-            login(response.token, response.userId, response.activeProfile, response.activeProfileId);
+            login(response.token, response.userId, response.activeProfile, response.activeProfileId,response.activeProfileImage, response.profileName);
             toast({ title: 'Login Successful', description: response.message });
             push('/dashboard');
         } else {

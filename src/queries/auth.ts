@@ -21,9 +21,9 @@ export function useSwitchAccount() {
   return useMutation<SwitchAccountResponse, Error, { userId: string; token: string; payload: SwitchAccountPayload }>({
     mutationFn: ({ userId, token, payload }) => switchAccount(userId, token, payload),
     onSuccess: (data) => {
-      login(data.token, data.userId, data.activeProfile, data.activeProfileId, data.activeProfileImage);
+      login(data.token, data.userId, data.activeProfile, data.activeProfileId, data.activeProfileImage, data.profileName);
       queryClient.invalidateQueries({ queryKey: ['accounts', data.userId] });
-      window.location.reload();
+      window.location.href = '/dashboard';
     },
   });
 }

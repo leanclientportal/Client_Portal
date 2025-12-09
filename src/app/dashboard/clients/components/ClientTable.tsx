@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, FC } from 'react';
+import { useEffect, useState, FC, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -28,8 +28,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Edit, Trash2, Eye } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Edit, Eye, ArrowUpDown, Trash2 } from 'lucide-react';
+import { cn, formatDate } from '@/lib/utils';
+import { Input } from "@/components/ui/input";
 
 interface ActionButtonProps {
   onClick: (e: React.MouseEvent) => void;
@@ -62,6 +63,8 @@ const ActionButton: FC<ActionButtonProps> = ({ onClick, children, label, classNa
 
 const CLIENTS_PER_PAGE = 10;
 
+type SortKey = keyof Client | '';
+
 export default function ClientTable() {
   const [clients, setClients] = useState<Client[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
@@ -71,62 +74,99 @@ export default function ClientTable() {
   const { activeProfileId: tenantId, token } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
+  const [sortKey, setSortKey] = useState<SortKey>('lastActivityDate');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [deleteClientId, setDeleteClientId] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const fetchClients = async () => {
+    if (!tenantId || !token) return;
+    try {
+      setLoading(true);
+      console.log(searchTerm.toLowerCase());
+      let searchtext;
+      if (searchTerm)
+        searchtext = searchTerm.toLowerCase();
+
+      const { clients: fetchedClients, pagination: newPagination } = await getClients(
+        tenantId,
+        token,
+        currentPage,
+        CLIENTS_PER_PAGE,
+        searchtext
+      );
+      setClients(fetchedClients);
+      setPagination(newPagination);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch clients');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (!tenantId || !token) return;
-
-    const fetchClients = async () => {
-      try {
-        setLoading(true);
-        const { clients: fetchedClients, pagination: newPagination } = await getClients(
-          tenantId,
-          token,
-          currentPage,
-          CLIENTS_PER_PAGE
-        );
-
-        const processedClients = fetchedClients.map(client => {
-          return { ...client };
-        });
-
-        setClients(processedClients);
-        setPagination(newPagination);
-        setError(null);
-      } catch (err: any) {
-        setError(err.message || 'Failed to fetch clients');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchClients();
   }, [tenantId, token, currentPage]);
 
-  const handleClientDeleted = (clientId: string) => {
-    setClients(currentClients => currentClients.filter(c => c._id !== clientId));
-  };
+  const handleDeleteClient = async () => {
+    if (!tenantId || !token || !deleteClientId) return;
 
-  const handleDeleteClick = (e: React.MouseEvent, client: Client) => {
-    e.stopPropagation();
-    setClientToDelete(client);
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!clientToDelete || !tenantId || !token) return;
-
-    setIsDeleting(true);
     try {
-      await deleteClient(tenantId, token, clientToDelete._id);
-      toast({ title: "Success", description: "Client deleted successfully." });
-      handleClientDeleted(clientToDelete._id);
-      setClientToDelete(null);
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message || "Failed to delete client.", variant: "destructive" });
+      await deleteClient(tenantId, deleteClientId, token);
+      toast({ title: 'Client deleted successfully' });
+      fetchClients(); // Refetch clients after deletion
+    } catch (error) {
+      toast({ title: 'Error deleting client', variant: 'destructive' });
     } finally {
-      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+      setDeleteClientId(null);
+    }
+  };
+
+  const filteredClients = async (value: any) => {
+    setSearchTerm(value)
+    if (!value)
+      fetchClients();
+    if (value && value.length > 2)
+      fetchClients();
+    else
+      toast({ title: 'Please enter at least 3 characters to search.' });
+  };
+
+  const sortedClients = useMemo(() => {
+    if (!sortKey) return clients;
+
+    return [...clients].sort((a, b) => {
+      const aValue = a[sortKey];
+      const bValue = b[sortKey];
+
+      if (sortKey === 'lastActivityDate') {
+        const dateA = aValue ? new Date(aValue as string).getTime() : 0;
+        const dateB = bValue ? new Date(bValue as string).getTime() : 0;
+        return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+      }
+
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return sortDirection === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+      }
+
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+
+      return 0;
+    });
+  }, [clients, sortKey, sortDirection]);
+
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDirection('asc');
     }
   };
 
@@ -161,21 +201,41 @@ export default function ClientTable() {
     return <div className="text-red-500 text-center">Error: {error}</div>;
   }
 
+  const SortableHeader: FC<{ sortKey: SortKey, children: React.ReactNode }> = ({ sortKey: key, children }) => (
+    <TableHead onClick={() => handleSort(key)} className="cursor-pointer">
+      <div className="flex items-center">
+        {children}
+        {sortKey === key && <ArrowUpDown className="ml-2 h-4 w-4" />}
+      </div>
+    </TableHead>
+  );
+
   return (
     <>
+      <div className="mb-4">
+        <Input
+          placeholder="Search by name, email, or phone..."
+          value={searchTerm}
+          onChange={(e) => handleActionClick(e, () => {
+            filteredClients(e.target.value);
+          })}
+          className="max-w-sm"
+        />
+      </div>
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Profile</TableHead>
-            <TableHead>Name</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Phone</TableHead>
+            <SortableHeader sortKey="name">Name</SortableHeader>
+            <SortableHeader sortKey="email">Email</SortableHeader>
+            <SortableHeader sortKey="phone">Phone</SortableHeader>
+            <SortableHeader sortKey="lastActivityDate">Last Activity</SortableHeader>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {clients.length > 0 ? (
-            clients.map(client => (
+          {sortedClients.length > 0 ? (
+            sortedClients.map(client => (
               <TableRow key={client._id}>
                 <TableCell>
                   <Avatar>
@@ -183,9 +243,15 @@ export default function ClientTable() {
                     <AvatarFallback>{client.name.charAt(0)}</AvatarFallback>
                   </Avatar>
                 </TableCell>
-                <TableCell>{client.name}</TableCell>
+                <TableCell>
+                  {client.name}
+                  {client.invitationToken && (
+                    <div className="text-xs text-red-500">Invitation Acceptance Pending</div>
+                  )}
+                </TableCell>
                 <TableCell>{client.email}</TableCell>
                 <TableCell>{client.phone || 'N/A'}</TableCell>
+                <TableCell>{formatDate(client.lastActivityDate)}</TableCell>
                 <TableCell className="text-right">
                   <div
                     className="inline-flex justify-end items-center gap-1 rounded-full bg-muted p-1"
@@ -206,8 +272,11 @@ export default function ClientTable() {
                       <Edit className="h-[22px] w-[22px]" />
                     </ActionButton>
                     <ActionButton
-                      onClick={(e) => handleDeleteClick(e, client)}
-                      label="Delete"
+                      onClick={(e) => handleActionClick(e, () => {
+                        setDeleteClientId(client._id);
+                        setIsDeleteDialogOpen(true);
+                      })}
+                      label="Trash"
                       className="text-red-500 hover:bg-red-500"
                     >
                       <Trash2 className="h-[22px] w-[22px]" />
@@ -218,7 +287,7 @@ export default function ClientTable() {
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={5} className="text-center">No clients found.</TableCell>
+              <TableCell colSpan={6} className="text-center">No clients found.</TableCell>
             </TableRow>
           )}
         </TableBody>
@@ -251,19 +320,18 @@ export default function ClientTable() {
           </div>
         </div>
       )}
-      <AlertDialog open={!!clientToDelete} onOpenChange={(isOpen) => !isOpen && setClientToDelete(null)}>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to delete this client?</AlertDialogTitle>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the client and all of their associated data.
+              This action cannot be undone. This will permanently delete this client and all associated data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmDelete} disabled={isDeleting}>
-              {isDeleting ? 'Deleting...' : 'Delete'}
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleDeleteClient}>Continue</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

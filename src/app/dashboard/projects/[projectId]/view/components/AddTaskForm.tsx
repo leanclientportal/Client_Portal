@@ -119,6 +119,16 @@ export default function AddTaskForm({ projectId, onTaskAdded, setOpen }: AddTask
                       onSelect={field.onChange}
                       initialFocus
                     />
+                    <div className="p-2 border-t border-border">
+                        <Button
+                            onClick={() => field.onChange(new Date())}
+                            variant="outline"
+                            size="sm"
+                            className="w-full"
+                        >
+                            Now
+                        </Button>
+                    </div>
                   </PopoverContent>
                 </Popover>
               )}

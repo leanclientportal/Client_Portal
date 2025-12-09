@@ -1,5 +1,5 @@
 
-import type { Client, GetClientsResponse, GetProjectsResponse, GetTasksResponse, NewClient, NewProject, NewTask, Project, Task, ProjectFile, User, AuthResponse, LoginCredentials, UpdateUserPayload, GetAccountsResponse, SwitchAccountPayload, SwitchAccountResponse, Tenant, NewProfile, CreateProfileResponse, MergeProfilesPayload, MergeProfilesResponse, NewDocument, GetDocumentsResponse } from "./types";
+import type { Client, GetClientsResponse, GetProjectsResponse, GetTasksResponse, NewClient, NewProject, NewTask, Project, Task, ProjectFile, User, AuthResponse, LoginCredentials, UpdateUserPayload, GetAccountsResponse, SwitchAccountPayload, SwitchAccountResponse, Tenant, NewProfile, CreateProfileResponse, MergeProfilesPayload, MergeProfilesResponse, NewDocument, GetDocumentsResponse, NewInvoice, GetInvoicesResponse, SelectList, SelectListItem, ProjectFilterParams } from "./types";
 
 interface Invoice {
     id: string;
@@ -11,6 +11,12 @@ interface ApiListResponse {
     success: boolean;
     message: string;
     data: GetClientsResponse;
+}
+
+interface ApiSelectListResponse {
+    success: boolean;
+    message: string;
+    data: SelectList;
 }
 
 interface ApiProjectsListResponse {
@@ -29,6 +35,12 @@ interface ApiDocumentsListResponse {
     success: boolean;
     message: string;
     data: GetDocumentsResponse;
+}
+
+interface ApiInvoicesListResponse {
+    success: boolean;
+    message: string;
+    data: GetInvoicesResponse;
 }
 
 
@@ -61,9 +73,13 @@ interface ApiAddResponse {
     message: string;
     clientId?: string;
 }
+interface ApiResponse {
+    success: boolean;
+    message: string;
+}
 
 // Function to retrieve a paginated list of clients
-export async function getClients(tenantId: string, token: string, page: number, limit: number): Promise<GetClientsResponse> {
+export async function getClients(tenantId: string, token: string, page: number, limit: number, search: any): Promise<GetClientsResponse> {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (!baseUrl) {
         throw new Error("API base URL is not configured.");
@@ -72,6 +88,8 @@ export async function getClients(tenantId: string, token: string, page: number, 
     const url = new URL(`${baseUrl}/clients/${tenantId}`);
     url.searchParams.append('page', page.toString());
     url.searchParams.append('limit', limit.toString());
+    if(search)
+    url.searchParams.append('search', search);
 
     try {
         const response = await fetch(url.toString(), {
@@ -100,22 +118,64 @@ export async function getClients(tenantId: string, token: string, page: number, 
     }
 }
 
-// Function to get projects for a specific client
-export async function getProjects(activeProfile: string, token: string, activeProfileId: string): Promise<GetProjectsResponse> {
+export async function getClientsSelectList(tenantId: string, token: string): Promise<SelectListItem[]> {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (!baseUrl) {
         throw new Error("API base URL is not configured.");
     }
 
-    const url = `${baseUrl}/projects/${activeProfile}/${activeProfileId}`;
+    const url = new URL(`${baseUrl}/clients/${tenantId}/dropdown`);
 
     try {
-        const response = await fetch(url, {
+        const response = await fetch(url.toString(), {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`,
             },
+            cache: 'no-store',
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Failed to fetch tenants. Status: ${response.status}`);
+        }
+
+        const responseData: { success: boolean, count: number, message?: string, data: SelectListItem[] } = await response.json();
+        if (!responseData.success) {
+            throw new Error(responseData.message || "API returned a non-successful response.");
+        }
+
+        return responseData.data;
+    } catch (error) {
+        console.error("Error getting clients:", error);
+        throw error instanceof Error ? error : new Error("An unknown error occurred.");
+    }
+}
+
+// Function to get projects for a specific client, now with filtering
+export async function getProjects(
+    activeProfile: string, 
+    token: string, 
+    activeProfileId: string,
+    filters: ProjectFilterParams = {} // Accepts a filter object
+): Promise<GetProjectsResponse> {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!baseUrl) {
+        throw new Error("API base URL is not configured.");
+    }
+
+    const url = `${baseUrl}/projects/${activeProfile}/${activeProfileId}`; // New endpoint
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST', // Changed to POST
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify(filters), // Send filters in the body
+            cache: 'no-store',
         });
 
         if (!response.ok) {
@@ -185,7 +245,7 @@ export async function getDocuments(token: string, projectId: string): Promise<Ge
         throw new Error("API base URL is not configured.");
     }
 
-    const url = `${baseUrl}/document/${projectId}`;
+    const url = `${baseUrl}/documents/${projectId}`;
 
     try {
         const response = await fetch(url, {
@@ -205,6 +265,44 @@ export async function getDocuments(token: string, projectId: string): Promise<Ge
         }
 
         const responseData: ApiDocumentsListResponse = await response.json();
+        if (!responseData.success) {
+            throw new Error(responseData.message || "API returned a non-successful response.");
+        }
+
+        return responseData.data;
+    } catch (error) {
+        console.error(`Error getting tasks for project ${projectId}:`, error);
+        throw error instanceof Error ? error : new Error("An unknown error occurred while fetching tasks.");
+    }
+}
+
+// Function to get documents for a specific project
+export async function getInvoices(token: string, projectId: string): Promise<GetInvoicesResponse> {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!baseUrl) {
+        throw new Error("API base URL is not configured.");
+    }
+
+    const url = `${baseUrl}/invoices/${projectId}`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            if (response.status === 404) {
+                return { invoice: [], pagination: { current: 1, total: 0, count: 0, totalRecords: 0 } };
+            }
+            throw new Error(errorData?.message || `Failed to fetch tasks. Status: ${response.status}`);
+        }
+
+        const responseData: ApiInvoicesListResponse = await response.json();
         if (!responseData.success) {
             throw new Error(responseData.message || "API returned a non-successful response.");
         }
@@ -260,7 +358,7 @@ export async function addProject(tenantId: string, token: string, clientId: stri
         throw new Error("API base URL is not configured.");
     }
 
-    const url = `${baseUrl}/projects/${tenantId}/${clientId}`;
+    const url = `${baseUrl}/projects/${tenantId}/${clientId}/add`;
     const { clientId: _, ...projectData } = newProject;
 
     try {
@@ -286,42 +384,6 @@ export async function addProject(tenantId: string, token: string, clientId: stri
         return responseData;
     } catch (error) {
         console.error("Error adding project:", error);
-        throw error instanceof Error ? error : new Error("An unknown error occurred.");
-    }
-}
-
-// Function to add files to a project
-export async function addProjectFiles(tenantId: string, token: string, clientId: string, projectId: string, files: { file: string; fileName: string; fileType: string; }[]): Promise<ApiAddResponse> {
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-    if (!baseUrl) {
-        throw new Error("API base URL is not configured.");
-    }
-
-    const url = `${baseUrl}/projects/${clientId}/${projectId}/files`;
-
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({ files }),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => null);
-            throw new Error(errorData?.message || `Failed to add files. Status: ${response.status}`);
-        }
-
-        const responseData: ApiAddResponse = await response.json();
-        if (!responseData.success) {
-            throw new Error(responseData.message || "API returned a non-successful response.");
-        }
-
-        return responseData;
-    } catch (error) {
-        console.error("Error adding project files:", error);
         throw error instanceof Error ? error : new Error("An unknown error occurred.");
     }
 }
@@ -371,7 +433,7 @@ export async function addDocument(token: string, projectId: string, newDocument:
         throw new Error("API base URL is not configured.");
     }
 
-    const url = `${baseUrl}/document/${projectId}`;
+    const url = `${baseUrl}/documents/${projectId}`;
 
     try {
         const response = await fetch(url, {
@@ -385,7 +447,7 @@ export async function addDocument(token: string, projectId: string, newDocument:
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => null);
-            throw new Error(errorData?.message || `Failed to add task. Status: ${response.status}`);
+            throw new Error(errorData?.message || `Failed to add document. Status: ${response.status}`);
         }
 
         const responseData: ApiAddResponse = await response.json();
@@ -396,6 +458,43 @@ export async function addDocument(token: string, projectId: string, newDocument:
         return responseData;
     } catch (error) {
         console.error("Error adding task:", error);
+        throw error instanceof Error ? error : new Error("An unknown error occurred.");
+    }
+}
+
+
+// Function to add a new invoice to a project
+export async function addInvoice(token: string, projectId: string, newInvoice: NewInvoice): Promise<ApiAddResponse> {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!baseUrl) {
+        throw new Error("API base URL is not configured.");
+    }
+
+    const url = `${baseUrl}/invoices/${projectId}`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify(newInvoice),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Failed to add invoice. Status: ${response.status}`);
+        }
+
+        const responseData: ApiAddResponse = await response.json();
+        if (!responseData.success) {
+            throw new Error(responseData.message || "API returned a non-successful response.");
+        }
+
+        return responseData;
+    } catch (error) {
+        console.error("Error adding invoice:", error);
         throw error instanceof Error ? error : new Error("An unknown error occurred.");
     }
 }
@@ -713,6 +812,72 @@ export async function deleteTask(token: string, projectId: string, taskId: strin
     }
 }
 
+export async function deleteDocument(token: string, projectId: string, documentId: string): Promise<ApiAddResponse> {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!baseUrl) {
+        throw new Error("API base URL is not configured.");
+    }
+
+    const url = `${baseUrl}/documents/${projectId}/${documentId}`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Failed to delete document. Status: ${response.status}`);
+        }
+
+        const responseData: ApiAddResponse = await response.json();
+        if (!responseData.success) {
+            throw new Error(responseData.message || "API returned a non-successful response.");
+        }
+
+        return responseData;
+    } catch (error) {
+        console.error("Error deleting document:", error);
+        throw error instanceof Error ? error : new Error("An unknown error occurred.");
+    }
+}
+
+export async function deleteInvoice(token: string, projectId: string, invoiceId: string): Promise<ApiAddResponse> {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!baseUrl) {
+        throw new Error("API base URL is not configured.");
+    }
+
+    const url = `${baseUrl}/invoices/${projectId}/${invoiceId}`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Failed to delete invoice. Status: ${response.status}`);
+        }
+
+        const responseData: ApiAddResponse = await response.json();
+        if (!responseData.success) {
+            throw new Error(responseData.message || "API returned a non-successful response.");
+        }
+
+        return responseData;
+    } catch (error) {
+        console.error("Error deleting invoice:", error);
+        throw error instanceof Error ? error : new Error("An unknown error occurred.");
+    }
+}
+
 // Function to update an existing task
 export async function updateTask(token: string, projectId: string, taskId: string, updatedTask: Partial<NewTask>): Promise<ApiAddResponse> {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -848,7 +1013,7 @@ export async function switchAccount(userId: string, token: string, payload: Swit
 }
 
 // Function to retrieve a paginated list of tenants by client
-export async function getTenantsByClient(clientId: string, token: string): Promise<Tenant[]> {
+export async function getTenantsByClient(clientId: string, token: string): Promise<SelectListItem[]> {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (!baseUrl) {
         throw new Error("API base URL is not configured.");
@@ -871,7 +1036,7 @@ export async function getTenantsByClient(clientId: string, token: string): Promi
             throw new Error(errorData?.message || `Failed to fetch tenants. Status: ${response.status}`);
         }
 
-        const responseData: { success: boolean, count: number, message?: string, data: Tenant[] } = await response.json();
+        const responseData: { success: boolean, count: number, message?: string, data: SelectListItem[] } = await response.json();
         if (!responseData.success) {
             throw new Error(responseData.message || "API returned a non-successful response.");
         }
@@ -1022,5 +1187,31 @@ export async function mergeProfiles(userId: string, token: string, payload: Merg
     } catch (error) {
         console.error("Error merging profiles:", error);
         throw error instanceof Error ? error : new Error("An unknown error occurred.");
+    }
+}
+
+
+export async function resendInvitation(tenantId: string, clientId: string): Promise<ApiResponse> {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!baseUrl) {
+        throw new Error("API base URL is not configured.");
+    }
+
+    const url = `${baseUrl}/clients/${tenantId}/${clientId}/resend-invitation`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            // body: JSON.stringify({ email, otp, type, ...options }),
+        });
+
+        const data = await response.json();
+        return { ...data, status: response.status };
+    } catch (error) {
+        console.error('Verify OTP error:', error);
+        throw error;
     }
 }

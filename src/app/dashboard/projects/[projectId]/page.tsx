@@ -3,9 +3,7 @@
 
 import { useState, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
 import EditProjectForm from "./components/EditProjectForm";
-import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,18 +21,23 @@ function EditProjectPageContent({ params }: { params: Promise<{ clientId: string
 
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
 
-  const handleBackClick = () => {
+  const handleBack = () => {
+    // In a real application, you might check for unsaved changes here
+    // For now, we'll just go back.
     router.back();
   };
 
   return (
-    <div className="max-w-7xl mx-auto py-8">
-       <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" size="icon" onClick={handleBackClick}>
-            <ArrowLeft className="h-5 w-5" />
-        </Button>
+    <div className="max-w-7xl mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-semibold">Edit Project</h1>
       </div>
-      <EditProjectForm clientId={resolvedParams.clientId} projectId={resolvedParams.projectId} />
+      {/* Removed the back button from here */}
+      <EditProjectForm
+        clientId={resolvedParams.clientId}
+        projectId={resolvedParams.projectId}
+        onBack={handleBack}
+      />
       <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -54,5 +57,5 @@ function EditProjectPageContent({ params }: { params: Promise<{ clientId: string
 }
 
 export default function EditProjectPage({ params }: { params: Promise<{ clientId: string, projectId: string }> }) {
-    return <EditProjectPageContent params={params} />;
+  return <EditProjectPageContent params={params} />;
 }

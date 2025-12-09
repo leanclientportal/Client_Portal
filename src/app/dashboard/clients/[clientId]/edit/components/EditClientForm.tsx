@@ -3,18 +3,18 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { useForm, SubmitHandler, FormProvider } from 'react-hook-form';
+import { useForm, SubmitHandler, FormProvider, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from '@/hooks/use-auth';
-import { updateClient } from '@/lib/api';
+import { updateClient, resendInvitation } from '@/lib/api';
 import { uploadImageAndGetURL } from '@/lib/storage';
 import type { Client, NewClient } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { PhoneNumberInput } from '@/components/ui/phone-number-input';
+import PhoneNumberInput from '@/components/ui/PhoneNumberInput';
 import { isValidPhoneNumber } from 'react-phone-number-input';
 import {
   AlertDialog,
@@ -85,6 +85,20 @@ export default function EditClientForm({ client }: EditClientFormProps) {
     }
   };
 
+  const handleResendInvitation = async () => {
+    if (!tenantId || !token) {
+      toast({ title: "Authentication Error", description: "Authentication details are missing.", variant: "destructive" });
+      return;
+    }
+    try {
+      let respon = await resendInvitation(tenantId, client._id);
+      toast({ title: "Success", description: respon.message });
+      router.push(`/dashboard/clients/${client._id}/edit`);
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Failed to resend invitation.", variant: "destructive" });
+    }
+  };
+
   const onSubmit: SubmitHandler<NewClient> = async (data) => {
     if (!tenantId || !token) {
       toast({ title: "Authentication Error", description: "Authentication details are missing.", variant: "destructive" });
@@ -107,6 +121,9 @@ export default function EditClientForm({ client }: EditClientFormProps) {
       };
 
       const response = await updateClient(tenantId, token, client._id, updatedClientData);
+      if (response.success && data.email !== client.email) {
+        await handleResendInvitation();
+      }
       toast({ title: "Success", description: response.message });
       router.push('/dashboard/clients');
     } catch (err: any) {
@@ -120,7 +137,14 @@ export default function EditClientForm({ client }: EditClientFormProps) {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Client Details</CardTitle>
+          <div className="flex justify-between mb-6">
+            <CardTitle>Client Details</CardTitle>
+            {client && client.invitationToken && (
+              <div className="text-sm text-white-500 bg-yellow-500 py-1 px-4 rounded-full">
+                Invitation Acceptance Pending
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <FormProvider {...form}>
@@ -144,19 +168,35 @@ export default function EditClientForm({ client }: EditClientFormProps) {
               </div>
 
               <div>
-                <Input placeholder="Email" {...form.register("email")} />
+                <Input placeholder="Email" {...form.register("email")} disabled={!client.invitationToken} />
                 {form.formState.errors.email && <p className="text-red-500 text-xs mt-1">{form.formState.errors.email.message}</p>}
               </div>
 
               <div>
-                <PhoneNumberInput name="phone" />
+                <Controller
+                  name="phone"
+                  control={form.control}
+                  render={({ field }) => (
+                    <PhoneNumberInput
+                      {...field}
+                      defaultCountry="US"
+                      placeholder="Phone number"
+                    />
+                  )}
+                />
                 {form.formState.errors.phone && <p className="text-red-500 text-xs mt-1">{form.formState.errors.phone.message}</p>}
               </div>
 
-              <div className="flex gap-2">
-                <Button type="submit" disabled={isLoading}>
+              <div className="flex gap-3">
+                {client.invitationToken && (
+                  <Button type="button" className='bg-yellow-600' variant="outline" onClick={handleResendInvitation}>
+                    Resend Invitation
+                  </Button>
+                )}
+                <Button type="submit" className='text-white-500 bg-blue-600' variant="outline" disabled={isLoading}>
                   {isLoading ? 'Updating Client...' : 'Update Client'}
                 </Button>
+
                 <Button type="button" variant="outline" onClick={handleBackClick}>
                   Back
                 </Button>

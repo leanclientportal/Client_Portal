@@ -36,8 +36,10 @@ function EditClientPageContent({ params }: { params: Promise<{ clientId: string 
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-8">
-      <h1 className="text-2xl font-semibold mb-6">Edit Client</h1>
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-semibold">Edit Client</h1>
+      </div>
       {client && <EditClientForm client={client} />}
     </div>
   );

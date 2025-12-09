@@ -7,12 +7,12 @@ import { useSendOtp, useVerifyOtp } from '@/queries/auth';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { useForm, FormProvider } from 'react-hook-form';
+import { useForm, FormProvider, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
-import { PhoneNumberInput } from '@/components/ui/phone-number-input';
+import PhoneNumberInput from '@/components/ui/PhoneNumberInput';
 import { isValidPhoneNumber } from 'react-phone-number-input';
 
 const formSchema = z.object({
@@ -112,11 +112,21 @@ export default function RegisterPage() {
               </div>
 
               <div className="mb-4">
-                <PhoneNumberInput name="phone" disabled={step === 'otp'} />
+                <Controller
+                  name="phone"
+                  control={form.control}
+                  render={({ field }) => (
+                    <PhoneNumberInput
+                      {...field}
+                      placeholder="Phone number"
+                      disabled={step === 'otp'}
+                    />
+                  )}
+                />
                 {form.formState.errors.phone && <p className="text-red-500 text-xs mt-1">{form.formState.errors.phone.message}</p>}
               </div>
 
-              {step === 'email' && (
+              {/* {step === 'email' && (
                 <RadioGroup defaultValue="User" onValueChange={setProfileType} className="flex gap-4 mb-4">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="client" id="client" />
@@ -127,7 +137,7 @@ export default function RegisterPage() {
                     <Label htmlFor="tenant">Tenant</Label>
                   </div>
                 </RadioGroup>
-              )}
+              )} */}
 
               {step === 'otp' && (
                 <div className="mb-4">

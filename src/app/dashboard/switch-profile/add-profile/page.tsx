@@ -2,12 +2,17 @@
 
 import React from 'react';
 import AddProfileForm from './components/AddProfileForm';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function AddProfilePage() {
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Add New Profile</h1>
-      <AddProfileForm />
-    </div>
+    <Card>
+        <CardHeader>
+            <CardTitle>Add New Profile</CardTitle>
+        </CardHeader>
+        <CardContent>
+            <AddProfileForm />
+        </CardContent>
+    </Card>
   );
 }

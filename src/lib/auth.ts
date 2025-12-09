@@ -100,3 +100,28 @@ export async function verifyOtp(email: string, otp: string, type: 'registration'
         throw error;
     }
 }
+
+export async function resendInvitation(tenantId: string, clientId: string): Promise<VerifyOtpResponse> {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!baseUrl) {
+        throw new Error("API base URL is not configured.");
+    }
+
+    const url = `${baseUrl}/clients/${tenantId}/${clientId}/resend-invitation`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            // body: JSON.stringify({ email, otp, type, ...options }),
+        });
+
+        const data = await response.json();
+        return { ...data, status: response.status };
+    } catch (error) {
+        console.error('Verify OTP error:', error);
+        throw error;
+    }
+}

@@ -39,11 +39,18 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isLoading, logout, activeProfile, activeProfileImage } = useAuth(); // Updated useAuth hook
+  const { isLoading, logout, activeProfile, activeProfileImage, profileName } = useAuth(); // Updated useAuth hook
   const pathname = usePathname();
   const role = useUserRole();
 
   const navItems = role ? menuConfig[role] : [];
+
+  const getInitials = (name: string) =>
+    name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase();
 
   const activeItem = (() => {
     if (pathname.includes('/projects')) {
@@ -54,8 +61,6 @@ export default function DashboardLayout({
       .reverse()
       .find((item) => pathname.startsWith(item.href));
   })();
-
-  const pageTitle = activeItem ? activeItem.title : 'Dashboard';
 
   if (isLoading || !role) {
     return (
@@ -109,17 +114,16 @@ export default function DashboardLayout({
       <SidebarInset>
         <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-background sm:px-6 sm:py-4 shadow-md">
           <SidebarTrigger className="sm:hidden" />
-          <h1 className="text-xl font-semibold sm:text-2xl font-headline">
-            {pageTitle}
-          </h1>
           <div className="ml-auto">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon" className="overflow-hidden rounded-full">
                   <Avatar>
-                    {/* Use user's avatar image and fallback to their initial */}
-                    <AvatarImage src={activeProfileImage || '/images/avatar.png'} alt={activeProfile || 'Profile'} />
-                    <AvatarFallback>{activeProfile}</AvatarFallback>
+                    <AvatarImage
+                      src={activeProfileImage || `https://ui-avatars.com/api/?name=${(profileName || activeProfile || '').replace(/\s/g, '+')}&background=random`}
+                      alt={activeProfile || 'Profile'}
+                    />
+                    <AvatarFallback>{profileName ? getInitials(profileName) : ''}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>

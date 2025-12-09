@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { useForm, SubmitHandler, FormProvider } from 'react-hook-form';
+import { useForm, SubmitHandler, FormProvider, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import { addClient } from '@/lib/api';
 import { uploadImageAndGetURL } from '@/lib/storage';
 import type { NewClient } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { PhoneNumberInput } from '@/components/ui/phone-number-input';
+import PhoneNumberInput from '@/components/ui/PhoneNumberInput';
 import { isValidPhoneNumber } from 'react-phone-number-input';
 import {
   AlertDialog,
@@ -156,7 +156,16 @@ export default function AddClientForm() {
               </div>
 
               <div>
-                <PhoneNumberInput name="phone" />
+                <Controller
+                  name="phone"
+                  control={form.control}
+                  render={({ field }) => (
+                    <PhoneNumberInput
+                      {...field}
+                      placeholder="Phone number"
+                    />
+                  )}
+                />
                 {form.formState.errors.phone && <p className="text-red-500 text-xs mt-1">{form.formState.errors.phone.message}</p>}
               </div>
 

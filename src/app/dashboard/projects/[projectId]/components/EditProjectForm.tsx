@@ -27,13 +27,16 @@ type FormValues = z.infer<typeof formSchema>;
 interface EditProjectFormProps {
   clientId: string;
   projectId: string;
+  onBack: () => void;
 }
 
-export default function EditProjectForm({ clientId, projectId }: EditProjectFormProps) {
+export default function EditProjectForm({ clientId, projectId, onBack }: EditProjectFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const { token } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeleted, setIsDeleted] = useState(false);
+  const [clientName, setClientName] = useState('');
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -50,11 +53,18 @@ export default function EditProjectForm({ clientId, projectId }: EditProjectForm
     const fetchProjectData = async () => {
       try {
         const project = await getProject(token, projectId);
-        form.reset({
-          name: project.name,
-          description: project.description,
-          status: project.status,
-        });
+        if (project.isDeleted) {
+          setIsDeleted(true);
+        } else {
+          form.reset({
+            name: project.name,
+            description: project.description,
+            status: project.status,
+          });
+          if (project.clientId && project.clientId?.name) {
+            setClientName(project.clientId?.name);
+          }
+        }
       } catch (error: any) {
         toast({ title: "Error", description: "Failed to fetch project data.", variant: "destructive" });
       }
@@ -85,52 +95,81 @@ export default function EditProjectForm({ clientId, projectId }: EditProjectForm
     }
   }
 
+  if (isDeleted) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Project Details</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>This project is deleted and contact administrator.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Edit Details</CardTitle>
+          <CardTitle>Project Details</CardTitle>
         </CardHeader>
         <CardContent>
           <FormProvider {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div>
-                <Label htmlFor="name">Project Name</Label>
-                <Input id="name" {...form.register("name")} />
-                {form.formState.errors.name && <p className="text-red-500 text-xs mt-1">{form.formState.errors.name.message}</p>}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                <Label htmlFor="clientName" className="md:col-span-3 md:text-right">Client Name</Label>
+                <div className="md:col-span-9">
+                  <Input id="clientName" value={clientName} disabled />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                <Label htmlFor="name" className="md:col-span-3 md:text-right">Project Name</Label>
+                <div className="md:col-span-9">
+                  <Input id="name" {...form.register("name")} />
+                  {form.formState.errors.name && <p className="text-red-500 text-xs mt-1">{form.formState.errors.name.message}</p>}
+                </div>
               </div>
 
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea id="description" {...form.register("description")} />
-                {form.formState.errors.description && <p className="text-red-500 text-xs mt-1">{form.formState.errors.description.message}</p>}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                <Label htmlFor="description" className="md:col-span-3 md:text-right">Description</Label>
+                <div className="md:col-span-9">
+                  <Textarea id="description" {...form.register("description")} />
+                  {form.formState.errors.description && <p className="text-red-500 text-xs mt-1">{form.formState.errors.description.message}</p>}
+                </div>
               </div>
 
-              <div>
-                <Label htmlFor="status">Status</Label>
-                <Controller
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger id="status">
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                        <SelectItem value="on-hold">On Hold</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                {form.formState.errors.status && <p className="text-red-500 text-xs mt-1">{form.formState.errors.status.message}</p>}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                <Label htmlFor="status" className="md:col-span-3 md:text-right">Status</Label>
+                <div className="md:col-span-9">
+                  <Controller
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger id="status">
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="on-hold">On Hold</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {form.formState.errors.status && <p className="text-red-500 text-xs mt-1">{form.formState.errors.status.message}</p>}
+                </div>
               </div>
 
-              <div className="flex gap-2">
-                <Button type="submit" className="bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-700 transition duration-300 ease-in-out" disabled={isLoading}>
+              <div className="flex md:justify-end gap-2">
+                <Button type="submit" className='text-white bg-blue-600' variant="outline" disabled={isLoading}>
                   <Save className="mr-2 h-4 w-4" />
                   {isLoading ? 'Saving...' : 'Save Changes'}
+                </Button>
+                <Button type="button" variant="outline" onClick={onBack}>
+                  Back
                 </Button>
               </div>
             </form>

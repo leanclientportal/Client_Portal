@@ -4,13 +4,20 @@ export interface Client {
     tenantId: string;
     name: string;
     email: string;
-    phone: string;
-    address: string;
+    phone: string | null;
+    address?: string;
     profileImageUrl?: string;
     createdAt: string;
     updatedAt: string;
     profileImageBinary?: string;
     isActive: boolean;
+    lastActivityDate?: string;
+    invitationToken?: string;
+}
+
+export interface SelectListItem {
+    value: string;
+    label: string;
 }
 
 export interface APIResponse<T> {
@@ -32,14 +39,15 @@ export interface ProjectFile {
 
 export interface Project {
     _id: string;
-    clientId: string | Client;
-    tenantId: string | Tenant;
+    clientId: Client;
+    tenantId: Tenant;
     name: string;
     description: string;
     status: 'active' | 'completed' | 'on-hold';
-    isActive: boolean;
+    isDeleted: boolean;
     createdAt: string;
     updatedAt: string;
+    lastActivityDate: string;
     projectFiles: ProjectFile[];
 }
 
@@ -74,13 +82,14 @@ export interface NewClient {
     profileImageBinary?: string;
     profileImageName?: string;
     isActive?: boolean;
+    invitationToken?: string;
 }
 
 export interface NewProject {
     name: string;
     description: string;
-    status: 'active' | 'completed' | 'on-hold';
-    isActive?: boolean;
+    status: 'active' | 'on-hold' | 'completed';
+    isDeleted?: boolean;
     clientId: string;
     projectFileBinary?: string;
     projectFileName?: string;
@@ -97,9 +106,22 @@ export interface NewTask {
 
 
 export interface NewDocument {
-    title: string;
-    description: string;
-    docUrl: string;
+    name: string;
+    tag?: string;
+    uploadedBy?: string;
+    uploaderId?: string;
+    description?: string;
+    docUrl?: string;
+}
+
+export interface NewInvoice {
+    invoiceUrl: string;
+    title?: string;
+    description?: string;
+    status: string;
+    amount: number;
+    dueDate: string;
+    paymentLink?: string;
 }
 
 
@@ -123,6 +145,10 @@ export interface GetClientsResponse {
     pagination: Pagination;
 }
 
+export interface SelectList {
+    Item: SelectListItem[];
+}
+
 export interface GetProjectsResponse {
     projects: Project[];
     pagination: Pagination;
@@ -134,6 +160,10 @@ export interface GetTasksResponse {
 
 export interface GetDocumentsResponse {
     documents: Documents[];
+    pagination: Pagination;
+}
+export interface GetInvoicesResponse {
+    invoice: Invoice[];
     pagination: Pagination;
 }
 
@@ -156,12 +186,6 @@ export interface Document {
     uploaderId: string;
 }
 
-export interface NewDocument {
-    name: string;
-    tag: string;
-    uploadedBy: string;
-    uploaderId: string;
-}
 export interface LoginCredentials {
     emailOrPhone: string;
     password: string;
@@ -229,7 +253,8 @@ export interface SwitchAccountResponse {
     userId: string;
     activeProfile: string;
     activeProfileId: string;
-    activeProfileImage: string;
+    activeProfileImage: string | null;
+    profileName: string;
 }
 
 export interface VerifyOtpResponse {
@@ -240,13 +265,14 @@ export interface VerifyOtpResponse {
     userId: string;
     activeProfile: string;
     activeProfileId: string;
-    activeProfileImage: string;
+    activeProfileImage: string | null;
+    profileName: string;
 }
 export interface NewProfile {
     name: string;
     email: string;
     profileType: 'client' | 'tenant';
-    phone?: string;
+    phone: string | null;
     profileImageUrl?: string;
     profileImageBinary?: string;
     profileImageName?: string;
@@ -277,20 +303,21 @@ export interface ProjectDocument {
 }
 
 export interface Invoice {
-    id: string;
+    _id: string;
     projectId: string;
-    amount: string;
+    title: string;
+    invoiceUrl: string;
+    amount: number;
     dueDate: string;
     status: string;
     paymentLink?: string;
     createdAt: string;
     updatedAt?: string;
-    fileName?: string;
-    downloadURL?: string;
-    storagePath?: string;
 }
 
-export interface GetInvoicesResponse {
-    invoices: Invoice[];
-    pagination: Pagination;
+export interface ProjectFilterParams {
+    searchTerm?: string;
+    selectedClient?: string;
+    dateFrom?: string;
+    dateTo?: string;
 }
