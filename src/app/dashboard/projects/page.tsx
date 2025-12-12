@@ -7,14 +7,17 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getProjects } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
-import type { Project } from '@/lib/types';
+import type { Project, ProjectFilterParams } from '@/lib/types';
 import ProjectList from './components/ProjectList';
+import { useSearchParams } from 'next/navigation';
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { activeProfileId, activeProfile, token } = useAuth();
+  const searchParams = useSearchParams();
+  const initialClientId = searchParams.get('clientId');
 
   useEffect(() => {
     if (!activeProfileId || !token) return;
@@ -22,7 +25,12 @@ export default function ProjectsPage() {
     const fetchProjects = async () => {
       try {
         setLoading(true);
-        const { projects: fetchedProjects } = await getProjects(activeProfile as string, token, activeProfileId);
+        const filters: ProjectFilterParams = {};
+        if (initialClientId) {
+          filters.selectedClient = initialClientId;
+        }
+
+        const { projects: fetchedProjects } = await getProjects(activeProfile as string, token, activeProfileId, filters);
         setProjects(fetchedProjects);
         setError(null);
       } catch (err: any) {
@@ -33,7 +41,7 @@ export default function ProjectsPage() {
     };
 
     fetchProjects();
-  }, [activeProfileId, token, activeProfile]);
+  }, [activeProfileId, token, activeProfile, initialClientId]);
 
   const handleProjectDeleted = (projectId: string) => {
     setProjects(currentProjects => currentProjects.filter(p => p._id !== projectId));
@@ -58,7 +66,12 @@ export default function ProjectsPage() {
       ) : error ? (
         <div className="text-red-500 text-center">Error: {error}</div>
       ) : (
-        <ProjectList projects={projects} onProjectDeleted={handleProjectDeleted} activeProfile={activeProfile} />
+        <ProjectList 
+          projects={projects} 
+          onProjectDeleted={handleProjectDeleted} 
+          activeProfile={activeProfile as string} 
+          initialClientId={initialClientId || undefined} // Pass initialClientId
+        />
       )}
     </div>
   );

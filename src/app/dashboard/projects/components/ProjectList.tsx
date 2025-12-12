@@ -54,11 +54,12 @@ interface ProjectListProps {
   projects: Project[];
   onProjectDeleted: (projectId: string) => void;
   activeProfile: string;
+  initialClientId?: string; // Added initialClientId prop
 }
 
 type SortableColumn = 'name' | 'clientName' | 'status' | 'updatedAt';
 
-const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeProfile }) => {
+const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeProfile, initialClientId }) => {
   const { token, activeProfileId } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
@@ -75,7 +76,7 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeP
 
   // Temporary filter states
   const [searchTermInput, setSearchTermInput] = useState('');
-  const [selectedClientInput, setSelectedClientInput] = useState('all');
+  const [selectedClientInput, setSelectedClientInput] = useState(initialClientId || 'all'); // Set initialClientId here
   const [dateInput, setDateInput] = useState<DateRange | undefined>(undefined);
   const [displayProjects, setDisplayProjects] = useState<Project[]>(projects);
   const [isFiltering, setIsFiltering] = useState(false);
@@ -83,6 +84,14 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeP
   useEffect(() => {
     setDisplayProjects(projects);
   }, [projects]);
+
+  useEffect(() => {
+    // Set selectedClientInput when initialClientId changes (e.g., on direct navigation with clientId)
+    if (initialClientId && selectedClientInput !== initialClientId) {
+      setSelectedClientInput(initialClientId);
+      handleFilter(); // Apply filter automatically if initialClientId is present
+    }
+  }, [initialClientId]);
 
   const [clients, setClients] = useState<SelectListItem[]>([]);
   const [tenants, setTenants] = useState<SelectListItem[]>([]);
@@ -219,7 +228,7 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeP
       return;
     }
     try {
-      const { tasks: fetchedTasks } = await getTasks(token, project?._id);
+      const { tasks: fetchedTasks } = await getTasks(token, project?._id, activeProfile);
       setTasks(fetchedTasks);
     } catch (error: any) {
       toast({ title: "Error", description: error.message || "Failed to fetch tasks.", variant: "destructive" });

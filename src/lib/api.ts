@@ -88,8 +88,8 @@ export async function getClients(tenantId: string, token: string, page: number, 
     const url = new URL(`${baseUrl}/clients/${tenantId}`);
     url.searchParams.append('page', page.toString());
     url.searchParams.append('limit', limit.toString());
-    if(search)
-    url.searchParams.append('search', search);
+    if (search)
+        url.searchParams.append('search', search);
 
     try {
         const response = await fetch(url.toString(), {
@@ -155,8 +155,8 @@ export async function getClientsSelectList(tenantId: string, token: string): Pro
 
 // Function to get projects for a specific client, now with filtering
 export async function getProjects(
-    activeProfile: string, 
-    token: string, 
+    activeProfile: string,
+    token: string,
     activeProfileId: string,
     filters: ProjectFilterParams = {} // Accepts a filter object
 ): Promise<GetProjectsResponse> {
@@ -200,13 +200,13 @@ export async function getProjects(
 }
 
 // Function to get tasks for a specific project
-export async function getTasks(token: string, projectId: string): Promise<GetTasksResponse> {
+export async function getTasks(token: string, projectId: string, activeProfile: string): Promise<GetTasksResponse> {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (!baseUrl) {
         throw new Error("API base URL is not configured.");
     }
 
-    const url = `${baseUrl}/tasks/${projectId}`;
+    const url = `${baseUrl}/tasks/${projectId}/${activeProfile}`;
 
     try {
         const response = await fetch(url, {
@@ -465,6 +465,81 @@ export async function addDocument(token: string, projectId: string, newDocument:
 
 // Function to add a new invoice to a project
 export async function addInvoice(token: string, projectId: string, newInvoice: NewInvoice): Promise<ApiAddResponse> {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!baseUrl) {
+        throw new Error("API base URL is not configured.");
+    }
+
+    const url = `${baseUrl}/invoices/${projectId}`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify(newInvoice),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Failed to add invoice. Status: ${response.status}`);
+        }
+
+        const responseData: ApiAddResponse = await response.json();
+        if (!responseData.success) {
+            throw new Error(responseData.message || "API returned a non-successful response.");
+        }
+
+        return responseData;
+    } catch (error) {
+        console.error("Error adding invoice:", error);
+        throw error instanceof Error ? error : new Error("An unknown error occurred.");
+    }
+}
+
+
+
+// Function to add a new invoice to a project
+export async function updateInvoice(token: string, projectId: string, invoiceId: string, newInvoice: Partial<NewInvoice>): Promise<ApiAddResponse> {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!baseUrl) {
+        throw new Error("API base URL is not configured.");
+    }
+
+    const url = `${baseUrl}/invoices/${projectId}/${invoiceId}`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify(newInvoice),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Failed to add invoice. Status: ${response.status}`);
+        }
+
+        const responseData: ApiAddResponse = await response.json();
+        if (!responseData.success) {
+            throw new Error(responseData.message || "API returned a non-successful response.");
+        }
+
+        return responseData;
+    } catch (error) {
+        console.error("Error adding invoice:", error);
+        throw error instanceof Error ? error : new Error("An unknown error occurred.");
+    }
+}
+
+
+// Function to add a new invoice to a project
+export async function updateDocument(token: string, projectId: string, newInvoice: NewInvoice): Promise<ApiAddResponse> {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (!baseUrl) {
         throw new Error("API base URL is not configured.");
@@ -1213,5 +1288,40 @@ export async function resendInvitation(tenantId: string, clientId: string): Prom
     } catch (error) {
         console.error('Verify OTP error:', error);
         throw error;
+    }
+}
+
+// Function to mark an invoice as paid
+export async function markInvoiceAsPaid(token: string, projectId: string, invoiceId: string): Promise<ApiAddResponse> {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!baseUrl) {
+        throw new Error("API base URL is not configured.");
+    }
+
+    const url = `${baseUrl}/invoices/${projectId}/${invoiceId}/pay`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Failed to mark invoice as paid. Status: ${response.status}`);
+        }
+
+        const responseData: ApiAddResponse = await response.json();
+        if (!responseData.success) {
+            throw new Error(responseData.message || "API returned a non-successful response.");
+        }
+
+        return responseData;
+    } catch (error) {
+        console.error("Error marking invoice as paid:", error);
+        throw error instanceof Error ? error : new Error("An unknown error occurred.");
     }
 }

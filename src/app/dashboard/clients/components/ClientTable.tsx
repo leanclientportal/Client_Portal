@@ -31,6 +31,7 @@ import {
 import { Edit, Eye, ArrowUpDown, Trash2 } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 
 interface ActionButtonProps {
   onClick: (e: React.MouseEvent) => void;
@@ -148,6 +149,12 @@ export default function ClientTable() {
         return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
       }
 
+      if (sortKey === 'totalProjects') {
+        const numA = (aValue as number) ?? 0;
+        const numB = (bValue as number) ?? 0;
+        return sortDirection === 'asc' ? numA - numB : numB - numA;
+      }
+
       if (typeof aValue === 'string' && typeof bValue === 'string') {
         return sortDirection === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
       }
@@ -201,6 +208,18 @@ export default function ClientTable() {
     return <div className="text-red-500 text-center">Error: {error}</div>;
   }
 
+  const getProjectCountBadgeClasses = (count: number) => {
+    if (count === 0) {
+      return 'bg-gray-500 text-white';
+    } else if (count > 0 && count <= 5) {
+      return 'bg-blue-500 text-white';
+    } else if (count > 5 && count <= 10) {
+      return 'bg-green-500 text-white';
+    } else {
+      return 'bg-purple-500 text-white';
+    }
+  };
+
   const SortableHeader: FC<{ sortKey: SortKey, children: React.ReactNode }> = ({ sortKey: key, children }) => (
     <TableHead onClick={() => handleSort(key)} className="cursor-pointer">
       <div className="flex items-center">
@@ -229,6 +248,7 @@ export default function ClientTable() {
             <SortableHeader sortKey="name">Name</SortableHeader>
             <SortableHeader sortKey="email">Email</SortableHeader>
             <SortableHeader sortKey="phone">Phone</SortableHeader>
+            <SortableHeader sortKey="totalProjects">Total Projects</SortableHeader>
             <SortableHeader sortKey="lastActivityDate">Last Activity</SortableHeader>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
@@ -251,6 +271,14 @@ export default function ClientTable() {
                 </TableCell>
                 <TableCell>{client.email}</TableCell>
                 <TableCell>{client.phone || 'N/A'}</TableCell>
+                <TableCell>
+                  <Badge className={cn(
+                    "h-6 w-6 rounded-full flex items-center justify-center p-0",
+                    getProjectCountBadgeClasses(client.totalProjects)
+                  )}>
+                    {client.totalProjects}
+                  </Badge>
+                </TableCell>
                 <TableCell>{formatDate(client.lastActivityDate)}</TableCell>
                 <TableCell className="text-right">
                   <div
@@ -258,7 +286,7 @@ export default function ClientTable() {
                     onClick={(e) => e.stopPropagation()}
                   >
                     <ActionButton
-                      onClick={(e) => handleActionClick(e, () => router.push(`/dashboard/clients/${client._id}/projects`))}
+                      onClick={(e) => handleActionClick(e, () => router.push(`/dashboard/projects?clientId=${client._id}`))}
                       label="Projects"
                       className="text-blue-500 hover:bg-blue-500"
                     >
@@ -287,7 +315,7 @@ export default function ClientTable() {
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={6} className="text-center">No clients found.</TableCell>
+              <TableCell colSpan={7} className="text-center">No clients found.</TableCell>
             </TableRow>
           )}
         </TableBody>

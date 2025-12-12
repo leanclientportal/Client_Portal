@@ -1,4 +1,3 @@
-
 'use client';
 
 import { FC, useEffect, useState, useCallback, MouseEvent, useMemo, use } from 'react';
@@ -6,12 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from '@/hooks/use-auth';
-import { getProject, getTasks, deleteTask, getDocuments, deleteDocument, getInvoices, deleteInvoice } from '@/lib/api';
-import type { Project, Task } from '@/lib/types';
+import { getProject, getTasks, deleteTask, getDocuments, deleteDocument, getInvoices, deleteInvoice, markInvoiceAsPaid } from '@/lib/api';
+import type { Project, Task, Invoice, Documents } from '@/lib/types'; // Added Invoice type
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { useRouter } from 'next/navigation';
-import { ArrowLeft, PlusCircle, Loader2, Edit, Trash2, Paperclip, Download, Link as LinkIcon, Save } from 'lucide-react';
+import { ArrowLeft, PlusCircle, Loader2, Edit, Trash2, Paperclip, Download, Link as LinkIcon, Save, ArrowUpDown } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -21,7 +19,7 @@ import {
 } from '@/components/ui/dialog';
 import AddTaskForm from './components/AddTaskForm';
 import EditTaskForm from './components/EditTaskForm';
-import AddFileDialog from './components/AddFileDialog';
+import AddFileDialog from './components/AddDocumentDialog';
 import AddInvoiceDialog from './components/AddInvoiceDialog';
 import {
   Table,
@@ -41,8 +39,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { cn } from '@/lib/utils';
+import { capitalizeFirstLetter, cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useRouter } from 'next/navigation';
+import EditInvoiceDialog from './components/EditInvoiceDialog';
 
 interface ViewProjectDetailsProps {
   params: Promise<{
@@ -80,11 +80,11 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
   const [project, setProject] = useState<Project | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projectFiles, setProjectFiles] = useState<any[]>([]);
-  const [projectInvoices, setProjectInvoices] = useState<any[]>([]);
+  const [projectInvoices, setProjectInvoices] = useState<Invoice[]>([]); // Changed to Invoice[]
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingTasks, setIsLoadingTasks] = useState(true);
-  const [isLoadingFiles, setIsLoadingFiles] = useState(true);
-  const [isLoadingInvoices, setIsLoadingInvoices] = useState(true);
+  const [isLoadingTasks, setIsLoadingTasks] = useState(false);
+  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
+  const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
   const [isAddTaskOpen, setAddTaskOpen] = useState(false);
   const [isAddFileOpen, setAddFileOpen] = useState(false);
   const [isAddInvoiceOpen, setAddInvoiceOpen] = useState(false);
@@ -95,12 +95,21 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
   const [isDeletingFile, setIsDeletingFile] = useState(false);
   const [isDeletingInvoice, setIsDeletingInvoice] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
+  const [invoiceToEdit, setInvoiceToEdit] = useState<Invoice | null>(null);
   const [activeTab, setActiveTab] = useState("details");
+  
+  const [invoiceToPaid, setInvoiceToPaid] = useState<Invoice | null>(null);
+  const [isPaidInvoice, setIsPaidInvoice] = useState(false);
 
-  const capitalizeFirstLetter = (str: string): string => {
-    if (!str) return str;
-    return str.charAt(0).toUpperCase() + str.slice(1);
-  };
+  const [sortKey, setSortKey] = useState<keyof Task>('dueDate');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [invoiceSortKey, setInvoiceSortKey] = useState<keyof Invoice>('createdAt'); // New state for invoice sort key
+  const [invoiceSortOrder, setInvoiceSortOrder] = useState<'asc' | 'desc'>('asc'); // New state for invoice sort order
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [fileSortKey, setFileSortKey] = useState<keyof Documents>('createdDate'); // New state for invoice sort key
+  const [fileSortOrder, setFileSortOrder] = useState<'asc' | 'desc'>('asc'); // New state for invoice sort order
+
 
   const fetchProject = useCallback(async () => {
     if (!activeProfileId || !token || !projectId) {
@@ -120,12 +129,11 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
 
   const fetchTasks = useCallback(async () => {
     if (!token || !projectId) {
-      setIsLoadingTasks(false);
       return;
     }
     setIsLoadingTasks(true);
     try {
-      const tasksData = await getTasks(token, projectId);
+      const tasksData = await getTasks(token, projectId, activeProfile);
       setTasks(tasksData.tasks);
     } catch (error: any) {
       toast({ title: "Error", description: "Failed to fetch tasks.", variant: "destructive" });
@@ -136,7 +144,6 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
 
   const fetchFiles = useCallback(async () => {
     if (!token || !projectId) {
-      setIsLoadingFiles(false);
       return;
     }
     setIsLoadingFiles(true);
@@ -152,7 +159,6 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
 
   const fetchInvoices = useCallback(async () => {
     if (!token || !projectId) {
-      setIsLoadingInvoices(false);
       return;
     }
     setIsLoadingInvoices(true);
@@ -168,10 +174,18 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
 
   useEffect(() => {
     fetchProject();
-    fetchTasks();
-    fetchFiles();
-    fetchInvoices();
-  }, [fetchProject, fetchTasks, fetchFiles, fetchInvoices]);
+  }, [fetchProject]);
+
+  useEffect(() => {
+    if (activeTab === 'tasks') {
+      fetchTasks();
+    } else if (activeTab === 'files') {
+      fetchFiles();
+    } else if (activeTab === 'invoices') {
+      fetchInvoices();
+    }
+  }, [activeTab, fetchTasks, fetchFiles, fetchInvoices]);
+
 
   const handleDownload = (downloadUrl: string, fileName: string) => {
     const a = document.createElement('a');
@@ -180,6 +194,108 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
     document.body.appendChild(a);
     a.click();
     a.remove();
+  };
+
+  const sortedTasks = useMemo(() => {
+    const sorted = [...tasks].sort((a, b) => {
+      const aValue = a[sortKey];
+      const bValue = b[sortKey];
+
+      if (aValue < bValue) {
+        return sortOrder === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortOrder === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+    return sorted;
+  }, [tasks, sortKey, sortOrder]);
+
+  const paginatedTasks = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return sortedTasks.slice(startIndex, startIndex + itemsPerPage);
+  }, [sortedTasks, currentPage, itemsPerPage]);
+
+  const handleSort = (key: keyof Task) => {
+    if (sortKey === key) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortOrder('asc');
+    }
+  };
+
+  const sortedFiles = useMemo(() => {
+    const sorted = [...projectFiles].sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      if (fileSortKey === 'createdDate') {
+        aValue = new Date(a[fileSortKey]).getTime();
+        bValue = new Date(b[fileSortKey]).getTime();
+      } else {
+        aValue = (a[fileSortKey] || '').toString().toLowerCase();
+        bValue = (b[fileSortKey] || '').toString().toLowerCase();
+      }
+
+      if (aValue < bValue) {
+        return fileSortOrder === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return fileSortOrder === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+    return sorted;
+  }, [projectFiles, fileSortKey, fileSortOrder]);
+
+  // New function to handle invoice sorting
+  const handleFileSort = (key: keyof Documents) => {
+    if (fileSortKey === key) {
+      setFileSortOrder(fileSortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setFileSortKey(key);
+      setFileSortOrder('asc');
+    }
+  };
+
+  // New memoized function for sorted invoices
+  const sortedInvoices = useMemo(() => {
+    const sorted = [...projectInvoices].sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      if (invoiceSortKey === 'dueDate' || invoiceSortKey === 'createdAt') {
+        aValue = new Date(a[invoiceSortKey]).getTime();
+        bValue = new Date(b[invoiceSortKey]).getTime();
+      } else if (invoiceSortKey === 'amount') {
+        aValue = a[invoiceSortKey];
+        bValue = b[invoiceSortKey];
+      } else {
+        aValue = (a[invoiceSortKey] || '').toString().toLowerCase();
+        bValue = (b[invoiceSortKey] || '').toString().toLowerCase();
+      }
+
+      if (aValue < bValue) {
+        return invoiceSortOrder === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return invoiceSortOrder === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+    return sorted;
+  }, [projectInvoices, invoiceSortKey, invoiceSortOrder]);
+
+  // New function to handle invoice sorting
+  const handleInvoiceSort = (key: keyof Invoice) => {
+    if (invoiceSortKey === key) {
+      setInvoiceSortOrder(invoiceSortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setInvoiceSortKey(key);
+      setInvoiceSortOrder('asc');
+    }
   };
 
   const taskStatusCounts = useMemo(() => {
@@ -234,10 +350,53 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
     setTaskToDelete(task);
   };
 
+  const handleConfirmDeleteTask = async () => {
+    if (!taskToDelete || !token) return;
+    setIsDeletingTask(true);
+    try {
+      const response = await deleteTask(token, projectId, taskToDelete._id);
+      toast({ title: "Success", description: response.message || "Task deleted successfully" });
+      fetchTasks();
+      setTaskToDelete(null);
+    } catch (error: any) {
+      toast({ title: "Error", description: "Failed to delete task.", variant: "destructive" });
+    } finally {
+      setIsDeletingTask(false);
+    }
+  };
+
   const handleEditTaskClick = (e: MouseEvent, task: Task) => {
     e.stopPropagation();
     setTaskToEdit(task);
   };
+
+  const handleEditInvoiceClick = (e: MouseEvent, Invoice: Invoice) => {
+    e.stopPropagation();
+    setInvoiceToEdit(Invoice);
+  };
+
+  // invoice mark as paid
+
+  const handlePaidInvoiceClick = (e: MouseEvent, Invoice: Invoice) => {
+    e.stopPropagation();
+    setInvoiceToPaid(Invoice);
+  };
+
+  const handleConfirmMarkPaidTask = async () => {
+    if (!invoiceToPaid || !token) return;
+    setIsPaidInvoice(true);
+    try {
+      const response = await markInvoiceAsPaid(token, projectId, invoiceToPaid._id);
+      toast({ title: "Success", description: response.message || "Invoice paid successfully" });
+      fetchInvoices();
+      setInvoiceToPaid(null);
+    } catch (error: any) {
+      toast({ title: "Error", description: "Failed to paid invoice.", variant: "destructive" });
+    } finally {
+      setIsPaidInvoice(false);
+    }
+  };
+  // end 
 
   const getTaskStatusClasses = (status: Task['status']) => {
     switch (status) {
@@ -293,46 +452,36 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
     <>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold">{project.name}</h1>
-        <div className="flex gap-2">
-          {activeProfile !== 'client' && (
-            <Button onClick={() => router.push(`/dashboard/projects/${projectId}/edit`)} className="bg-blue-500 text-white">
-              <Edit className="mr-2 h-4 w-4" />
-              Edit
-            </Button>
-          )}
-          <Button variant="outline" onClick={() => router.back()}>
-            Back
-          </Button>
-        </div>
       </div>
 
       <Tabs defaultValue="details" className="mt-6" onValueChange={setActiveTab}>
-        <TabsList>
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="tasks">Tasks</TabsTrigger>
           <TabsTrigger value="files">Documents</TabsTrigger>
           <TabsTrigger value="invoices">Invoices</TabsTrigger>
         </TabsList>
+
         <TabsContent value="details">
           <Card>
             <CardContent className="space-y-6 pt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <h3 className="font-semibold text-lg mb-2">Description</h3>
                   <p className="text-muted-foreground">{project.description}</p>
                 </div>
 
-                  <div>
-                    <h3 className="font-semibold text-lg mb-2">Status</h3>
-                    <Badge
-                      variant={
-                        project.status === 'completed' ? 'default' : project.status === 'active' ? 'secondary' : 'outline'
-                      }
-                    >
-                      {capitalizeFirstLetter(project.status)}
-                    </Badge>
-                  </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">Status</h3>
+                  <Badge
+                    variant={
+                      project.status === 'completed' ? 'default' : project.status === 'active' ? 'secondary' : 'outline'
+                    }
+                  >
+                    {capitalizeFirstLetter(project.status)}
+                  </Badge>
                 </div>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -342,6 +491,19 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
                 <div>
                   <h3 className="font-semibold text-lg mb-2">Last Activity Date</h3>
                   <p className="text-muted-foreground">{new Date(project.lastActivityDate).toLocaleDateString()}</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex gap-2">
+                  {activeProfile !== 'client' && (
+                    <Button onClick={() => router.push(`/dashboard/projects/${projectId}/edit`)} className="bg-blue-500 text-white">
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit
+                    </Button>
+                  )}
+                  <Button variant="outline" onClick={() => router.back()}>
+                    Back
+                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -394,14 +556,29 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Title</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Due Date</TableHead>
+                        <TableHead>
+                          <Button variant="ghost" onClick={() => handleSort('title')}>
+                            Title
+                            <ArrowUpDown className="ml-2 h-4 w-4" />
+                          </Button>
+                        </TableHead>
+                        <TableHead>
+                          <Button variant="ghost" onClick={() => handleSort('status')}>
+                            Status
+                            <ArrowUpDown className="ml-2 h-4 w-4" />
+                          </Button>
+                        </TableHead>
+                        <TableHead>
+                          <Button variant="ghost" onClick={() => handleSort('dueDate')}>
+                            Due Date
+                            <ArrowUpDown className="ml-2 h-4 w-4" />
+                          </Button>
+                        </TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {tasks.length > 0 ? tasks.map(task => (
+                      {paginatedTasks.length > 0 ? paginatedTasks.map(task => (
                         <TableRow key={task._id}>
                           <TableCell>{task.title}</TableCell>
                           <TableCell>
@@ -436,6 +613,24 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
                       )}
                     </TableBody>
                   </Table>
+                  <div className="flex items-center justify-end space-x-2 py-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => (prev * itemsPerPage < tasks.length ? prev + 1 : prev))}
+                      disabled={currentPage * itemsPerPage >= tasks.length}
+                    >
+                      Next
+                    </Button>
+                  </div>
                 </>
               )}
             </CardContent>
@@ -450,7 +645,7 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
                   <DialogTrigger asChild>
                     <Button className="bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-700 transition duration-300 ease-in-out">
                       <Paperclip className="mr-2 h-4 w-4" />
-                      Add File
+                      Add Documents
                     </Button>
                   </DialogTrigger>
                   <AddFileDialog
@@ -461,6 +656,7 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
                       setAddFileOpen(false);
                     }}
                     projectId={projectId}
+                    documents={projectFiles}
                   />
                 </Dialog>
               </div>
@@ -474,15 +670,32 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>File Name</TableHead>
-                      <TableHead>Date Uploaded</TableHead>
+                      <TableHead>
+                        <Button variant="ghost" onClick={() => handleFileSort('title')}>
+                          File Name
+                          <ArrowUpDown className="ml-2 h-4 w-4" />
+                        </Button>
+                      </TableHead>
+                      <TableHead>
+                        <Button variant="ghost" onClick={() => handleFileSort('updatedBy')}>
+                          Uploaded By
+                          <ArrowUpDown className="ml-2 h-4 w-4" />
+                        </Button>
+                      </TableHead>
+                      <TableHead>
+                        <Button variant="ghost" onClick={() => handleFileSort('createdDate')}>
+                          Uploaded Date
+                          <ArrowUpDown className="ml-2 h-4 w-4" />
+                        </Button>
+                      </TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {projectFiles.length > 0 ? projectFiles.map((file, index) => (
+                    {sortedFiles.length > 0 ? sortedFiles.map((file, index) => (
                       <TableRow key={index}>
                         <TableCell>{file.name}</TableCell>
+                        <TableCell>{file.uploadedBy}<br />{file.uploaderId.email}</TableCell>
                         <TableCell>{new Date(file.createdDate).toLocaleDateString()}</TableCell>
                         <TableCell className="text-right">
                           <div className="inline-flex justify-end items-center gap-1 rounded-full bg-muted p-1">
@@ -492,13 +705,6 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
                               className="text-blue-500 hover:bg-blue-500"
                             >
                               <Download className="h-5 w-5" />
-                            </ActionButton>
-                            <ActionButton
-                              onClick={(e) => handleDeleteFileClick(e, file)}
-                              label="Delete"
-                              className="text-red-500 hover:bg-red-500"
-                            >
-                              <Trash2 className="h-5 w-5" />
                             </ActionButton>
                           </div>
                         </TableCell>
@@ -521,10 +727,11 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
                 <CardTitle>Invoices</CardTitle>
                 <Dialog open={isAddInvoiceOpen} onOpenChange={setAddInvoiceOpen}>
                   <DialogTrigger asChild>
-                    <Button className="bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-700 transition duration-300 ease-in-out">
+                    {activeProfile !== "client" && (<Button className="bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-700 transition duration-300 ease-in-out">
                       <Paperclip className="mr-2 h-4 w-4" />
                       Add Invoice
-                    </Button>
+                    </Button>)}
+
                   </DialogTrigger>
                   <AddInvoiceDialog
                     isOpen={isAddInvoiceOpen}
@@ -547,40 +754,87 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>DueDate</TableHead>
-                      <TableHead>Date Uploaded</TableHead>
+                      <TableHead>
+                        <Button variant="ghost" onClick={() => handleInvoiceSort('title')}>
+                          Title
+                          <ArrowUpDown className="ml-2 h-4 w-4" />
+                        </Button>
+                      </TableHead>
+                      <TableHead>
+                        <Button variant="ghost" onClick={() => handleInvoiceSort('amount')}>
+                          Amount
+                          <ArrowUpDown className="ml-2 h-4 w-4" />
+                        </Button>
+                      </TableHead>
+                      <TableHead>
+                        <Button variant="ghost" onClick={() => handleInvoiceSort('status')}>
+                          Status
+                          <ArrowUpDown className="ml-2 h-4 w-4" />
+                        </Button>
+                      </TableHead>
+                      <TableHead>
+                        <Button variant="ghost" onClick={() => handleInvoiceSort('invoiceDate')}>
+                          Invoice Date
+                          <ArrowUpDown className="ml-2 h-4 w-4" />
+                        </Button>
+                      </TableHead>
+                      <TableHead>
+                        <Button variant="ghost" onClick={() => handleInvoiceSort('dueDate')}>
+                          Due Date
+                          <ArrowUpDown className="ml-2 h-4 w-4" />
+                        </Button>
+                      </TableHead>
+
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {projectInvoices.length > 0 ? projectInvoices.map((invoice, index) => (
+                    {sortedInvoices.length > 0 ? sortedInvoices.map((invoice, index) => (
                       <TableRow key={index}>
                         <TableCell>{invoice.title}</TableCell>
-                        <TableCell>{invoice.description}</TableCell>
                         <TableCell>{invoice.amount}</TableCell>
                         <TableCell>{capitalizeFirstLetter(invoice.status)}</TableCell>
+                        <TableCell>{new Date(invoice.invoiceDate).toLocaleDateString()}</TableCell>
                         <TableCell>{new Date(invoice.dueDate).toLocaleDateString()}</TableCell>
-                        <TableCell>{new Date(invoice.createdAt).toLocaleDateString()}</TableCell>
                         <TableCell className="text-right">
                           <div className="inline-flex justify-end items-center gap-1 rounded-full bg-muted p-1">
-                            <ActionButton
-                              onClick={() => handleDownload(invoice.invoiceUrl || invoice.invoiceUrl, invoice.fileName || invoice.name)}
+
+                            {invoice.invoiceUrl && (<ActionButton
+                              onClick={() => handleDownload(invoice.invoiceUrl, invoice.title || `invoice-${invoice._id}`)}
                               label="Download"
                               className="text-blue-500 hover:bg-blue-500"
                             >
                               <Download className="h-5 w-5" />
                             </ActionButton>
-                            <ActionButton
-                              onClick={(e) => handleDeleteInvoiceClick(e, invoice)}
-                              label="Delete"
-                              className="text-red-500 hover:bg-red-500"
-                            >
-                              <Trash2 className="h-5 w-5" />
-                            </ActionButton>
+                            )}
+                            {activeProfile !== 'client' && (
+                              <>
+                                {invoice.status !== 'paid' && (
+                                  <ActionButton
+                                    onClick={(e) => handlePaidInvoiceClick(e, invoice)}
+                                    label="Mark As Paid"
+                                    className="text-green-500 hover:bg-green-500"
+                                  >
+                                    <Save className="h-5 w-5" />
+                                  </ActionButton>
+                                )}
+                                <ActionButton
+                                  onClick={(e) => handleEditInvoiceClick(e, invoice)}
+                                  label="Edit"
+                                  className="text-yellow-500 hover:bg-yellow-500"
+                                >
+                                  <Edit className="h-5 w-5" />
+                                </ActionButton>
+                                <ActionButton
+                                  onClick={(e) => handleDeleteInvoiceClick(e, invoice)}
+                                  label="Delete"
+                                  className="text-red-500 hover:bg-red-500"
+                                >
+                                  <Trash2 className="h-5 w-5" />
+                                </ActionButton>
+                              </>
+                            )}
+
                           </div>
                         </TableCell>
                       </TableRow>
@@ -618,6 +872,26 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
           </DialogContent>
         </Dialog>
       )}
+     
+
+      <AlertDialog open={!!taskToDelete} onOpenChange={(isOpen) => !isOpen && setTaskToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this task?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the task from the project.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDeleteTask} disabled={isDeletingTask}>
+              {isDeletingTask ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+     
 
       <AlertDialog open={!!fileToDelete} onOpenChange={(isOpen) => !isOpen && setFileToDelete(null)}>
         <AlertDialogContent>
@@ -631,6 +905,43 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmDeleteFile} disabled={isDeletingFile}>
               {isDeletingFile ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {invoiceToEdit && (
+        <Dialog open={!!invoiceToEdit} onOpenChange={(isOpen) => !isOpen && setInvoiceToEdit(null)}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Edit Invoice</DialogTitle>
+            </DialogHeader>
+            <EditInvoiceDialog
+              projectId={projectId}
+              invoice={invoiceToEdit}
+              onInvoiceUpdated={() => {
+                fetchInvoices();
+                setInvoiceToEdit(null);
+              }}
+              onClose={() => setInvoiceToEdit(null)}
+              isOpen={!!invoiceToEdit}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
+
+      <AlertDialog open={!!invoiceToPaid} onOpenChange={(isOpen) => !isOpen && setInvoiceToPaid(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to paid this invoice?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Once you confirm, the invoice status will be updated to “Paid”, This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmMarkPaidTask} disabled={isPaidInvoice}>
+              {isPaidInvoice ? 'Mark as paid...' : 'Paid'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

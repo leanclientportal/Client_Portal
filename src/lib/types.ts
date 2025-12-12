@@ -13,6 +13,7 @@ export interface Client {
     isActive: boolean;
     lastActivityDate?: string;
     invitationToken?: string;
+    totalProjects: number; // Added totalProjects field
 }
 
 export interface SelectListItem {
@@ -67,7 +68,6 @@ export interface Documents {
     _id: string;
     projectId: string;
     title: string;
-    description: string;
     createdDate: string;
     updatedBy: string;
     docUrl: string;
@@ -107,21 +107,22 @@ export interface NewTask {
 
 export interface NewDocument {
     name: string;
-    tag?: string;
     uploadedBy?: string;
     uploaderId?: string;
-    description?: string;
     docUrl?: string;
+    isOverwrite: boolean;
 }
 
 export interface NewInvoice {
-    invoiceUrl: string;
-    title?: string;
+    invoiceUrl?: string; // Made optional
+    title: string;
     description?: string;
     status: string;
     amount: number;
     dueDate: string;
-    paymentLink?: string;
+    invoiceDate: string; // Added new field
+    paidDate?: string; // Added new field, optional
+    paymentLink?: string; // Made optional
 }
 
 
@@ -183,7 +184,7 @@ export interface Document {
     tag: string;
     createdDate: string;
     uploadedBy: string;
-    uploaderId: string;
+    uploaderId: any;
 }
 
 export interface LoginCredentials {
@@ -215,8 +216,8 @@ export interface LoginResponse {
     userId: string;
     activeProfile: string;
     activeProfileId: string;
-    email: string;
-    status: number;
+    activeProfileImage: string | null;
+    profileName: string;
 }
 
 export interface UpdateUserPayload {
@@ -310,8 +311,10 @@ export interface Invoice {
     amount: number;
     dueDate: string;
     status: string;
+    invoiceDate: string;
     paymentLink?: string;
     createdAt: string;
+    paidDate: string;
     updatedAt?: string;
 }
 

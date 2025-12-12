@@ -38,8 +38,10 @@ interface AddTaskFormProps {
 
 export default function AddTaskForm({ projectId, onTaskAdded, setOpen }: AddTaskFormProps) {
   const { toast } = useToast();
-  const { userId, token } = useAuth();
+  const { userId, token, activeProfile } = useAuth(); // Get activeProfile
   const [isLoading, setIsLoading] = useState(false);
+
+  const isClientProfile = activeProfile === 'client';
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -47,7 +49,7 @@ export default function AddTaskForm({ projectId, onTaskAdded, setOpen }: AddTask
       title: '',
       description: '',
       status: 'todo',
-      visibleToClient: false,
+      visibleToClient: isClientProfile ? true : false, // Set default based on activeProfile
     },
   });
 
@@ -63,6 +65,7 @@ export default function AddTaskForm({ projectId, onTaskAdded, setOpen }: AddTask
       ...data,
       description: data.description || '',
       dueDate: data.dueDate.toISOString(),
+      visibleToClient: isClientProfile ? true : data.visibleToClient, // Ensure true if client
     };
 
     try {
@@ -158,20 +161,22 @@ export default function AddTaskForm({ projectId, onTaskAdded, setOpen }: AddTask
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <Controller
-            control={form.control}
-            name="visibleToClient"
-            render={({ field }) => (
-              <Switch
-                id="visibleToClient"
-                checked={field.value}
-                onCheckedChange={field.onChange}
-              />
-            )}
-          />
-          <Label htmlFor="visibleToClient">Visible to Client</Label>
-        </div>
+        {!isClientProfile && ( // Conditionally render if not a client profile
+          <div className="flex items-center space-x-2">
+            <Controller
+              control={form.control}
+              name="visibleToClient"
+              render={({ field }) => (
+                <Switch
+                  id="visibleToClient"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              )}
+            />
+            <Label htmlFor="visibleToClient">Visible to Client</Label>
+          </div>
+        )}
 
         <div className="flex gap-2 justify-end">
           <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>

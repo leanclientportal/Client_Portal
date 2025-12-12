@@ -7,47 +7,62 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from '@/hooks/use-auth';
-import { addInvoice } from '@/lib/api';
+import { updateInvoice } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X, File, UploadCloud } from 'lucide-react';
 import { uploadFile } from '@/lib/storage';
-import { NewInvoice } from '@/lib/types';
+import { NewInvoice, Invoice } from '@/lib/types';
 import { format } from 'date-fns';
 
 interface FileWithPreview extends File {
   preview: string;
 }
 
-interface AddInvoiceDialogProps {
+interface EditInvoiceDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onInvoiceAdded: () => void;
+  onInvoiceUpdated: () => void;
   projectId: string;
+  invoice: Invoice;
 }
 
-const AddInvoiceDialog: FC<AddInvoiceDialogProps> = ({ isOpen, onClose, onInvoiceAdded, projectId }) => {
-  const { token } = useAuth();
+const safeFormatDate = (dateString?: string): string => {
+    if (dateString) {
+        const date = new Date(dateString);
+        if (date instanceof Date && !isNaN(date.getTime())) {
+            return format(date, 'yyyy-MM-dd');
+        }
+    }
+    return '';
+};
+
+export default function EditInvoiceDialog({ projectId, invoice, onInvoiceUpdated, isOpen, onClose }: EditInvoiceDialogProps) {
+
+  const { token, activeProfile } = useAuth();
   const { toast } = useToast();
   const today = format(new Date(), 'yyyy-MM-dd');
+  const isClient = activeProfile === 'client';
 
-  const [title, setTitle] = useState('');
-  const [status, setStatus] = useState('pending');
-  const [amount, setAmount] = useState('');
-  const [dueDate, setDueDate] = useState('');
-  const [invoiceDate, setInvoiceDate] = useState(today);
-  const [paidDate, setPaidDate] = useState<string | undefined>(undefined);
-  const [paymentLink, setPaymentLink] = useState('');
+  const [title, setTitle] = useState(invoice.title);
+  const [status, setStatus] = useState(invoice.status);
+  const [amount, setAmount] = useState(invoice.amount.toString());
+  const [dueDate, setDueDate] = useState(safeFormatDate(invoice.dueDate));
+  const [invoiceDate, setInvoiceDate] = useState(safeFormatDate(invoice.invoiceDate));
+  const [paidDate, setPaidDate] = useState<string | undefined>(
+    safeFormatDate(invoice.paidDate) || undefined
+  );
+  const [paymentLink, setPaymentLink] = useState(invoice.paymentLink || '');
   const [files, setFiles] = useState<FileWithPreview[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (status === 'paid') {
+    if (status === 'paid' && !paidDate) {
       setPaidDate(today);
-    } else {
+    } else if (status !== 'paid') {
       setPaidDate(undefined);
     }
-  }, [status, today]);
+  }, [status, paidDate, today]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const filesWithPreview = acceptedFiles.map(file => Object.assign(file, {
@@ -62,7 +77,8 @@ const AddInvoiceDialog: FC<AddInvoiceDialogProps> = ({ isOpen, onClose, onInvoic
     accept: {
       'image/*': ['.jpeg', '.png', '.gif', '.webp'],
       'application/pdf': ['.pdf'],
-    }
+    },
+    disabled: isClient
   });
 
   const handleRemoveFile = (index: number) => {
@@ -74,21 +90,21 @@ const AddInvoiceDialog: FC<AddInvoiceDialogProps> = ({ isOpen, onClose, onInvoic
   };
 
   const handleSubmit = async () => {
-    if (!token || !title || !status || !amount || !dueDate || !invoiceDate) {
-      toast({ title: "Error", description: "Please fill all mandatory fields (Title, Status, Amount, Due Date, Invoice Date).", variant: "destructive" });
+    if (isClient || !token || !title || !status || !amount || !dueDate || !invoiceDate) {
+      toast({ title: "Error", description: "Please fill all mandatory fields.", variant: "destructive" });
       return;
     }
 
     setIsSubmitting(true);
     try {
-      let fileUrl = undefined;
+      let fileUrl = invoice.invoiceUrl;
       if (files.length > 0) {
         const fileToUpload = files[0];
         const uploadedFile = await uploadFile('invoices', projectId, fileToUpload);
         fileUrl = uploadedFile.downloadURL;
       }
 
-      const invoiceData: NewInvoice = {
+      const invoiceData: Partial<NewInvoice> = {
         invoiceUrl: fileUrl,
         title,
         status,
@@ -99,14 +115,14 @@ const AddInvoiceDialog: FC<AddInvoiceDialogProps> = ({ isOpen, onClose, onInvoic
         paymentLink: paymentLink || undefined,
       };
 
-      const response = await addInvoice(token, projectId, invoiceData);
+      const response = await updateInvoice(token, projectId, invoice._id, invoiceData);
 
-      toast({ title: "Success", description: response.message || "Invoice added successfully" });
-      onInvoiceAdded();
+      toast({ title: "Success", description: response.message || "Invoice updated successfully" });
+      onInvoiceUpdated();
       onClose();
     } catch (error: any) {
-      console.error("Failed to add invoice:", error);
-      toast({ title: "Error", description: error.message || "Failed to add invoice", variant: "destructive" });
+      console.error("Failed to update invoice:", error);
+      toast({ title: "Error", description: error.message || "Failed to update invoice", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
       files.forEach(file => URL.revokeObjectURL(file.preview));
@@ -128,26 +144,26 @@ const AddInvoiceDialog: FC<AddInvoiceDialogProps> = ({ isOpen, onClose, onInvoic
     }}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Invoice</DialogTitle>
+          <DialogTitle>{isClient ? 'View Invoice' : 'Edit Invoice'}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="title" className="text-right">Title*</Label>
-            <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} className="col-span-3" required />
+            <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} className="col-span-3" required disabled={isClient} />
           </div>
-
+         
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="amount" className="text-right">Amount*</Label>
-            <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="col-span-3" required />
+            <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="col-span-3" required disabled={isClient} />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="invoiceDate" className="text-right">Invoice Date*</Label>
-            <Input id="invoiceDate" type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} className="col-span-3" required />
+            <Input id="invoiceDate" type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} className="col-span-3" required disabled={isClient} />
           </div>
-
+          
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="status" className="text-right">Status*</Label>
-            <Select onValueChange={setStatus} value={status} required>
+            <Select onValueChange={setStatus} value={status} required disabled={isClient}>
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Select a status" />
               </SelectTrigger>
@@ -160,25 +176,27 @@ const AddInvoiceDialog: FC<AddInvoiceDialogProps> = ({ isOpen, onClose, onInvoic
           {status === 'paid' && (
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="paidDate" className="text-right">Paid Date*</Label>
-              <Input id="paidDate" type="date" value={paidDate} onChange={(e) => setPaidDate(e.target.value)} className="col-span-3" required />
+              <Input id="paidDate" type="date" value={paidDate} onChange={(e) => setPaidDate(e.target.value)} className="col-span-3" required disabled={isClient} />
             </div>
           )}
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="dueDate" className="text-right">Due Date*</Label>
-            <Input id="dueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="col-span-3" required />
+            <Input id="dueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="col-span-3" required disabled={isClient} />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="paymentLink" className="text-right">Payment Link (Optional)</Label>
-            <Input id="paymentLink" value={paymentLink} onChange={(e) => setPaymentLink(e.target.value)} className="col-span-3" />
+            <Input id="paymentLink" value={paymentLink} onChange={(e) => setPaymentLink(e.target.value)} className="col-span-3" disabled={isClient} />
           </div>
-          <div {...getRootProps()} className={`p-10 border-2 border-dashed rounded-lg text-center cursor-pointer ${isDragActive ? 'border-blue-500' : 'border-gray-300'}`}>
-            <input {...getInputProps()} />
-            <UploadCloud className="mx-auto h-12 w-12 text-gray-400" />
-            {isDragActive ?
-              <p>Drop the file here ...</p> :
-              <p>Drag and drop a file here, or click to select a file (Optional)</p>
-            }
-          </div>
+          {!isClient && (
+            <div {...getRootProps()} className={`p-10 border-2 border-dashed rounded-lg text-center cursor-pointer ${isDragActive ? 'border-blue-500' : 'border-gray-300'}`}>
+              <input {...getInputProps()} />
+              <UploadCloud className="mx-auto h-12 w-12 text-gray-400" />
+              {isDragActive ?
+                <p>Drop the file here ...</p> :
+                <p>Drag and drop a file here, or click to select a file (Optional)</p>
+              }
+            </div>
+          )}
           {files.length > 0 && (
             <div className="mt-4 space-y-2">
               <h4 className="font-semibold">Selected File:</h4>
@@ -201,16 +219,24 @@ const AddInvoiceDialog: FC<AddInvoiceDialogProps> = ({ isOpen, onClose, onInvoic
               </ul>
             </div>
           )}
+          {invoice.invoiceUrl && files.length === 0 && (
+            <div className="mt-4">
+              <h4 className="font-semibold">Current Invoice File:</h4>
+              <a href={invoice.invoiceUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                View Current Invoice
+              </a>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button onClick={onClose} variant="outline">Cancel</Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? 'Adding...' : 'Add Invoice'}
-          </Button>
+          {!isClient && (
+            <Button onClick={handleSubmit} disabled={isSubmitting}>
+              {isSubmitting ? 'Updating...' : 'Update Invoice'}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 };
-
-export default AddInvoiceDialog;
