@@ -200,7 +200,7 @@ export async function getProjects(
 }
 
 // Function to get tasks for a specific project
-export async function getTasks(token: string, projectId: string, activeProfile: string): Promise<GetTasksResponse> {
+export async function getTasks(token: string, projectId: string, activeProfile: any): Promise<GetTasksResponse> {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (!baseUrl) {
         throw new Error("API base URL is not configured.");

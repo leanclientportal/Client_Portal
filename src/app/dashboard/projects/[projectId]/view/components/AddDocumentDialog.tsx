@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { X, File, UploadCloud } from 'lucide-react';
 import { uploadFile } from '@/lib/storage';
 import { addDocument, updateDocument } from '@/lib/api';
-import { Document, NewDocument } from '@/lib/types';
+import { Document, Documents, NewDocument } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { capitalizeFirstLetter } from '@/lib/utils';
@@ -23,7 +23,7 @@ interface AddDocumentDialogProps {
   onClose: () => void;
   onFileUploaded: () => void;
   projectId: string;
-  documents: Document[]; // Pass existing documents to check for overwrites
+  documents: Documents[]; // Pass existing documents to check for overwrites
 }
 
 const AddDocumentDialog: FC<AddDocumentDialogProps> = ({ isOpen, onClose, onFileUploaded, projectId, documents }) => {

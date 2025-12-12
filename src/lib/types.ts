@@ -67,10 +67,12 @@ export interface Task {
 export interface Documents {
     _id: string;
     projectId: string;
-    title: string;
+    name: string;
+    uploadedBy?: string;
+    uploaderId?: any;
     createdDate: string;
-    updatedBy: string;
-    docUrl: string;
+    docUrl?: string;
+    isOverwrite: boolean;
 }
 
 export interface NewClient {
