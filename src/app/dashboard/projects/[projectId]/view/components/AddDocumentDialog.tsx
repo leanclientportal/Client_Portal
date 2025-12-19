@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { X, File, UploadCloud } from 'lucide-react';
 import { uploadFile } from '@/lib/storage';
 import { addDocument, updateDocument } from '@/lib/api';
-import { Document, Documents, NewDocument } from '@/lib/types';
+import type { Documents, NewDocument, CommonApiResponse, ApiAddResponseData } from '@/lib/types'; // Updated imports
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { capitalizeFirstLetter } from '@/lib/utils';
@@ -72,47 +72,60 @@ const AddDocumentDialog: FC<AddDocumentDialogProps> = ({ isOpen, onClose, onFile
 
     setIsLoading(true);
 
-    const uploadPromises: Promise<any>[] = [];
+    const uploadPromises: Promise<void>[] = []; // Changed to Promise<void>
     let uploadedBy = activeProfile as string;
     if (activeProfile) { uploadedBy = capitalizeFirstLetter(activeProfile) };
+
     for (const fileToUpload of files) {
       const existingDoc = documents.find(doc => doc.name === fileToUpload.name);
-
-      if (existingDoc) {
-        if (!overwrite) {
-          toast({
-            title: "File already exists",
-            description: `"${fileToUpload.name}" already exists. To replace it, check the "Overwrite" box.`,
-            variant: "destructive",
-          });
-          setIsLoading(false);
-          return; // Stop the entire upload process
-        }
-
-        if (existingDoc.uploaderId._id !== activeProfileId) {
-          toast({
-            title: "Permission Denied",
-            description: `You do not have permission to overwrite "${fileToUpload.name}". It was uploaded by another user.`,
-            variant: "destructive",
-          });
-          setIsLoading(false);
-          return;
-        }
+      
+      // Check if file exists and overwrite is not selected, or if user lacks permission
+      if (existingDoc && !overwrite) {
+        toast({
+          title: "File already exists",
+          description: `"${fileToUpload.name}" already exists. To replace it, check the "Overwrite" box.`,
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return; // Stop the entire upload process
       }
+      
+      if (existingDoc && overwrite && existingDoc.uploaderId._id !== activeProfileId) {
+        toast({
+          title: "Permission Denied",
+          description: `You do not have permission to overwrite "${fileToUpload.name}". It was uploaded by another user.`,
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
       uploadPromises.push(
         (async () => {
-          const docUrl = await uploadFile('documents', projectId, fileToUpload);
-          const newDocument: NewDocument = {
+          const docUrlResponse = await uploadFile('documents', projectId, fileToUpload);
+          const newDocumentData: NewDocument = {
             name: fileToUpload.name,
-            docUrl: docUrl.downloadURL,
+            docUrl: docUrlResponse.downloadURL,
             uploadedBy: uploadedBy,
             uploaderId: activeProfileId as string,
             isOverwrite: overwrite
           };
-          await addDocument(token, projectId, newDocument);
+
+          let apiResponse: CommonApiResponse<ApiAddResponseData>;
+
+          if (existingDoc && overwrite) {
+            // If overwriting, call updateDocument
+            apiResponse = await updateDocument(token, projectId, existingDoc._id, newDocumentData);
+          } else {
+            // Otherwise, add new document
+            apiResponse = await addDocument(token, projectId, newDocumentData);
+          }
+
+          if (!apiResponse.success) {
+            throw new Error(apiResponse.message || `Failed to process document: ${fileToUpload.name}`);
+          }
         })()
       );
-
     }
 
     try {

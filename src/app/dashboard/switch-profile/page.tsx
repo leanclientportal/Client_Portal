@@ -2,18 +2,22 @@
 
 import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { getAccounts } from '@/queries/accounts';
+import { getAccounts } from '@/queries/accounts'; // Corrected import to use the query hook
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useSwitchAccount } from '@/queries/auth';
-import { Account } from '@/lib/types';
+import type { Account } from '@/lib/types';
 import { useRouter } from 'next/navigation';
-import MergeProfileModal from './components/MergeProfileModal'; // Assuming the modal component will be created here
+import MergeProfileModal from './components/MergeProfileModal';
 
 export default function SwitchProfilePage() {
   const { token, userId, activeProfileId } = useAuth();
-  const { data, isLoading } = getAccounts(token, userId);
+  
+  // Use the React Query hook correctly
+  const { data: response, isLoading } = getAccounts(token, userId);
+  const accounts = response?.data?.accounts || []; // Derived state
+
   const switchAccountMutation = useSwitchAccount();
   const router = useRouter();
 
@@ -76,30 +80,30 @@ export default function SwitchProfilePage() {
               </div>
             </div>
           ))
-          : data?.accounts.map((account) => (
+          : (accounts && accounts.length > 0) ? accounts.map((account) => (
             <div key={account.id} className="p-4 border rounded-lg shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-4">
-                    <img
-                        src={account.profileImageUrl || `https://ui-avatars.com/api/?name=${account.name.replace(/\s/g, '+')}&background=random`}
-                        alt={account.name}
-                        className="h-12 w-12 rounded-full"
-                    />
-                    <div>
-                        <div className="font-medium">{account.name}</div>
-                        <div className="text-sm text-muted-foreground">{account.email}</div>
-                        <div className="text-sm text-muted-foreground">{account.phone}</div>
-                    </div>
+                  <img
+                    src={account.profileImageUrl || `https://ui-avatars.com/api/?name=${account.name.replace(/\s/g, '+')}&background=random`}
+                    alt={account.name}
+                    className="h-12 w-12 rounded-full"
+                  />
+                  <div>
+                    <div className="font-medium">{account.name}</div>
+                    <div className="text-sm text-muted-foreground">{account.email}</div>
+                    <div className="text-sm text-muted-foreground">{account.phone}</div>
+                  </div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                    <Badge variant={account.type === 'client' ? 'secondary' : 'default' } className="capitalize">{account.type}</Badge>
-                    {account.id === activeProfileId as string ? (
-                        <Badge className="bg-green-500 text-white">Active</Badge>
-                    ) : (
-                        <Button size="sm" onClick={() => handleSwitch(account)} disabled={switchAccountMutation.isPending}>
-                            {switchAccountMutation.isPending ? 'Switching...' : 'Switch'}
-                        </Button>
-                    )}
+                  <Badge variant={account.type === 'client' ? 'secondary' : 'default'} className="capitalize">{account.type}</Badge>
+                  {account.id === activeProfileId as string ? (
+                    <Badge className="bg-green-500 text-white">Active</Badge>
+                  ) : (
+                    <Button size="sm" onClick={() => handleSwitch(account)} disabled={switchAccountMutation.isPending}>
+                      {switchAccountMutation.isPending ? 'Switching...' : 'Switch'}
+                    </Button>
+                  )}
                 </div>
               </div>
               <div className="flex justify-end gap-2 mt-4">
@@ -107,14 +111,17 @@ export default function SwitchProfilePage() {
                 <Button variant="outline" size="sm" onClick={() => handleMerge(account)}>Merge</Button>
               </div>
             </div>
-          ))}
+          )) : (
+            <div className="text-center col-span-full text-muted-foreground">No accounts found.</div>
+          )
+        }
       </div>
       {selectedAccountForMerge && (
         <MergeProfileModal
           isOpen={isMergeModalOpen}
           onClose={handleCloseModal}
           sourceAccount={selectedAccountForMerge}
-          allAccounts={data?.accounts || []}
+          allAccounts={accounts}
           currentUserId={userId as string}
           authToken={token as string}
         />

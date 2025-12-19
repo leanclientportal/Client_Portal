@@ -1,78 +1,33 @@
 'use client';
 
 import { useAuth } from "@/hooks/use-auth";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription
-} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { EmailNotificationSettings } from "./components/EmailNotificationSettings";
+import { SmtpSettings } from "./components/SmtpSettings";
+import { WhatsappNotificationSettings } from "./components/WhatsappNotificationSettings";
 
 export default function SettingsPage() {
-  const { name, email, isLoading } = useAuth();
+  const { isLoading } = useAuth();
 
   if (isLoading) {
     return <div>Loading...</div>; // Or a spinner component
   }
 
   return (
-    <Tabs defaultValue="profile">
+    <Tabs defaultValue="email-notification">
       <TabsList className="grid w-full grid-cols-3">
-        <TabsTrigger value="profile">Profile</TabsTrigger>
-        <TabsTrigger value="account">Account</TabsTrigger>
-        <TabsTrigger value="notifications">Notifications</TabsTrigger>
+        <TabsTrigger value="email-notification">Email notification</TabsTrigger>
+        <TabsTrigger value="smtp-settings">SMTP Settings</TabsTrigger>
+        <TabsTrigger value="whatsapp-notification">Whatsapp notification</TabsTrigger>
       </TabsList>
-      <TabsContent value="profile">
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile Settings</CardTitle>
-            <CardDescription>
-              Update your personal information.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" defaultValue={name || ''} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" defaultValue={email || ''} />
-            </div>
-            <Button>Save Changes</Button>
-          </CardContent>
-        </Card>
+      <TabsContent value="email-notification">
+        <EmailNotificationSettings />
       </TabsContent>
-      <TabsContent value="account">
-         <Card>
-          <CardHeader>
-            <CardTitle>Account Settings</CardTitle>
-            <CardDescription>
-              Manage your account and billing information.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p>Account settings will be available here.</p>
-          </CardContent>
-        </Card>
+      <TabsContent value="smtp-settings">
+        <SmtpSettings />
       </TabsContent>
-       <TabsContent value="notifications">
-         <Card>
-          <CardHeader>
-            <CardTitle>Notification Settings</CardTitle>
-            <CardDescription>
-              Configure how you receive notifications.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p>Notification settings will be available here.</p>
-          </CardContent>
-        </Card>
+      <TabsContent value="whatsapp-notification">
+        <WhatsappNotificationSettings />
       </TabsContent>
     </Tabs>
   );

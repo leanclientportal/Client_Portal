@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Account } from '@/lib/types';
+import type { Account, MergeProfilesPayload, MergeProfilesResponse, CommonApiResponse } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -12,8 +12,9 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { mergeProfiles } from '@/lib/api'; // Import the mergeProfiles function
-import { MergeProfilesPayload, MergeProfilesResponse } from '@/lib/types'; // Import necessary types
+import { useToast } from '@/hooks/use-toast'; // Import useToast
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 interface MergeProfileModalProps {
   isOpen: boolean;
@@ -32,6 +33,8 @@ export default function MergeProfileModal({
   currentUserId,
   authToken,
 }: MergeProfileModalProps) {
+  const { toast } = useToast(); // Initialize useToast
+  const router = useRouter();
   const mergeCandidates = allAccounts.filter(
     (account) =>
       account.type === sourceAccount.type && account.id !== sourceAccount.id
@@ -47,17 +50,21 @@ export default function MergeProfileModal({
     };
 
     try {
-      const response: MergeProfilesResponse = await mergeProfiles(currentUserId, authToken, payload);
+      const response: CommonApiResponse<MergeProfilesResponse> = await mergeProfiles(currentUserId, authToken, payload);
 
       if (response.success) {
+        toast({ title: 'Success', description: response.message || 'Profile merged successfully.' });
         console.log('Profile merge successful:', response.message);
-        // You might want to refresh the accounts list or show a success toast here
+        // You might want to refresh the accounts list or trigger a global state update
         onClose(); // Close the modal on success
+        window.location.reload();
       } else {
+        toast({ title: 'Error', description: response.message || 'Failed to merge profile.', variant: 'destructive' });
         console.error('Profile merge failed:', response.message);
         // Show an error message to the user
       }
-    } catch (error) {
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message || 'An unexpected error occurred during profile merge.', variant: 'destructive' });
       console.error('Error during profile merge:', error);
       // Handle network errors or other exceptions
       // Show an error message to the user

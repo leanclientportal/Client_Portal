@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/hooks/use-auth';
 import { addTask } from '@/lib/api';
-import type { NewTask } from '@/lib/types';
+import type { NewTask, CommonApiResponse, ApiAddResponseData } from '@/lib/types'; // Added CommonApiResponse, ApiAddResponseData
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
@@ -55,7 +55,7 @@ export default function AddTaskForm({ projectId, onTaskAdded, setOpen }: AddTask
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
     if (!userId || !token) {
-      toast({ title: "Authentication Error", description: "Authentication details are missing.", variant: "destructive" });
+      toast({ title: "Authentication Error", description: "Authentication details are missing. Please log in again.", variant: "destructive" });
       return;
     }
 
@@ -69,10 +69,14 @@ export default function AddTaskForm({ projectId, onTaskAdded, setOpen }: AddTask
     };
 
     try {
-      const response = await addTask(token, projectId, taskData);
-      toast({ title: "Success", description: response.message || "Task added successfully." });
-      onTaskAdded();
-      setOpen(false);
+      const response: CommonApiResponse<ApiAddResponseData> = await addTask(token, projectId, taskData);
+      if (response.success) {
+        toast({ title: "Success", description: response.message || "Task added successfully." });
+        onTaskAdded();
+        setOpen(false);
+      } else {
+        toast({ title: "Error", description: response.message || "Failed to add task.", variant: "destructive" });
+      }
     } catch (error: any) {
       toast({ title: "Error", description: error.message || "Failed to add task.", variant: "destructive" });
     } finally {
@@ -123,14 +127,14 @@ export default function AddTaskForm({ projectId, onTaskAdded, setOpen }: AddTask
                       initialFocus
                     />
                     <div className="p-2 border-t border-border">
-                        <Button
-                            onClick={() => field.onChange(new Date())}
-                            variant="outline"
-                            size="sm"
-                            className="w-full"
-                        >
-                            Now
-                        </Button>
+                      <Button
+                        onClick={() => field.onChange(new Date())}
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                      >
+                        Now
+                      </Button>
                     </div>
                   </PopoverContent>
                 </Popover>

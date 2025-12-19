@@ -3,48 +3,59 @@
 import { useEffect, useState, use } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { getClient } from '@/lib/api';
-import type { Client } from '@/lib/types';
+import type { Client, CommonApiResponse } from '@/lib/types';
 import EditClientForm from "./components/EditClientForm";
 
-function EditClientPageContent({ params }: { params: Promise<{ clientId: string }> }) {
-  const { clientId } = use(params);
+// This component now receives the resolved clientId directly
+function EditClientPageContent({ clientId }: { clientId: string }) {
   const { activeProfileId: tenantId, token } = useAuth();
   const [client, setClient] = useState<Client | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (token && tenantId) {
-      getClient(token, tenantId, clientId)
-        .then(data => {
-          setClient(data);
-          setLoading(false);
-        })
-        .catch(err => {
-          setError(err.message || 'Failed to fetch client data.');
-          setLoading(false);
-        });
+    if (!token || !tenantId || !clientId) {
+      setLoading(false);
+      return;
     }
-  }, [token, tenantId, clientId]);
+
+    setLoading(true);
+    getClient(token, tenantId, clientId)
+      .then((response: CommonApiResponse<Client>) => {
+        if (response.success && response.data) {
+          setClient(response.data); // Directly assign response.data
+          setError(null);
+        } else {
+          setError(response.message || 'Failed to fetch client data.');
+          setClient(null);
+        }
+      })
+      .catch((err: any) => {
+        setError(err.message || 'Failed to fetch client data.');
+        setClient(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [token, tenantId, clientId]); // clientId is now a direct dependency
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div>Loading client details...</div>;
   }
 
   if (error) {
-    return <div>Error: {error}</div>;
+    return <div className="text-red-500 text-center">Error: {error}</div>;
   }
 
-  return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">Edit Client</h1>
-      </div>
-      {client && <EditClientForm client={client} />}
-    </div>
-  );
+  if (!client) {
+    return <div className="text-center text-muted-foreground">Client not found.</div>;
+  }
+
+  return <EditClientForm client={client} />;
 }
 
-export default function EditClientPage({ params }: { params: { clientId: string } }) {
-  return <EditClientPageContent params={Promise.resolve(params)} />;
+// The top-level page component resolves the promise and passes the string clientId
+export default function EditClientPage({ params }: { params: Promise<{ clientId: string }> }) {
+  const resolvedParams = use(params); // Resolve the promise here
+  return <EditClientPageContent clientId={resolvedParams.clientId} />; // Pass the resolved clientId
 }

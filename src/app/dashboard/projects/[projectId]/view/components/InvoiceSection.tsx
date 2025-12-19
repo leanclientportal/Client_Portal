@@ -34,11 +34,11 @@ import EditInvoiceDialog from './EditInvoiceDialog';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { deleteInvoice, markInvoiceAsPaid } from '@/lib/api';
-import type { Invoice } from '@/lib/types';
+import type { Invoice, CommonApiResponse, ApiAddResponseData } from '@/lib/types'; // Added CommonApiResponse, ApiAddResponseData
 import { capitalizeFirstLetter, cn } from '@/lib/utils';
-import { ActionButton } from './ActionButton'; // Assuming ActionButton is also extracted
-import { isPast, isToday, isFuture, addDays, format } from 'date-fns'; // Import date-fns utilities
-import { Badge } from '@/components/ui/badge'; // Import Badge component
+import { ActionButton } from './ActionButton';
+import { isPast, isToday, isFuture, addDays, format } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
 
 interface InvoiceSectionProps {
   projectId: string;
@@ -59,8 +59,8 @@ const InvoiceSection: FC<InvoiceSectionProps> = ({ projectId, projectInvoices, i
   const [invoiceToPaid, setInvoiceToPaid] = useState<Invoice | null>(null);
   const [isPaidInvoice, setIsPaidInvoice] = useState(false);
 
-  const [invoiceSortKey, setInvoiceSortKey] = useState<keyof Invoice>('invoiceDate'); // Changed default sort key to 'invoiceDate'
-  const [invoiceSortOrder, setInvoiceSortOrder] = useState<'asc' | 'desc'>('desc'); // Changed default sort order to 'desc'
+  const [invoiceSortKey, setInvoiceSortKey] = useState<keyof Invoice>('invoiceDate');
+  const [invoiceSortOrder, setInvoiceSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const handleDownload = (downloadUrl: string, fileName: string) => {
     const a = document.createElement('a');
@@ -116,12 +116,16 @@ const InvoiceSection: FC<InvoiceSectionProps> = ({ projectId, projectInvoices, i
     if (!invoiceToDelete || !token) return;
     setIsDeletingInvoice(true);
     try {
-      const response = await deleteInvoice(token, projectId, invoiceToDelete._id);
-      toast({ title: "Success", description: response.message || "Invoice deleted successfully" });
-      fetchInvoices();
-      setInvoiceToDelete(null);
+      const response: CommonApiResponse<ApiAddResponseData> = await deleteInvoice(token, projectId, invoiceToDelete._id);
+      if (response.success) {
+        toast({ title: "Success", description: response.message || "Invoice deleted successfully" });
+        fetchInvoices();
+        setInvoiceToDelete(null);
+      } else {
+        toast({ title: "Error", description: response.message || "Failed to delete invoice.", variant: "destructive" });
+      }
     } catch (error: any) {
-      toast({ title: "Error", description: "Failed to delete invoice.", variant: "destructive" });
+      toast({ title: "Error", description: error.message || "Failed to delete invoice.", variant: "destructive" });
     } finally {
       setIsDeletingInvoice(false);
     }
@@ -141,12 +145,16 @@ const InvoiceSection: FC<InvoiceSectionProps> = ({ projectId, projectInvoices, i
     if (!invoiceToPaid || !token) return;
     setIsPaidInvoice(true);
     try {
-      const response = await markInvoiceAsPaid(token, projectId, invoiceToPaid._id);
-      toast({ title: "Success", description: response.message || "Invoice paid successfully" });
-      fetchInvoices();
-      setInvoiceToPaid(null);
+      const response: CommonApiResponse<ApiAddResponseData> = await markInvoiceAsPaid(token, projectId, invoiceToPaid._id);
+      if (response.success) {
+        toast({ title: "Success", description: response.message || "Invoice marked as paid successfully" });
+        fetchInvoices();
+        setInvoiceToPaid(null);
+      } else {
+        toast({ title: "Error", description: response.message || "Failed to mark invoice as paid.", variant: "destructive" });
+      }
     } catch (error: any) {
-      toast({ title: "Error", description: "Failed to paid invoice.", variant: "destructive" });
+      toast({ title: "Error", description: error.message || "Failed to mark invoice as paid.", variant: "destructive" });
     } finally {
       setIsPaidInvoice(false);
     }

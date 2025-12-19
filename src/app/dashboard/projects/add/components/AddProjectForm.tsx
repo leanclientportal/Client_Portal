@@ -15,13 +15,14 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/use-auth';
 import { getClients, getTenantsByClient, addProject } from '@/lib/api';
 import { Save } from 'lucide-react';
+import type { GetClientsResponse, SelectListItem, CommonApiResponse, ApiAddResponseData, NewProject } from '@/lib/types';
 
 const formSchema = z.object({
   ownerId: z.string().min(1, { message: "Owner is required." }),
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   description: z.string().min(10, { message: "Description must be at least 10 characters." }),
   status: z.enum(['active', 'on-hold', 'completed']),
-  isDeleted: z.boolean(),
+  isDeleted: z.boolean().optional(), // Made optional based on NewProject type
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -54,14 +55,25 @@ export default function AddProjectForm({ onBack }: AddProjectFormProps) {
     const fetchOwners = async () => {
       try {
         if (activeProfile === 'client') {
-          const tenants = await getTenantsByClient(activeProfileId, token);
-          setOwners(tenants.map(tenant => ({ id: tenant._id, name: tenant.name })));
+          const response: CommonApiResponse<{ count: number, data: SelectListItem[] }> = await getTenantsByClient(activeProfileId, token);
+          if (response.success && response.data) {
+            setOwners(response.data.data.map(tenant => ({ id: tenant.value, name: tenant.label })));
+          } else {
+            toast({ title: "Error", description: response.message || "Failed to fetch tenants.", variant: "destructive" });
+            setOwners([]);
+          }
         } else {
-          const { clients } = await getClients(activeProfileId, token, 1, 100, null);
-          setOwners(clients.map(client => ({ id: client._id, name: client.name })));
+          const response: CommonApiResponse<GetClientsResponse> = await getClients(activeProfileId, token, 1, 100, undefined);
+          if (response.success && response.data) {
+            setOwners(response.data.clients.map(client => ({ id: client._id, name: client.name })));
+          } else {
+            toast({ title: "Error", description: response.message || "Failed to fetch clients.", variant: "destructive" });
+            setOwners([]);
+          }
         }
-      } catch (error) {
-        toast({ title: "Error", description: "Failed to fetch owners.", variant: "destructive" });
+      } catch (error: any) {
+        toast({ title: "Error", description: error.message || "Failed to fetch owners.", variant: "destructive" });
+        setOwners([]);
       }
     };
 
@@ -80,12 +92,19 @@ export default function AddProjectForm({ onBack }: AddProjectFormProps) {
     const clientId = activeProfile === 'client' ? activeProfileId : data.ownerId;
     const { ownerId, ...projectData } = data;
 
+    const newProjectPayload: NewProject = { ...projectData, clientId };
+
     try {
-      await addProject(tenantId, token, clientId, { ...projectData, clientId });
-      toast({ title: "Success", description: "Project added successfully." });
-      router.push('/dashboard/projects');
+      const response: CommonApiResponse<ApiAddResponseData> = await addProject(tenantId, token, clientId, newProjectPayload);
+      
+      if (response.success) {
+        toast({ title: "Success", description: response.message || "Project added successfully." });
+        router.push('/dashboard/projects');
+      } else {
+        toast({ title: "Error", description: response.message || "Failed to add project.", variant: "destructive" });
+      }
     } catch (error: any) {
-      toast({ title: "Error", description: error.message || "Failed to add project.", variant: "destructive" });
+      toast({ title: "Error", description: error.message || "An unexpected error occurred.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }

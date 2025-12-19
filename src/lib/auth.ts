@@ -76,7 +76,7 @@ export async function sendOtp(email: string, type: 'registration' | 'login'): Pr
     }
 }
 
-export async function verifyOtp(email: string, otp: string, type: 'registration' | 'login', options?: { name?: string; phone?: string; activeProfile?: string }): Promise<VerifyOtpResponse> {
+export async function verifyOtp(email: string, otp: string, type: 'registration' | 'login', options?: { name?: string; phone?: string; activeProfile?: string; activeProfileImage?: string; profileName?: string }): Promise<VerifyOtpResponse> {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (!baseUrl) {
         throw new Error("API base URL is not configured.");

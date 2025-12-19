@@ -14,9 +14,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getClients, deleteClient } from '@/lib/api';
+import { startConversation } from '@/lib/api/chat';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import type { Client, Pagination } from '@/lib/types';
+import type { Client, Pagination, CommonApiResponse, GetClientsResponse } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   AlertDialog,
@@ -28,10 +29,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Edit, Eye, ArrowUpDown, Trash2 } from 'lucide-react';
+import { Edit, Eye, ArrowUpDown, Trash2, MessageSquare } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { useChat } from '@/providers/chat-provider';
 
 interface ActionButtonProps {
   onClick: (e: React.MouseEvent) => void;
@@ -80,28 +82,35 @@ export default function ClientTable() {
   const [deleteClientId, setDeleteClientId] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const { openChat } = useChat();
 
-  const fetchClients = async () => {
+  const fetchClients = async (searchText: string = "") => {
     if (!tenantId || !token) return;
     try {
       setLoading(true);
-      console.log(searchTerm.toLowerCase());
-      let searchtext;
-      if (searchTerm)
-        searchtext = searchTerm.toLowerCase();
 
-      const { clients: fetchedClients, pagination: newPagination } = await getClients(
+      // Updated to use CommonApiResponse
+      const response: CommonApiResponse<GetClientsResponse> = await getClients(
         tenantId,
         token,
         currentPage,
         CLIENTS_PER_PAGE,
-        searchtext
+        searchText
       );
-      setClients(fetchedClients);
-      setPagination(newPagination);
-      setError(null);
+
+      if (response.success) {
+        setClients(response.data?.clients || []); // Access clients from response.data
+        setPagination(response.pagination || null); // Access pagination from response
+        setError(null);
+      } else {
+        setError(response.message || 'Failed to fetch clients');
+        setClients([]);
+        setPagination(null);
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to fetch clients');
+      setClients([]);
+      setPagination(null);
     } finally {
       setLoading(false);
     }
@@ -109,31 +118,47 @@ export default function ClientTable() {
 
   useEffect(() => {
     fetchClients();
-  }, [tenantId, token, currentPage]);
+  }, [tenantId, token, currentPage]); // Added searchTerm to dependencies to trigger refetch on search
 
   const handleDeleteClient = async () => {
     if (!tenantId || !token || !deleteClientId) return;
 
     try {
-      await deleteClient(tenantId, deleteClientId, token);
-      toast({ title: 'Client deleted successfully' });
-      fetchClients(); // Refetch clients after deletion
-    } catch (error) {
-      toast({ title: 'Error deleting client', variant: 'destructive' });
+      // Updated to use CommonApiResponse
+      const response: CommonApiResponse<any> = await deleteClient(tenantId, token, deleteClientId);
+
+      if (response.success) {
+        toast({ title: response.message || 'Client deleted successfully' });
+        fetchClients(); // Refetch clients after deletion
+      } else {
+        toast({ title: response.message || 'Error deleting client', variant: 'destructive' });
+      }
+    } catch (error: any) {
+      toast({ title: error.message || 'Error deleting client', variant: 'destructive' });
     } finally {
       setIsDeleteDialogOpen(false);
       setDeleteClientId(null);
     }
   };
 
-  const filteredClients = async (value: any) => {
-    setSearchTerm(value)
-    if (!value)
-      fetchClients();
-    if (value && value.length > 2)
-      fetchClients();
-    else
+  const handleStartChat = async (client: Client) => {
+    // Open the chat popup directly
+    openChat({
+        id: client._id,
+        name: client.name,
+        image: client.profileImageUrl,
+        type: 'client' // Assuming table lists clients
+    });
+  };
+
+  const filteredClients = (value: string) => {
+    setSearchTerm(value);
+    if (!value || value.length > 2) {
+      setCurrentPage(1); // Reset to first page on new search
+      fetchClients(value);
+    } else if (value.length > 0 && value.length <= 2) {
       toast({ title: 'Please enter at least 3 characters to search.' });
+    }
   };
 
   const sortedClients = useMemo(() => {
@@ -235,9 +260,7 @@ export default function ClientTable() {
         <Input
           placeholder="Search by name, email, or phone..."
           value={searchTerm}
-          onChange={(e) => handleActionClick(e, () => {
-            filteredClients(e.target.value);
-          })}
+          onChange={(e) => filteredClients(e.target.value)}
           className="max-w-sm"
         />
       </div>
@@ -285,6 +308,13 @@ export default function ClientTable() {
                     className="inline-flex justify-end items-center gap-1 rounded-full bg-muted p-1"
                     onClick={(e) => e.stopPropagation()}
                   >
+                     <ActionButton
+                      onClick={(e) => handleActionClick(e, () => handleStartChat(client))}
+                      label="Chat"
+                      className="text-green-500 hover:bg-green-500"
+                    >
+                      <MessageSquare className="h-[22px] w-[22px]" />
+                    </ActionButton>
                     <ActionButton
                       onClick={(e) => handleActionClick(e, () => router.push(`/dashboard/projects?clientId=${client._id}`))}
                       label="Projects"

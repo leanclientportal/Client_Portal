@@ -1,7 +1,7 @@
 'use client';
 
 import { FC, useState, MouseEvent, useCallback, useMemo, useEffect } from 'react';
-import { Project, SelectListItem, Task, ProjectFilterParams } from '@/lib/types';
+import { Project, SelectListItem, Task, ProjectFilterParams, CommonApiResponse, ApiAddResponseData, GetProjectsResponse, GetTasksResponse } from '@/lib/types';
 import { deleteProject, getTasks, deleteTask, getClientsSelectList, getTenantsByClient, getProjects } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
@@ -101,11 +101,15 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeP
       if (token && activeProfileId) {
         try {
           if (activeProfile === 'client') {
-            const tenantResponse = await getTenantsByClient(activeProfileId, token);
-            setTenants(tenantResponse);
+            const response = await getTenantsByClient(activeProfileId, token);
+            if (response.success && response.data) {
+              setTenants(response?.data);
+            }
           } else {
-            const clientResponse = await getClientsSelectList(activeProfileId, token);
-            setClients(clientResponse);
+            const response = await getClientsSelectList(activeProfileId, token);
+            if (response.success && response.data) {
+              setClients(response?.data);
+            }
           }
         } catch (error) {
           toast({ title: "Error", description: "Failed to fetch clients or tenants.", variant: "destructive" });
@@ -130,9 +134,13 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeP
         dateTo: dateInput?.to ? dateInput.to.toISOString() : undefined,
       };
 
-      const { projects: filteredProjects } = await getProjects(activeProfile, token, activeProfileId, filters);
-      setDisplayProjects(filteredProjects);
-      toast({ title: "Success", description: "Projects filtered successfully." });
+      const response: CommonApiResponse<GetProjectsResponse> = await getProjects(activeProfile, token, activeProfileId, filters);
+      if (response.success && response.data) {
+        setDisplayProjects(response?.data?.projects);
+        toast({ title: "Success", description: response.message || "Projects filtered successfully." });
+      } else {
+        toast({ title: "Error", description: response.message || "Failed to Projects filtered.", variant: "destructive" });
+      }
 
     } catch (error: any) {
       toast({ title: "Filter Error", description: error.message || "An unexpected error occurred.", variant: "destructive" });
@@ -147,9 +155,13 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeP
     setDateInput(undefined);
     setIsFiltering(true);
     try {
-      const { projects: allProjects } = await getProjects(activeProfile, token!, activeProfileId!);
-      setDisplayProjects(allProjects);
-      toast({ title: "Success", description: "Filters cleared successfully." });
+      const response: CommonApiResponse<GetProjectsResponse> = await getProjects(activeProfile, token!, activeProfileId!);
+      if (response.success && response.data) {
+        setDisplayProjects(response?.data?.projects);
+        toast({ title: "Success", description: response.message || "Projects filtered successfully." });
+      } else {
+        toast({ title: "Error", description: response.message || "Failed to Projects filtered.", variant: "destructive" });
+      }
     } catch (error: any) {
       toast({ title: "Error", description: error.message || "Failed to clear filters and fetch all projects.", variant: "destructive" });
     } finally {
@@ -179,6 +191,9 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeP
   }, []);
 
   const filteredAndSortedProjects = useMemo(() => {
+    if (displayProjects == undefined || displayProjects.length === 0) return [];
+
+    // Create a copy of the displayProjects array to avoid modifying the)
     const sorted = [...displayProjects];
 
     sorted.sort((a, b) => {
@@ -228,8 +243,13 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeP
       return;
     }
     try {
-      const { tasks: fetchedTasks } = await getTasks(token, project?._id, activeProfile);
-      setTasks(fetchedTasks);
+      const response: CommonApiResponse<GetTasksResponse> = await getTasks(token, project?._id, activeProfile);
+      if (response.success && response.data) {
+        setTasks(response?.data?.tasks);
+        toast({ title: "Success", description: response.message || "tasks fetch successfully." });
+      } else {
+        toast({ title: "Error", description: response.message || "Failed to fetch tasks.", variant: "destructive" });
+      }
     } catch (error: any) {
       toast({ title: "Error", description: error.message || "Failed to fetch tasks.", variant: "destructive" });
     } finally {
@@ -336,7 +356,7 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeP
             <SelectItem value="all" key="all">All</SelectItem>
 
             {activeProfile === 'client'
-              ? tenants.map((tenant, index) => (
+              ? <> {tenants.length > 0 && tenants.map((tenant, index) => (
                 <SelectItem
                   key={tenant?.value ?? `tenant-${index}`}
                   value={tenant?.value}
@@ -344,14 +364,19 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeP
                   {tenant?.label}
                 </SelectItem>
               ))
-              : clients.map((client, index) => (
-                <SelectItem
-                  key={client?.value ?? `client-${index}`}
-                  value={client?.value}
-                >
-                  {client?.label}
-                </SelectItem>
-              ))
+              }
+              </>
+              : <>
+                {clients.length > 0 && clients.map((client, index) => (
+                  <SelectItem
+                    key={client?.value ?? `client-${index}`}
+                    value={client?.value}
+                  >
+                    {client?.label}
+                  </SelectItem>
+                ))
+                }
+              </>
             }
           </SelectContent>
 

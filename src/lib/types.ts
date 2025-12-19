@@ -1,3 +1,4 @@
+// src/lib/types.ts
 
 export interface Client {
     _id: string;
@@ -13,7 +14,7 @@ export interface Client {
     isActive: boolean;
     lastActivityDate?: string;
     invitationToken?: string;
-    totalProjects: number; // Added totalProjects field
+    totalProjects: number;
 }
 
 export interface SelectListItem {
@@ -21,14 +22,12 @@ export interface SelectListItem {
     label: string;
 }
 
-export interface APIResponse<T> {
-    data: T;
-}
-
-export interface PaginatedResponse<T> {
-    items: T[];
-    totalPages: number;
-    currentPage: number;
+export interface CommonApiResponse<T = undefined> {
+    success: boolean;
+    code: number;
+    message: string;
+    data?: T;
+    pagination?: Pagination;
 }
 
 export interface ProjectFile {
@@ -116,15 +115,15 @@ export interface NewDocument {
 }
 
 export interface NewInvoice {
-    invoiceUrl?: string; // Made optional
+    invoiceUrl?: string;
     title: string;
     description?: string;
     status: string;
     amount: number;
     dueDate: string;
-    invoiceDate: string; // Added new field
-    paidDate?: string; // Added new field, optional
-    paymentLink?: string; // Made optional
+    invoiceDate: string;
+    paidDate?: string;
+    paymentLink?: string;
 }
 
 
@@ -145,7 +144,6 @@ export interface AuthState {
 
 export interface GetClientsResponse {
     clients: Client[];
-    pagination: Pagination;
 }
 
 export interface SelectList {
@@ -154,20 +152,16 @@ export interface SelectList {
 
 export interface GetProjectsResponse {
     projects: Project[];
-    pagination: Pagination;
 }
 export interface GetTasksResponse {
     tasks: Task[];
-    pagination: Pagination;
 }
 
 export interface GetDocumentsResponse {
     documents: Documents[];
-    pagination: Pagination;
 }
 export interface GetInvoicesResponse {
-    invoice: Invoice[];
-    pagination: Pagination;
+    invoices: Invoice[];
 }
 
 export interface Pagination {
@@ -202,25 +196,20 @@ export interface Tenant {
     isActive: boolean;
 }
 
-export interface AuthResponse {
-    success: boolean;
-    message: string;
-    data: {
-        token: string;
-        userId: string;
-    };
-    status: number;
-}
-export interface LoginResponse {
-    success: boolean;
-    message: string;
+export interface AuthResponseData {
     token: string;
     userId: string;
-    activeProfile: string;
-    activeProfileId: string;
-    activeProfileImage: string | null;
-    profileName: string;
+    activeProfile?: string;
+    activeProfileId?: string;
+    activeProfileImage?: string | null;
+    profileName?: string;
 }
+
+export interface ApiAddResponseData {
+    clientId?: string;
+    message?: string;
+}
+
 
 export interface UpdateUserPayload {
     name?: string;
@@ -251,7 +240,7 @@ export interface SwitchAccountPayload {
     masterId: string;
 }
 
-export interface SwitchAccountResponse {
+export interface SwitchAccountResponseData {
     token: string;
     userId: string;
     activeProfile: string;
@@ -260,10 +249,12 @@ export interface SwitchAccountResponse {
     profileName: string;
 }
 
-export interface VerifyOtpResponse {
-    status: number;
+export interface VerifyInvitationResponseData {
     success: boolean;
     message: string;
+}
+
+export interface VerifyOtpResponseData {
     token: string;
     userId: string;
     activeProfile: string;
@@ -271,6 +262,7 @@ export interface VerifyOtpResponse {
     activeProfileImage: string | null;
     profileName: string;
 }
+
 export interface NewProfile {
     name: string;
     email: string;
@@ -282,8 +274,6 @@ export interface NewProfile {
 }
 
 export interface CreateProfileResponse {
-    success: boolean;
-    message: string;
 }
 
 export interface MergeProfilesPayload {
@@ -293,8 +283,6 @@ export interface MergeProfilesPayload {
 }
 
 export interface MergeProfilesResponse {
-    success: boolean;
-    message: string;
 }
 
 export interface ProjectDocument {
@@ -325,4 +313,54 @@ export interface ProjectFilterParams {
     selectedClient?: string;
     dateFrom?: string;
     dateTo?: string;
+}
+
+export interface Template {
+    _id: string;
+    tenantId: string;
+    name: string;
+    subject: string;
+    body: string;
+    templateTypeName: string;
+    templateId: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface NewTemplate {
+    name: string;
+    subject: string;
+    body: string;
+    templateId: number;
+}
+
+export interface GetTemplatesResponse {
+    templates: Template[];
+    pagination?: Pagination;
+}
+
+export interface EmailTemplateType {
+    code: number;
+    displayName: string;
+}
+
+export interface ChatMessage {
+    _id: string;
+    senderId: string;
+    senderType: 'client' | 'tenant';
+    receiverId: string;
+    receiverType: 'client' | 'tenant';
+    message: string;
+    read: boolean;
+    createdAt: string;
+}
+
+export interface ChatConversation {
+    _id: string;
+    name: string;
+    profileImageUrl?: string;
+    lastMessage?: string;
+    lastMessageDate?: string;
+    unreadCount: number;
+    type: 'client' | 'tenant';
 }

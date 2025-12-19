@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -13,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/hooks/use-auth';
 import { updateTask } from '@/lib/api';
-import type { NewTask, Task } from '@/lib/types';
+import type { NewTask, Task, CommonApiResponse, ApiAddResponseData } from '@/lib/types'; // Added CommonApiResponse, ApiAddResponseData
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
@@ -69,10 +68,14 @@ export default function EditTaskForm({ projectId, task, onTaskUpdated, setOpen }
     };
 
     try {
-      await updateTask(token, projectId, task._id, taskData);
-      toast({ title: "Success", description: "Task updated successfully." });
-      onTaskUpdated();
-      setOpen(false);
+      const response: CommonApiResponse<ApiAddResponseData> = await updateTask(token, projectId, task._id, taskData);
+      if (response.success) {
+        toast({ title: "Success", description: response.message || "Task updated successfully." });
+        onTaskUpdated();
+        setOpen(false);
+      } else {
+        toast({ title: "Error", description: response.message || "Failed to update task.", variant: "destructive" });
+      }
     } catch (error: any) {
       toast({ title: "Error", description: error.message || "Failed to update task.", variant: "destructive" });
     } finally {

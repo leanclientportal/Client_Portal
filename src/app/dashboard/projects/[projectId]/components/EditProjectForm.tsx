@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/use-auth';
 import { getProject, updateProject } from '@/lib/api';
 import { Save } from 'lucide-react';
+import type { Project, CommonApiResponse, ApiAddResponseData } from '@/lib/types'; // Import CommonApiResponse
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -52,26 +53,35 @@ export default function EditProjectForm({ clientId, projectId, onBack }: EditPro
 
     const fetchProjectData = async () => {
       try {
-        const project = await getProject(token, projectId);
-        if (project.isDeleted) {
-          setIsDeleted(true);
-        } else {
-          form.reset({
-            name: project.name,
-            description: project.description,
-            status: project.status,
-          });
-          if (project.clientId && project.clientId?.name) {
-            setClientName(project.clientId?.name);
+        // Expect CommonApiResponse<Project>
+        const response: CommonApiResponse<Project> = await getProject(token, projectId);
+        if (response.success && response.data) {
+          const project = response.data;
+          if (project.isDeleted) {
+            setIsDeleted(true);
+          } else {
+            form.reset({
+              name: project.name,
+              description: project.description,
+              status: project.status,
+            });
+            if (project.clientId && project.clientId?.name) {
+              setClientName(project.clientId?.name);
+            }
           }
+        } else {
+          toast({ title: "Error", description: response.message || "Failed to fetch project data.", variant: "destructive" });
         }
       } catch (error: any) {
-        toast({ title: "Error", description: "Failed to fetch project data.", variant: "destructive" });
+        toast({ title: "Error", description: error.message || "Failed to fetch project data.", variant: "destructive" });
+      } finally {
+        // Removed setLoading(false) here, as it's better to control loading at component level
+        // or ensure it's handled by the parent if this component is part of a larger loading state
       }
     };
 
     fetchProjectData();
-  }, [token, projectId, form, toast]);
+  }, [token, projectId, form, toast]); // Added form and toast to dependencies
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
     if (!token) {
@@ -85,9 +95,14 @@ export default function EditProjectForm({ clientId, projectId, onBack }: EditPro
 
   const saveProject = async (data: FormValues) => {
     try {
-        await updateProject(token!, projectId, data);
-        toast({ title: "Success", description: "Project updated successfully." });
-        router.push(`/dashboard/projects/${projectId}`);
+        // Expect CommonApiResponse<ApiAddResponseData>
+        const response: CommonApiResponse<ApiAddResponseData> = await updateProject(token!, projectId, data);
+        if (response.success) {
+          toast({ title: "Success", description: response.message || "Project updated successfully." });
+          router.push(`/dashboard/projects/${projectId}`);
+        } else {
+          toast({ title: "Error", description: response.message || "Failed to update project.", variant: "destructive" });
+        }
     } catch (error: any) {
         toast({ title: "Error", description: error.message || "Failed to update project.", variant: "destructive" });
     } finally {

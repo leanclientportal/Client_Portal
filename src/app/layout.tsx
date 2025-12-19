@@ -4,6 +4,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/ui/theme-provider';
 import { ModeToggle } from '@/components/ui/theme-toggle';
 import QueryProvider from '@/providers/query-provider';
+import { ChatProvider } from '@/providers/chat-provider';
+import { ChatPopup } from '@/components/ChatPopup';
 
 export const metadata: Metadata = {
   title: 'ClientVerse',
@@ -37,11 +39,14 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <QueryProvider>
-            <div className="absolute top-4 right-4">
-              <ModeToggle />
-            </div>
-            {children}
-            <Toaster />
+            <ChatProvider>
+              <div className="absolute top-4 right-4">
+                <ModeToggle />
+              </div>
+              {children}
+              <ChatPopup />
+              <Toaster />
+            </ChatProvider>
           </QueryProvider>
         </ThemeProvider>
       </body>

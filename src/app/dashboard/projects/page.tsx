@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getProjects } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
-import type { Project, ProjectFilterParams } from '@/lib/types';
+import type { Project, ProjectFilterParams, CommonApiResponse, GetProjectsResponse } from '@/lib/types';
 import ProjectList from './components/ProjectList';
 import { useSearchParams } from 'next/navigation';
 
@@ -30,11 +30,18 @@ export default function ProjectsPage() {
           filters.selectedClient = initialClientId;
         }
 
-        const { projects: fetchedProjects } = await getProjects(activeProfile as string, token, activeProfileId, filters);
-        setProjects(fetchedProjects);
-        setError(null);
+        const response: CommonApiResponse<GetProjectsResponse> = await getProjects(activeProfile as string, token, activeProfileId, filters);
+        
+        if (response.success && response.data) {
+          setProjects(response.data.projects);
+          setError(null);
+        } else {
+          setError(response.message || 'Failed to fetch projects');
+          setProjects([]);
+        }
       } catch (err: any) {
         setError(err.message || 'Failed to fetch projects');
+        setProjects([]);
       } finally {
         setLoading(false);
       }

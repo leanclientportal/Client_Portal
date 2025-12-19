@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from '@/hooks/use-auth';
 import { getProject, getTasks, getDocuments, getInvoices } from '@/lib/api';
-import type { Project, Task, Invoice, Documents } from '@/lib/types';
+import type { Project, Task, Invoice, Documents, CommonApiResponse, GetTasksResponse, GetDocumentsResponse, GetInvoicesResponse } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react'; // Only keeping ArrowLeft for general navigation
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -31,7 +31,7 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
   const { activeProfile, activeProfileId, token } = useAuth();
   const [project, setProject] = useState<Project | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [projectFiles, setProjectFiles] = useState<Documents[]>([]); // Changed to Documents[]
+  const [projectFiles, setProjectFiles] = useState<Documents[]>([]);
   const [projectInvoices, setProjectInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
@@ -46,10 +46,16 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
     }
     setIsLoading(true);
     try {
-      const projectData = await getProject(token, projectId);
-      setProject(projectData);
+      const response: CommonApiResponse<Project> = await getProject(token, projectId);
+      if (response.success && response.data) {
+        setProject(response.data);
+      } else {
+        toast({ title: "Error", description: response.message || "Failed to fetch project details.", variant: "destructive" });
+        setProject(null);
+      }
     } catch (error: any) {
-      toast({ title: "Error", description: "Failed to fetch project details.", variant: "destructive" });
+      toast({ title: "Error", description: error.message || "Failed to fetch project details.", variant: "destructive" });
+      setProject(null);
     } finally {
       setIsLoading(false);
     }
@@ -61,14 +67,20 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
     }
     setIsLoadingTasks(true);
     try {
-      const tasksData = await getTasks(token, projectId, activeProfile);
-      setTasks(tasksData.tasks);
+      const response: CommonApiResponse<GetTasksResponse> = await getTasks(token, projectId, activeProfile);
+      if (response.success && response.data) {
+        setTasks(response.data.tasks);
+      } else {
+        toast({ title: "Error", description: response.message || "Failed to fetch tasks.", variant: "destructive" });
+        setTasks([]);
+      }
     } catch (error: any) {
-      toast({ title: "Error", description: "Failed to fetch tasks.", variant: "destructive" });
+      toast({ title: "Error", description: error.message || "Failed to fetch tasks.", variant: "destructive" });
+      setTasks([]);
     } finally {
       setIsLoadingTasks(false);
     }
-  }, [token, projectId, activeProfile, toast]); // Added activeProfile to dependencies
+  }, [token, projectId, activeProfile, toast]);
 
   const fetchFiles = useCallback(async () => {
     if (!token || !projectId) {
@@ -76,10 +88,16 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
     }
     setIsLoadingFiles(true);
     try {
-      const filesData = await getDocuments(token, projectId);
-      setProjectFiles(filesData.documents); // Corrected: access the 'documents' property
+      const response: CommonApiResponse<GetDocumentsResponse> = await getDocuments(token, projectId);
+      if (response.success && response.data) {
+        setProjectFiles(response.data.documents);
+      } else {
+        toast({ title: "Error", description: response.message || "Failed to fetch files.", variant: "destructive" });
+        setProjectFiles([]);
+      }
     } catch (error: any) {
-      toast({ title: "Error", description: "Failed to fetch files.", variant: "destructive" });
+      toast({ title: "Error", description: error.message || "Failed to fetch files.", variant: "destructive" });
+      setProjectFiles([]);
     } finally {
       setIsLoadingFiles(false);
     }
@@ -91,10 +109,16 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
     }
     setIsLoadingInvoices(true);
     try {
-      const invoicesData = await getInvoices(token, projectId);
-      setProjectInvoices(invoicesData.invoice); // Corrected: access the 'invoice' property
+      const response: CommonApiResponse<GetInvoicesResponse> = await getInvoices(token, projectId);
+      if (response.success && response.data) {
+        setProjectInvoices(response.data.invoices);
+      } else {
+        toast({ title: "Error", description: response.message || "Failed to fetch invoices.", variant: "destructive" });
+        setProjectInvoices([]);
+      }
     } catch (error: any) {
-      toast({ title: "Error", description: "Failed to fetch invoices.", variant: "destructive" });
+      toast({ title: "Error", description: error.message || "Failed to fetch invoices.", variant: "destructive" });
+      setProjectInvoices([]);
     } finally {
       setIsLoadingInvoices(false);
     }
@@ -105,7 +129,6 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
   }, [fetchProject]);
 
   useEffect(() => {
-    // Only fetch data for the active tab to avoid unnecessary API calls
     if (activeTab === 'tasks') {
       fetchTasks();
     } else if (activeTab === 'files') {
@@ -113,9 +136,7 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
     } else if (activeTab === 'invoices') {
       fetchInvoices();
     }
-    // No need to fetch for 'details' as project data is always fetched
   }, [activeTab, fetchTasks, fetchFiles, fetchInvoices]);
-
 
   if (isLoading) {
     return (

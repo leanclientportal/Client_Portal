@@ -34,7 +34,7 @@ import EditTaskForm from './EditTaskForm';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { deleteTask } from '@/lib/api';
-import type { Task } from '@/lib/types';
+import type { Task, CommonApiResponse, ApiAddResponseData } from '@/lib/types'; // Added CommonApiResponse, ApiAddResponseData
 import { capitalizeFirstLetter, cn } from '@/lib/utils';
 import { ActionButton } from './ActionButton'; // Assuming ActionButton is also extracted
 
@@ -120,12 +120,16 @@ const TaskSection: FC<TaskSectionProps> = ({ projectId, tasks, isLoadingTasks, f
     if (!taskToDelete || !token) return;
     setIsDeletingTask(true);
     try {
-      const response = await deleteTask(token, projectId, taskToDelete._id);
-      toast({ title: "Success", description: response.message || "Task deleted successfully" });
-      fetchTasks();
-      setTaskToDelete(null);
+      const response: CommonApiResponse<ApiAddResponseData> = await deleteTask(token, projectId, taskToDelete._id);
+      if (response.success) {
+        toast({ title: "Success", description: response.message || "Task deleted successfully" });
+        fetchTasks();
+        setTaskToDelete(null);
+      } else {
+        toast({ title: "Error", description: response.message || "Failed to delete task.", variant: "destructive" });
+      }
     } catch (error: any) {
-      toast({ title: "Error", description: "Failed to delete task.", variant: "destructive" });
+      toast({ title: "Error", description: error.message || "Failed to delete task.", variant: "destructive" });
     } finally {
       setIsDeletingTask(false);
     }

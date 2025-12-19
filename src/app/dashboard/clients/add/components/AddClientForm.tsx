@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from '@/hooks/use-auth';
 import { addClient } from '@/lib/api';
 import { uploadImageAndGetURL } from '@/lib/storage';
-import type { NewClient } from '@/lib/types';
+import type { NewClient, CommonApiResponse, ApiAddResponseData } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import PhoneNumberInput from '@/components/ui/PhoneNumberInput';
 import { isValidPhoneNumber } from 'react-phone-number-input';
@@ -106,14 +106,15 @@ export default function AddClientForm() {
         ...(profileImageUrl && { profileImageUrl }),
       };
 
-      const response = await addClient(tenantId, token, newClientData);
+      const response: CommonApiResponse<ApiAddResponseData> = await addClient(tenantId, token, newClientData);
 
       if (response.success) {
         toast({ title: "Success", description: response.message });
         form.reset();
         router.push('/dashboard/clients');
       } else {
-        throw new Error(response.message || "Failed to create client.");
+        // If response.success is false, but no error was thrown by httpClient, handle it here
+        toast({ title: "Error", description: response.message || "Failed to create client.", variant: "destructive" });
       }
     } catch (err: any) {
       toast({ title: "Error", description: err.message || "An unexpected error occurred.", variant: "destructive" });

@@ -57,7 +57,7 @@ const ProjectDetailsSection: FC<ProjectDetailsSectionProps> = ({ project, active
         <div className="flex items-center justify-between mb-6">
           <div className="flex gap-2">
             {activeProfile !== 'client' && (
-              <Button onClick={() => router.push(`/dashboard/projects/${projectId}/edit`)} className="bg-blue-500 text-white">
+              <Button onClick={() => router.push(`/dashboard/projects/${projectId}`)} className="bg-blue-500 text-white">
                 <Edit className="mr-2 h-4 w-4" />
                 Edit
               </Button>

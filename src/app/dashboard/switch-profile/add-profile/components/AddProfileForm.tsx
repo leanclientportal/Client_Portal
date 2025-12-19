@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { createProfile, updateProfile } from '@/lib/api';
-import { NewProfile, Account } from '@/lib/types';
+import type { NewProfile, Account, CommonApiResponse, CreateProfileResponse } from '@/lib/types';
 import 'react-phone-number-input/style.css';
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
 import { uploadImageAndGetURL } from '@/lib/storage';
@@ -115,7 +115,7 @@ export default function AddProfileForm({ account }: AddProfileFormProps) {
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!activeProfileId || !token) {
+    if (!userId || !token) {
       toast({ title: 'Error', description: 'Authentication details are missing. Please log in again.', variant: 'destructive' });
       return;
     }
@@ -125,20 +125,28 @@ export default function AddProfileForm({ account }: AddProfileFormProps) {
       const { profileImageBinary, profileImageName, ...profileDetails } = values;
 
       if (profileImageBinary && profileImageName) {
-        profileImageUrl = await uploadImageAndGetURL(activeProfileId, profileImageBinary, profileImageName);
+        profileImageUrl = await uploadImageAndGetURL(activeProfileId!, profileImageBinary, profileImageName);
       }
 
-      const profileData = { ...profileDetails, profileImageUrl };
+      const profileData: NewProfile = {
+        ...profileDetails,
+        phone: profileDetails.phone || null, // Convert undefined or empty string to null
+        profileImageUrl
+      };
 
-      const response = isEditMode && account
-        ? await updateProfile(userId, token, account.id, profileData)
-        : await createProfile(userId, token, { ...values, profileImageUrl });
+      let response: CommonApiResponse<CreateProfileResponse>;
+
+      if (isEditMode && account) {
+        response = await updateProfile(userId, token, account.id, profileData);
+      } else {
+        response = await createProfile(userId, token, profileData);
+      }
 
       if (response.success) {
         toast({ title: 'Success', description: `Profile ${isEditMode ? 'updated' : 'created'} successfully.` });
         router.push('/dashboard/switch-profile');
       } else {
-        throw new Error(response.message || `Failed to ${isEditMode ? 'update' : 'create'} profile.`);
+        toast({ title: 'Error', description: response.message || `Failed to ${isEditMode ? 'update' : 'create'} profile.`, variant: 'destructive' });
       }
     } catch (err: any) {
       toast({ title: 'Error', description: err.message || 'An unexpected error occurred.', variant: 'destructive' });

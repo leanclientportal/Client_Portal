@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X, File, UploadCloud } from 'lucide-react';
 import { uploadFile } from '@/lib/storage';
-import { NewInvoice } from '@/lib/types';
+import type { NewInvoice, CommonApiResponse, ApiAddResponseData } from '@/lib/types'; // Updated imports
 import { format } from 'date-fns';
 
 interface FileWithPreview extends File {
@@ -99,14 +99,18 @@ const AddInvoiceDialog: FC<AddInvoiceDialogProps> = ({ isOpen, onClose, onInvoic
         paymentLink: paymentLink || undefined,
       };
 
-      const response = await addInvoice(token, projectId, invoiceData);
+      const response: CommonApiResponse<ApiAddResponseData> = await addInvoice(token, projectId, invoiceData);
 
-      toast({ title: "Success", description: response.message || "Invoice added successfully" });
-      onInvoiceAdded();
-      onClose();
+      if (response.success) {
+        toast({ title: "Success", description: response.message || "Invoice added successfully" });
+        onInvoiceAdded();
+        onClose();
+      } else {
+        toast({ title: "Error", description: response.message || "Failed to add invoice.", variant: "destructive" });
+      }
     } catch (error: any) {
       console.error("Failed to add invoice:", error);
-      toast({ title: "Error", description: error.message || "Failed to add invoice", variant: "destructive" });
+      toast({ title: "Error", description: error.message || "An unexpected error occurred.", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
       files.forEach(file => URL.revokeObjectURL(file.preview));

@@ -30,9 +30,8 @@ import AddDocumentDialog from './AddDocumentDialog'; // Corrected component name
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { deleteDocument } from '@/lib/api'; // getDocuments might not be needed if passed as prop
-import type { Documents } from '@/lib/types'; // Assuming Documents is the type for a single document
+import type { Documents, CommonApiResponse, ApiAddResponseData } from '@/lib/types'; // Added CommonApiResponse, ApiAddResponseData
 import { ActionButton } from './ActionButton'; // Assuming ActionButton is also extracted
-import { AnyARecord } from 'node:dns';
 
 interface DocumentSectionProps {
     projectId: string;
@@ -103,12 +102,16 @@ const DocumentSection: FC<DocumentSectionProps> = ({ projectId, projectFiles, is
         if (!fileToDelete || !token) return;
         setIsDeletingFile(true);
         try {
-            const response = await deleteDocument(token, projectId, fileToDelete._id);
-            toast({ title: "Success", description: response.message || "Document deleted successfully" });
-            fetchFiles();
-            setFileToDelete(null);
+            const response: CommonApiResponse<ApiAddResponseData> = await deleteDocument(token, projectId, fileToDelete._id);
+            if (response.success) {
+              toast({ title: "Success", description: response.message || "Document deleted successfully" });
+              fetchFiles();
+              setFileToDelete(null);
+            } else {
+              toast({ title: "Error", description: response.message || "Failed to delete document.", variant: "destructive" });
+            }
         } catch (error: any) {
-            toast({ title: "Error", description: "Failed to delete file.", variant: "destructive" });
+            toast({ title: "Error", description: error.message || "Failed to delete file.", variant: "destructive" });
         } finally {
             setIsDeletingFile(false);
         }
@@ -184,13 +187,13 @@ const DocumentSection: FC<DocumentSectionProps> = ({ projectId, projectFiles, is
                                             >
                                                 <Download className="h-5 w-5" />
                                             </ActionButton>
-                                            <ActionButton
+                                            {/* <ActionButton
                                                 onClick={(e) => handleDeleteFileClick(e, file)}
                                                 label="Delete"
                                                 className="text-red-500 hover:bg-red-500"
                                             >
                                                 <Trash2 className="h-5 w-5" />
-                                            </ActionButton>
+                                            </ActionButton> */}
                                         </div>
                                     </TableCell>
                                 </TableRow>

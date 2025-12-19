@@ -14,7 +14,8 @@ export default function EditProfilePage() {
   const accountId = params.accountId as string;
   const { data, isLoading } = getAccounts(token, userId);
 
-  const account = data?.accounts.find((acc) => acc.id === accountId);
+  // Correctly access accounts from data.data.accounts
+  const account = data?.data?.accounts.find((acc) => acc.id === accountId);
 
   return (
     <Card>

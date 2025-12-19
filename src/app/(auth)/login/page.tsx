@@ -58,10 +58,10 @@ export default function LoginPage() {
 
     verifyOtpMutation({ email: emailOrPhone, otp: data.otp, type: 'login' }, {
       onSuccess: (response) => {
-        if (response.status === 200 && response.token) {
-            login(response.token, response.userId, response.activeProfile, response.activeProfileId,response.activeProfileImage, response.profileName);
-            toast({ title: 'Login Successful', description: response.message });
-            push('/dashboard');
+        if (response.code === 200 && response.data) {
+          login(response.data.token, response.data.userId, response.data.activeProfile, response.data.activeProfileId, response.data.activeProfileImage, response.data.profileName);
+          toast({ title: 'Login Successful', description: response.message });
+          push('/dashboard');
         } else {
           toast({ title: 'Error', description: response.message || 'Invalid OTP. Please try again.', variant: 'destructive' });
         }
@@ -71,11 +71,11 @@ export default function LoginPage() {
       },
     });
   };
-  
-    const handleEditEmail = () => {
-        setStep('email');
-        form.reset();
-    };
+
+  const handleEditEmail = () => {
+    setStep('email');
+    form.reset();
+  };
 
   return (
     <main className="h-screen w-screen grid grid-cols-2">
@@ -93,15 +93,15 @@ export default function LoginPage() {
             </div>
 
             {step === 'otp' && (
-                 <div className="mb-4">
-                    <Input {...form.register('otp')} placeholder="Enter OTP" />
-                    {form.formState.errors.otp && <p className="text-red-500 text-sm mt-1">{form.formState.errors.otp.message}</p>}
-                    <div className="flex justify-between items-center mt-2">
-                        <Button variant="link" size="sm" onClick={handleSendOtp} disabled={isSendingOtp}>
-                            {isSendingOtp ? 'Resending...' : 'Resend OTP'}
-                        </Button>
-                        <Button variant="link" size="sm" onClick={handleEditEmail}>Edit Email</Button>
-                    </div>
+              <div className="mb-4">
+                <Input {...form.register('otp')} placeholder="Enter OTP" />
+                {form.formState.errors.otp && <p className="text-red-500 text-sm mt-1">{form.formState.errors.otp.message}</p>}
+                <div className="flex justify-between items-center mt-2">
+                  <Button variant="link" size="sm" onClick={handleSendOtp} disabled={isSendingOtp}>
+                    {isSendingOtp ? 'Resending...' : 'Resend OTP'}
+                  </Button>
+                  <Button variant="link" size="sm" onClick={handleEditEmail}>Edit Email</Button>
+                </div>
               </div>
             )}
 

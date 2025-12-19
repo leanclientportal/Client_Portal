@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from '@/hooks/use-auth';
 import { updateClient, resendInvitation } from '@/lib/api';
 import { uploadImageAndGetURL } from '@/lib/storage';
-import type { Client, NewClient } from '@/lib/types';
+import type { Client, NewClient, CommonApiResponse, ApiAddResponseData } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import PhoneNumberInput from '@/components/ui/PhoneNumberInput';
 import { isValidPhoneNumber } from 'react-phone-number-input';
@@ -91,11 +91,15 @@ export default function EditClientForm({ client }: EditClientFormProps) {
       return;
     }
     try {
-      let respon = await resendInvitation(tenantId, client._id);
-      toast({ title: "Success", description: respon.message });
-      router.push(`/dashboard/clients/${client._id}/edit`);
+      const respon: CommonApiResponse<ApiAddResponseData> = await resendInvitation(tenantId, client._id);
+      if (respon.success) {
+        toast({ title: "Success", description: respon.message });
+        router.push(`/dashboard/clients/${client._id}/edit`);
+      } else {
+        toast({ title: "Error", description: respon.message || "Failed to resend invitation.", variant: "destructive" });
+      }
     } catch (error: any) {
-      toast({ title: "Error", description: error.message || "Failed to resend invitation.", variant: "destructive" });
+      toast({ title: "Error", description: error.message || "An unexpected error occurred.", variant: "destructive" });
     }
   };
 
@@ -120,12 +124,17 @@ export default function EditClientForm({ client }: EditClientFormProps) {
         ...(profileImageUrl && { profileImageUrl }),
       };
 
-      const response = await updateClient(tenantId, token, client._id, updatedClientData);
-      if (response.success && data.email !== client.email) {
-        await handleResendInvitation();
+      const response: CommonApiResponse<ApiAddResponseData> = await updateClient(tenantId, token, client._id, updatedClientData);
+      
+      if (response.success) {
+        if (data.email !== client.email) {
+          await handleResendInvitation();
+        }
+        toast({ title: "Success", description: response.message });
+        router.push('/dashboard/clients');
+      } else {
+        toast({ title: "Error", description: response.message || "Failed to update client.", variant: "destructive" });
       }
-      toast({ title: "Success", description: response.message });
-      router.push('/dashboard/clients');
     } catch (err: any) {
       toast({ title: "Error", description: err.message || "An unexpected error occurred.", variant: "destructive" });
     } finally {

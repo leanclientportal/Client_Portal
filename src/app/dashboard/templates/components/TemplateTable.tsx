@@ -1,0 +1,231 @@
+'use client';
+
+import { useState, useEffect, useCallback, FC } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
+import { getTemplates, deleteTemplate } from '@/lib/api';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
+import type { Template } from '@/lib/types';
+import { AddTemplateDialog } from './AddTemplateDialog';
+import { EditTemplateDialog } from './EditTemplateDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Edit, Trash2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Skeleton } from "@/components/ui/skeleton";
+
+interface ActionButtonProps {
+  onClick: (e: React.MouseEvent) => void;
+  children: React.ReactNode;
+  label: string;
+  className?: string;
+}
+
+const ActionButton: FC<ActionButtonProps> = ({ onClick, children, label, className }) => {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "group/action relative flex h-9 w-9 items-center justify-center rounded-full bg-transparent transition-all duration-300 ease-in-out",
+        "hover:w-24",
+        className
+      )}
+    >
+      <div className="absolute flex h-full w-full items-center justify-center opacity-100 transition-opacity duration-300 group-hover/action:opacity-0">
+        {children}
+      </div>
+      <div className="absolute flex h-full w-full items-center justify-center opacity-0 transition-opacity duration-300 group-hover/action:opacity-100">
+        <span className="whitespace-nowrap text-xs font-semibold text-white">
+          {label}
+        </span>
+      </div>
+    </button>
+  );
+};
+
+export function TemplateTable() {
+  const { activeProfileId: tenantId, token } = useAuth();
+  const { toast } = useToast();
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAddOpen, setAddOpen] = useState(false);
+  const [isEditOpen, setEditOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [deleteTemplateId, setDeleteTemplateId] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const fetchTemplates = useCallback(async () => {
+    if (!tenantId || !token) return;
+    setIsLoading(true);
+    try {
+      const res = await getTemplates(tenantId, token, 1, 10);
+      if (res.success && res.data)
+        setTemplates(res.data?.templates);
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error?.response?.data?.message || 'Failed to load templates.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [tenantId, token, toast]);
+
+  useEffect(() => {
+    fetchTemplates();
+  }, [fetchTemplates]);
+
+  const handleDelete = async () => {
+    if (!tenantId || !token || !deleteTemplateId) return;
+    try {
+      const response = await deleteTemplate(tenantId, deleteTemplateId, token);
+      toast({
+        title: 'Success',
+        description: response.message,
+      });
+      fetchTemplates();
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error?.response?.data?.message || 'Failed to delete template.',
+      });
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setDeleteTemplateId(null);
+    }
+  };
+
+  const handleEdit = (template: Template) => {
+    setSelectedTemplate(template);
+    setEditOpen(true);
+  };
+
+  const handleAddSuccess = () => {
+    setAddOpen(false);
+    fetchTemplates();
+  };
+
+  const handleEditSuccess = () => {
+    setEditOpen(false);
+    fetchTemplates();
+  };
+
+  const handleActionClick = (e: React.MouseEvent, action: () => void) => {
+    e.stopPropagation();
+    action();
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-12 w-full" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button onClick={() => setAddOpen(true)}>Add Template</Button>
+      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[150px]">Name</TableHead>
+            <TableHead>Template Type</TableHead>
+            <TableHead>Subject</TableHead>
+            <TableHead>Body</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {templates.length > 0 ? (
+            templates.map((template) => (
+              <TableRow key={template._id}>
+                <TableCell className="font-medium">{template.name}</TableCell>
+                <TableCell>{template.templateTypeName}</TableCell>
+                <TableCell>{template.subject}</TableCell>
+                <TableCell className="max-w-md truncate">{template.body}</TableCell>
+                <TableCell className="text-right">
+                  <div
+                    className="inline-flex justify-end items-center gap-1 rounded-full bg-muted p-1"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ActionButton
+                      onClick={(e) => handleActionClick(e, () => handleEdit(template))}
+                      label="Edit"
+                      className="text-yellow-500 hover:bg-yellow-500"
+                    >
+                      <Edit className="h-[22px] w-[22px]" />
+                    </ActionButton>
+                    <ActionButton
+                      onClick={(e) => handleActionClick(e, () => {
+                        setDeleteTemplateId(template._id);
+                        setIsDeleteDialogOpen(true);
+                      })}
+                      label="Trash"
+                      className="text-red-500 hover:bg-red-500"
+                    >
+                      <Trash2 className="h-[22px] w-[22px]" />
+                    </ActionButton>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+             <TableRow>
+              <TableCell colSpan={4} className="text-center">No templates found.</TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+      <AddTemplateDialog
+        isOpen={isAddOpen}
+        onOpenChange={setAddOpen}
+        onSuccess={handleAddSuccess}
+      />
+      {selectedTemplate && (
+        <EditTemplateDialog
+          isOpen={isEditOpen}
+          onOpenChange={setEditOpen}
+          template={selectedTemplate}
+          onSuccess={handleEditSuccess}
+        />
+      )}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete this template.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}

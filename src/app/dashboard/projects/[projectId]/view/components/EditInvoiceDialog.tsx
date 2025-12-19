@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X, File, UploadCloud } from 'lucide-react';
 import { uploadFile } from '@/lib/storage';
-import { NewInvoice, Invoice } from '@/lib/types';
+import type { NewInvoice, Invoice, CommonApiResponse, ApiAddResponseData } from '@/lib/types'; // Updated imports
 import { format } from 'date-fns';
 
 interface FileWithPreview extends File {
@@ -57,9 +57,9 @@ export default function EditInvoiceDialog({ projectId, invoice, onInvoiceUpdated
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (status === 'paid' && !paidDate) {
+    if (status === 'paid') {
       setPaidDate(today);
-    } else if (status !== 'paid') {
+    } else {
       setPaidDate(undefined);
     }
   }, [status, paidDate, today]);
@@ -115,14 +115,18 @@ export default function EditInvoiceDialog({ projectId, invoice, onInvoiceUpdated
         paymentLink: paymentLink || undefined,
       };
 
-      const response = await updateInvoice(token, projectId, invoice._id, invoiceData);
+      const response: CommonApiResponse<ApiAddResponseData> = await updateInvoice(token, projectId, invoice._id, invoiceData); // Explicitly type the response
 
-      toast({ title: "Success", description: response.message || "Invoice updated successfully" });
-      onInvoiceUpdated();
-      onClose();
+      if (response.success) {
+        toast({ title: "Success", description: response.message || "Invoice updated successfully" });
+        onInvoiceUpdated();
+        onClose();
+      } else {
+        toast({ title: "Error", description: response.message || "Failed to update invoice.", variant: "destructive" });
+      }
     } catch (error: any) {
       console.error("Failed to update invoice:", error);
-      toast({ title: "Error", description: error.message || "Failed to update invoice", variant: "destructive" });
+      toast({ title: "Error", description: error.message || "An unexpected error occurred.", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
       files.forEach(file => URL.revokeObjectURL(file.preview));
