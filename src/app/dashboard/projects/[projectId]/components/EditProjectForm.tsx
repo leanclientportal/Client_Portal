@@ -117,7 +117,7 @@ export default function EditProjectForm({ clientId, projectId, onBack }: EditPro
           <CardTitle>Project Details</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>This project is deleted and contact administrator.</p>
+          <p>This project is deleted. Contact administrator.</p>
         </CardContent>
       </Card>
     );

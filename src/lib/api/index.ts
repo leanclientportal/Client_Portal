@@ -7,3 +7,4 @@ export * from './settings';
 export * from './tasks';
 export * from './templates';
 export * from './tenants';
+export * from './dashboard';

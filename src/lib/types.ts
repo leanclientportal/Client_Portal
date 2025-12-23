@@ -259,7 +259,7 @@ export interface VerifyOtpResponseData {
     userId: string;
     activeProfile: string;
     activeProfileId: string;
-    activeProfileImage: string | null;
+    activeProfileImage: string;
     profileName: string;
 }
 

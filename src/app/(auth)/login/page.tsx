@@ -22,7 +22,7 @@ type FormValues = z.infer<typeof schema>;
 export default function LoginPage() {
   const { toast } = useToast();
   const { login } = useAuth();
-  const { push } = useRouter();
+  const router = useRouter();
   const [step, setStep] = useState('email');
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const { mutate: sendOtpMutation, isPending: isSendingOtp } = useSendOtp();
@@ -40,7 +40,7 @@ export default function LoginPage() {
     setEmailOrPhone(emailOrPhoneValue);
     sendOtpMutation({ email: emailOrPhoneValue, type: 'login' }, {
       onSuccess: (response) => {
-        if (response.status === 200) {
+        if (response.success) {
           setStep('otp');
           toast({ title: 'OTP Sent', description: response.message });
         } else {
@@ -61,7 +61,7 @@ export default function LoginPage() {
         if (response.code === 200 && response.data) {
           login(response.data.token, response.data.userId, response.data.activeProfile, response.data.activeProfileId, response.data.activeProfileImage, response.data.profileName);
           toast({ title: 'Login Successful', description: response.message });
-          push('/dashboard');
+          // router.push('/dashboard');
         } else {
           toast({ title: 'Error', description: response.message || 'Invalid OTP. Please try again.', variant: 'destructive' });
         }

@@ -77,7 +77,6 @@ export const useAuth = () => {
       setActiveProfileId(null);
       setActiveProfileImage(null);
       setProfileName(null);
-      router.push('/login');
     } catch (error) {
       console.error("Could not access local storage", error);
     }
@@ -87,10 +86,10 @@ export const useAuth = () => {
     if (!isLoading) {
       const isAuthPage = pathname === '/login' || pathname === '/register';
       if (!token && !isAuthPage) {
-        router.replace('/login');
+        window.location.assign('/login');
       }
       if (token && (isAuthPage || pathname === '/')) {
-        router.replace('/dashboard');
+        window.location.assign('/dashboard');
       }
     }
   }, [token, isLoading, pathname, router]);

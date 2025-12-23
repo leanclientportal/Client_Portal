@@ -10,3 +10,4 @@ export * from './api/auth';
 export * from './api/tenants';
 export * from './api/templates';
 export * from './api/settings';
+export * from './api/dashboard';

@@ -168,7 +168,7 @@ const InvoiceSection: FC<InvoiceSectionProps> = ({ projectId, projectInvoices, i
     if (isPast(dueDate) && !isToday(dueDate)) {
       return { label: 'Overdue', variant: 'destructive' };
     } else if ((isToday(dueDate) || isFuture(dueDate) && dueDate <= sevenDaysFromNow) && dueDate.getTime() >= today.setHours(0,0,0,0)) {
-        return { label: 'Due Soon', variant: 'warning' };
+        return { label: 'Due', variant: 'warning' };
     }
     return null;
   };

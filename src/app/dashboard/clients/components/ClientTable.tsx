@@ -141,14 +141,14 @@ export default function ClientTable() {
     }
   };
 
-  const handleStartChat = async (client: Client) => {
-    // Open the chat popup directly
+    const handleStartChat = (client: Client) => {
     openChat({
         id: client._id,
         name: client.name,
         image: client.profileImageUrl,
-        type: 'client' // Assuming table lists clients
+        type: 'client'
     });
+    router.push('/dashboard/chat');
   };
 
   const filteredClients = (value: string) => {

@@ -23,13 +23,19 @@ export default function SwitchProfilePage() {
 
   const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
   const [selectedAccountForMerge, setSelectedAccountForMerge] = useState<Account | null>(null);
+  const [switchingAccountId, setSwitchingAccountId] = useState<string | null>(null);
 
   const handleSwitch = (account: Account) => {
     if (userId && token) {
+      setSwitchingAccountId(account.id);
       switchAccountMutation.mutate({
         userId,
         token,
         payload: { activeProfile: account.type, masterId: account.id }
+      }, {
+        onSettled: () => {
+          setSwitchingAccountId(null);
+        }
       });
     }
   };
@@ -101,7 +107,7 @@ export default function SwitchProfilePage() {
                     <Badge className="bg-green-500 text-white">Active</Badge>
                   ) : (
                     <Button size="sm" onClick={() => handleSwitch(account)} disabled={switchAccountMutation.isPending}>
-                      {switchAccountMutation.isPending ? 'Switching...' : 'Switch'}
+                      {switchAccountMutation.isPending && switchingAccountId === account.id ? 'Switching...' : 'Switch'}
                     </Button>
                   )}
                 </div>

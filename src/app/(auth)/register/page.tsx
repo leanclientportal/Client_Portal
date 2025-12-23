@@ -28,7 +28,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function RegisterPage() {
   const { toast } = useToast();
-  const { push } = useRouter();
+  const router = useRouter();
   const [step, setStep] = useState('email');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -54,15 +54,15 @@ export default function RegisterPage() {
     setPhone(phoneValue);
     sendOtpMutation({ email: emailValue, type: 'registration' }, {
       onSuccess: (response) => {
-        if (response.status === 200) {
+        if (response.success) {
           setStep('otp');
           toast({ title: 'OTP Sent', description: response.message });
         } else {
           toast({ title: 'Error', description: response.message || 'Failed to send OTP. Please try again.', variant: 'destructive' });
         }
       },
-      onError: () => {
-        toast({ title: 'Error', description: 'Failed to send OTP. Please try again.', variant: 'destructive' });
+      onError: (error) => {
+        toast({ title: 'Error', description: error.message || 'Failed to send OTP. Please try again.', variant: 'destructive' });
       },
     });
   };
@@ -72,15 +72,15 @@ export default function RegisterPage() {
 
     verifyOtpMutation({ email, otp: data.otp, type: 'registration', name, phone, profileType }, {
       onSuccess: (response) => {
-        if (response.status === 200) {
+        if (response.success) {
           toast({ title: 'OTP Verified', description: 'Your account has been successfully created.' });
-          push('/login');
+          router.push('/login');
         } else {
           toast({ title: 'Error', description: response.message || 'Invalid OTP. Please try again.', variant: 'destructive' });
         }
       },
-      onError: () => {
-        toast({ title: 'Error', description: 'Invalid OTP. Please try again.', variant: 'destructive' });
+      onError: (error) => {
+        toast({ title: 'Error', description: error.message || 'Invalid OTP. Please try again.', variant: 'destructive' });
       },
     });
   };

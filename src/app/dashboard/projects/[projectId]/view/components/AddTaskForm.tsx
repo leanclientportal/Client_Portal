@@ -99,7 +99,6 @@ export default function AddTaskForm({ projectId, onTaskAdded, setOpen }: AddTask
           {form.formState.errors.description && <p className="text-red-500 text-xs mt-1">{form.formState.errors.description.message}</p>}
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
           <div>
             <Label htmlFor="dueDate">Due Date</Label>
             <Controller
@@ -163,7 +162,6 @@ export default function AddTaskForm({ projectId, onTaskAdded, setOpen }: AddTask
             />
             {form.formState.errors.status && <p className="text-red-500 text-xs mt-1">{form.formState.errors.status.message}</p>}
           </div>
-        </div>
 
         {!isClientProfile && ( // Conditionally render if not a client profile
           <div className="flex items-center space-x-2">

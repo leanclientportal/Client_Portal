@@ -3,27 +3,22 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { sendOtp, verifyOtp } from '@/lib/auth';
+import { sendOtp, verifyOtp } from '@/lib/api';
 import { switchAccount } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
-import type { SwitchAccountPayload, SwitchAccountResponseData, CommonApiResponse } from '@/lib/types'; // Import CommonApiResponse and SwitchAccountResponseData
+import type { SwitchAccountPayload, SwitchAccountResponseData, CommonApiResponse, VerifyOtpResponseData } from '@/lib/types';
 
 export function useSendOtp() {
-  return useMutation({ mutationFn: (data: { email: string; type: 'registration' | 'login' }) => sendOtp(data.email, data.type) });
+  return useMutation<CommonApiResponse<undefined>, Error, { email: string; type: 'registration' | 'login' }>(
+    {
+      mutationFn: ({ email, type }) => sendOtp(email, type),
+    }
+  );
 }
 
 export function useVerifyOtp() {
-  return useMutation({
-    mutationFn: (data: {
-      email: string;
-      otp: string;
-      type: 'registration' | 'login';
-      name?: string;
-      phone?: string;
-      profileType?: string;
-      activeProfileImage?: string;
-      profileName?: string;
-    }) =>
+  return useMutation<CommonApiResponse<VerifyOtpResponseData>, Error, { email: string; otp: string; type: 'registration' | 'login'; name?: string; phone?: string; profileType?: string; }>({
+    mutationFn: (data) =>
       verifyOtp(
         data.email,
         data.otp,
@@ -32,8 +27,6 @@ export function useVerifyOtp() {
           name: data.name,
           phone: data.phone,
           activeProfile: data.profileType,
-          activeProfileImage: data.activeProfileImage,
-          profileName: data.profileName
         }
       )
   });

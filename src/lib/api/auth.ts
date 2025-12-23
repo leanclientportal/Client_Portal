@@ -15,6 +15,7 @@ import type {
   CommonApiResponse,
   AuthResponseData,
   VerifyInvitationResponseData,
+  VerifyOtpResponseData,
 } from '../types';
 
 // Assuming login function would not use httpClient directly if it returns AuthResponse structure directly
@@ -76,4 +77,18 @@ export async function mergeProfiles(userId: string, token: string, payload: Merg
     token,
     data: payload,
   });
+}
+
+export async function sendOtp(email: string, type: 'registration' | 'login'): Promise<CommonApiResponse<undefined>> {
+    return httpClient<undefined>('/auth/send-otp', {
+        method: 'POST',
+        data: { email, type },
+    });
+}
+
+export async function verifyOtp(email: string, otp: string, type: 'registration' | 'login', options?: { name?: string; phone?: string; activeProfile?: string;}): Promise<CommonApiResponse<VerifyOtpResponseData>> {
+    return httpClient<VerifyOtpResponseData>('/auth/verify-otp', {
+        method: 'POST',
+        data: { email, otp, type, ...options },
+    });
 }

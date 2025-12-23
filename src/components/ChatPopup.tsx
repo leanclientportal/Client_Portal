@@ -24,12 +24,13 @@ export function ChatPopup() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (isOpen && activeUser && token && activeProfileId) {
+    if (isOpen && activeUser && token && activeProfileId && activeProfile) {
+      console.log('All dependencies met, loading messages...');
       loadMessages();
       const interval = setInterval(loadMessages, 60000);
       return () => clearInterval(interval);
     }
-  }, [isOpen, activeUser, token, activeProfileId]);
+  }, [isOpen, activeUser, token, activeProfileId, activeProfile]);
 
   useEffect(() => {
     if (!isMinimized && isOpen) {
