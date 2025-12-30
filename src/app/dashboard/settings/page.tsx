@@ -4,31 +4,34 @@ import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmailNotificationSettings } from "./components/EmailNotificationSettings";
 import { SmtpSettings } from "./components/SmtpSettings";
-import { WhatsappNotificationSettings } from "./components/WhatsappNotificationSettings";
+import { GeneralSettings } from "./components/GeneralSettings";
+import { SettingsProvider } from "@/providers/SettingsProvider";
 
 export default function SettingsPage() {
-  const { isLoading } = useAuth();
+  const { isLoading, activeProfile } = useAuth();
 
   if (isLoading) {
     return <div>Loading...</div>; // Or a spinner component
   }
 
   return (
-    <Tabs defaultValue="email-notification">
-      <TabsList className="grid w-full grid-cols-3">
-        <TabsTrigger value="email-notification">Email notification</TabsTrigger>
-        <TabsTrigger value="smtp-settings">SMTP Settings</TabsTrigger>
-        <TabsTrigger value="whatsapp-notification">Whatsapp notification</TabsTrigger>
-      </TabsList>
-      <TabsContent value="email-notification">
-        <EmailNotificationSettings />
-      </TabsContent>
-      <TabsContent value="smtp-settings">
-        <SmtpSettings />
-      </TabsContent>
-      <TabsContent value="whatsapp-notification">
-        <WhatsappNotificationSettings />
-      </TabsContent>
-    </Tabs>
+    <SettingsProvider>
+      <Tabs defaultValue={activeProfile === 'client' ? 'general-settings' : 'email-notification'}>
+        <TabsList className={`grid w-full ${activeProfile === 'client' ? 'grid-cols-1' : 'grid-cols-3'}`}>
+          {activeProfile !== 'client' && <TabsTrigger value="email-notification">Email notification</TabsTrigger>}
+          {activeProfile !== 'client' && <TabsTrigger value="smtp-settings">SMTP Settings</TabsTrigger>}
+          <TabsTrigger value="general-settings">General Settings</TabsTrigger>
+        </TabsList>
+        {activeProfile !== 'client' && <TabsContent value="email-notification">
+          <EmailNotificationSettings />
+        </TabsContent>}
+        {activeProfile !== 'client' && <TabsContent value="smtp-settings">
+          <SmtpSettings />
+        </TabsContent>}
+        <TabsContent value="general-settings">
+          <GeneralSettings />
+        </TabsContent>
+      </Tabs>
+    </SettingsProvider>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { logout as clearSession } from '@/lib/auth';
 
 const USER_ID_KEY = 'clientverse_user_id';
 const JWT_TOKEN_KEY = 'clientverse_jwt';
@@ -65,12 +66,7 @@ export const useAuth = () => {
 
   const logout = useCallback(() => {
     try {
-      localStorage.removeItem(USER_ID_KEY);
-      localStorage.removeItem(JWT_TOKEN_KEY);
-      localStorage.removeItem(USER_ACTIVEPROFILE_KEY);
-      localStorage.removeItem(USER_ACTIVEPROFILEID_KEY);
-      localStorage.removeItem(USER_ACTIVEPROFILEIMAGE_KEY);
-      localStorage.removeItem(USER_PROFILENAME_KEY);
+      clearSession();
       setUserId(null);
       setToken(null);
       setActiveProfile(null);
@@ -80,7 +76,7 @@ export const useAuth = () => {
     } catch (error) {
       console.error("Could not access local storage", error);
     }
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     if (!isLoading) {

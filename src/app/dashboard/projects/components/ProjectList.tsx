@@ -395,9 +395,9 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeP
               <CalendarIcon className="mr-2 h-4 w-4" />
               {dateInput?.from ? (
                 dateInput.to ? (
-                  <>{format(dateInput.from, "LLL dd, y")} - {format(dateInput.to, "LLL dd, y")}</>
+                  <>{formatDate(dateInput.from)} - {formatDate(dateInput.to)}</>
                 ) : (
-                  format(dateInput.from, "LLL dd, y")
+                  formatDate(dateInput.from)
                 )
               ) : (
                 <span>Pick a date range</span>

@@ -35,7 +35,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { deleteInvoice, markInvoiceAsPaid } from '@/lib/api';
 import type { Invoice, CommonApiResponse, ApiAddResponseData } from '@/lib/types'; // Added CommonApiResponse, ApiAddResponseData
-import { capitalizeFirstLetter, cn } from '@/lib/utils';
+import { capitalizeFirstLetter, cn, formatAmount, formatDate } from '@/lib/utils';
 import { ActionButton } from './ActionButton';
 import { isPast, isToday, isFuture, addDays, format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
@@ -167,8 +167,8 @@ const InvoiceSection: FC<InvoiceSectionProps> = ({ projectId, projectInvoices, i
 
     if (isPast(dueDate) && !isToday(dueDate)) {
       return { label: 'Overdue', variant: 'destructive' };
-    } else if ((isToday(dueDate) || isFuture(dueDate) && dueDate <= sevenDaysFromNow) && dueDate.getTime() >= today.setHours(0,0,0,0)) {
-        return { label: 'Due', variant: 'warning' };
+    } else if ((isToday(dueDate) || isFuture(dueDate) && dueDate <= sevenDaysFromNow) && dueDate.getTime() >= today.setHours(0, 0, 0, 0)) {
+      return { label: 'Due', variant: 'warning' };
     }
     return null;
   };
@@ -248,12 +248,12 @@ const InvoiceSection: FC<InvoiceSectionProps> = ({ projectId, projectInvoices, i
                 return (
                   <TableRow key={invoice._id || index}>
                     <TableCell>{invoice.title}</TableCell>
-                    <TableCell>{invoice.amount}</TableCell>
+                    <TableCell>{formatAmount(invoice.amount)}</TableCell>
                     <TableCell>{capitalizeFirstLetter(invoice.status)}</TableCell>
-                    <TableCell>{new Date(invoice.invoiceDate).toLocaleDateString()}</TableCell>
+                    <TableCell>{formatDate(invoice.invoiceDate)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {new Date(invoice.dueDate).toLocaleDateString()}
+                        {formatDate(invoice.dueDate)}
                         {dueDateStatus && (
                           <Badge variant={dueDateStatus.variant as 'default' | 'secondary' | 'outline' | 'destructive' | 'warning'}>
                             {dueDateStatus.label}

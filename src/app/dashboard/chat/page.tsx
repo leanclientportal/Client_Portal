@@ -25,6 +25,7 @@ import { Loader2, Send, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { useSearchParams } from 'next/navigation';
 
 export default function ChatPage() {
   const { token, activeProfileId, activeProfile, profileName } = useAuth();
@@ -37,13 +38,32 @@ export default function ChatPage() {
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const conversationId = searchParams.get('conversationId');
 
   const fetchConversations = async () => {
     if (!token || !activeProfileId) return;
     try {
-      const response = await getConversations(token, activeProfileId, activeProfile);
+      const response = await getConversations(token, activeProfileId as string, activeProfile as string);
       if (response.success && response.data) {
         setConversations(response.data.conversations);
+        const record = response.data.conversations.find(
+          con => con.id === conversationId
+        );
+
+        if (!record) return;
+
+        // New model
+        const chatConversation: ChatConversation = {
+          id: record.id,
+          name: record.name,
+          lastMessage: record.lastMessage,
+          profileImageUrl: record.profileImageUrl,
+          type: record.type,
+          lastMessageDate: record.lastMessageDate,
+          unreadCount: record.unreadCount,
+        };
+        setSelectedConversation(chatConversation);
       }
     } catch (error) {
       console.error('Failed to fetch conversations:', error);
@@ -61,7 +81,7 @@ export default function ChatPage() {
     if (!token || !activeProfileId) return;
     setIsLoadingMessages(true);
     try {
-      const response = await getMessages(token, activeProfileId, activeProfile, conversation.id, conversation.type);
+      const response = await getMessages(token, activeProfileId, activeProfile as string, conversation.id, conversation.type);
       if (response.success && response.data) {
         setMessages(response.data.messages);
         scrollToBottom();
@@ -137,7 +157,7 @@ export default function ChatPage() {
       const interval = setInterval(() => {
         // We could implement a lighter check here (e.g. check for new messages only)
         // For simplicity, we just re-fetch. In production, use WebSockets/Socket.io.
-        getMessages(token!, activeProfileId!, activeProfile, selectedConversation.id, selectedConversation.type).then((res) => {
+        getMessages(token!, activeProfileId!, activeProfile as string, selectedConversation.id, selectedConversation.type).then((res) => {
           if (res.success && res.data) {
             // Simple diff check or just replace. Replacing for simplicity but ideally append new ones.
             // A simple way to avoid full re-render jumpiness is to only set if length changed

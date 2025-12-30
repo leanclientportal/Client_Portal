@@ -41,7 +41,7 @@ export function ChatPopup() {
   const loadMessages = async () => {
     if (!activeUser || !token || !activeProfileId) return;
     try {
-      const response = await getMessages(token, activeProfileId, activeProfile, activeUser.id, activeUser.type);
+      const response = await getMessages(token, activeProfileId, activeProfile as string, activeUser.id, activeUser.type);
       if (response.success && response.data) {
         setMessages(prev => {
           // Basic comparison to avoid unnecessary state updates if strictly needed

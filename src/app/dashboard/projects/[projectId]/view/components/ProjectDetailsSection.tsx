@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Edit } from 'lucide-react';
 import { useRouter } from 'next/navigation'; // Import useRouter
 import type { Project } from '@/lib/types';
-import { capitalizeFirstLetter } from '@/lib/utils'; // Import utility function
+import { capitalizeFirstLetter, formatDate } from '@/lib/utils'; // Import utility function
 import { useAuth } from '@/hooks/use-auth'; // Import useAuth
+import { format } from 'date-fns';
 
 interface ProjectDetailsSectionProps {
   project: Project | null;
@@ -47,11 +48,11 @@ const ProjectDetailsSection: FC<ProjectDetailsSectionProps> = ({ project, active
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <h3 className="font-semibold text-lg mb-2">Date Created</h3>
-            <p className="text-muted-foreground">{new Date(project.createdAt).toLocaleDateString()}</p>
+            <p className="text-muted-foreground">{formatDate(project.createdAt)}</p>
           </div>
           <div>
             <h3 className="font-semibold text-lg mb-2">Last Activity Date</h3>
-            <p className="text-muted-foreground">{new Date(project.lastActivityDate).toLocaleDateString()}</p>
+            <p className="text-muted-foreground">{formatDate(project.lastActivityDate)}</p>
           </div>
         </div>
         <div className="flex items-center justify-between mb-6">

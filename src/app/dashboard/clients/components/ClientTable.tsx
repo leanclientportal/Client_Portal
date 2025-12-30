@@ -33,7 +33,6 @@ import { Edit, Eye, ArrowUpDown, Trash2, MessageSquare } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { useChat } from '@/providers/chat-provider';
 
 interface ActionButtonProps {
   onClick: (e: React.MouseEvent) => void;
@@ -82,7 +81,7 @@ export default function ClientTable() {
   const [deleteClientId, setDeleteClientId] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const { openChat } = useChat();
+  const [filterValue, setFilterValue] = useState("");
 
   const fetchClients = async (searchText: string = "") => {
     if (!tenantId || !token) return;
@@ -117,8 +116,8 @@ export default function ClientTable() {
   };
 
   useEffect(() => {
-    fetchClients();
-  }, [tenantId, token, currentPage]); // Added searchTerm to dependencies to trigger refetch on search
+    fetchClients(filterValue);
+  }, [tenantId, token, currentPage, filterValue]); 
 
   const handleDeleteClient = async () => {
     if (!tenantId || !token || !deleteClientId) return;
@@ -141,23 +140,17 @@ export default function ClientTable() {
     }
   };
 
-    const handleStartChat = (client: Client) => {
-    openChat({
-        id: client._id,
-        name: client.name,
-        image: client.profileImageUrl,
-        type: 'client'
-    });
-    router.push('/dashboard/chat');
+  const handleStartChat = async (client: Client) => {
+    if (!tenantId || !token) return;
+    router.push(`/dashboard/chat?conversationId=${client._id}`);
   };
 
-  const filteredClients = (value: string) => {
-    setSearchTerm(value);
-    if (!value || value.length > 2) {
-      setCurrentPage(1); // Reset to first page on new search
-      fetchClients(value);
-    } else if (value.length > 0 && value.length <= 2) {
-      toast({ title: 'Please enter at least 3 characters to search.' });
+  const handleFilter = () => {
+    if (searchTerm.length > 0 && searchTerm.length <= 2) {
+        toast({ title: 'Please enter at least 3 characters to search.' });
+    } else {
+        setCurrentPage(1);
+        setFilterValue(searchTerm);
     }
   };
 
@@ -256,13 +249,14 @@ export default function ClientTable() {
 
   return (
     <>
-      <div className="mb-4">
+      <div className="flex items-center mb-4 space-x-2">
         <Input
           placeholder="Search by name, email, or phone..."
           value={searchTerm}
-          onChange={(e) => filteredClients(e.target.value)}
+          onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm"
         />
+        <Button onClick={handleFilter}>Filter</Button>
       </div>
       <Table>
         <TableHeader>
@@ -308,7 +302,7 @@ export default function ClientTable() {
                     className="inline-flex justify-end items-center gap-1 rounded-full bg-muted p-1"
                     onClick={(e) => e.stopPropagation()}
                   >
-                     <ActionButton
+                    <ActionButton
                       onClick={(e) => handleActionClick(e, () => handleStartChat(client))}
                       label="Chat"
                       className="text-green-500 hover:bg-green-500"

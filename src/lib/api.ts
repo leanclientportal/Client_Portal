@@ -11,3 +11,4 @@ export * from './api/tenants';
 export * from './api/templates';
 export * from './api/settings';
 export * from './api/dashboard';
+export * from './api/token_glossary';

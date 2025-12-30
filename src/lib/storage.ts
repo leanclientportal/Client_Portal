@@ -39,10 +39,26 @@ export async function uploadFile(folder: string, projectId: string, file: File):
 }
 
 /**
- * Deletes a file from Firebase Storage using its storage path.
- * @param storagePath The full path to the file in Firebase Storage.
+ * Deletes a file from Firebase Storage.
+ * @param storagePath The path of the file in Storage.
  */
-export async function deleteFileFromStorage(storagePath: string): Promise<void> {
+export async function deleteFileByPath(storagePath: string): Promise<void> {
   const storageRef = ref(storage, storagePath);
   await deleteObject(storageRef);
+}
+
+/**
+ * Uploads a logo to Firebase Storage.
+ * @param tenantId The ID of the tenant.
+ * @param logo The logo file to upload.
+ * @returns The download URL of the uploaded logo.
+ */
+export async function uploadLogo(tenantId: string, logo: File): Promise<string> {
+  try {
+    const { downloadURL } = await uploadFile('logos', tenantId, logo);
+    return downloadURL;
+  } catch (error) {
+    console.error('Error uploading logo:', error);
+    throw new Error('Failed to upload logo.');
+  }
 }

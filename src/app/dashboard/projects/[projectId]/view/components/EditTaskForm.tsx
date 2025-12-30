@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm, SubmitHandler, FormProvider, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -12,13 +12,10 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/hooks/use-auth';
 import { updateTask } from '@/lib/api';
-import type { NewTask, Task, CommonApiResponse, ApiAddResponseData } from '@/lib/types'; // Added CommonApiResponse, ApiAddResponseData
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
+import type { NewTask, Task, CommonApiResponse, ApiAddResponseData } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DialogDescription } from '@/components/ui/dialog';
+import { DatePicker } from '@/components/ui/date-picker';
 
 const formSchema = z.object({
   title: z.string().min(2, { message: "Title must be at least 2 characters." }),
@@ -46,13 +43,12 @@ export default function EditTaskForm({ projectId, task, onTaskUpdated, setOpen }
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: task.title,
-      description: task.description,
+      ...task,
       dueDate: new Date(task.dueDate),
-      status: task.status,
-      visibleToClient: task.visibleToClient,
     },
   });
+
+  const { control, register } = form;
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
     if (!token) {
@@ -86,55 +82,44 @@ export default function EditTaskForm({ projectId, task, onTaskUpdated, setOpen }
 
   return (
     <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div>
+      <DialogDescription />
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4 ">
+        <div className="grid gap-2">
           <Label htmlFor="title">Task Title</Label>
-          <Input id="title" placeholder="E.g. Design homepage mockup" {...form.register("title")} />
+          <Input id="title" placeholder="E.g. Design homepage mockup" {...register("title")} />
           {form.formState.errors.title && <p className="text-red-500 text-xs mt-1">{form.formState.errors.title.message}</p>}
         </div>
 
-        <div>
+        <div className="grid gap-2">
           <Label htmlFor="description">Description</Label>
-          <Textarea id="description" placeholder="Describe the task in more detail" {...form.register("description")} />
+          <Textarea id="description" placeholder="Describe the task in more detail" {...register("description")} />
           {form.formState.errors.description && <p className="text-red-500 text-xs mt-1">{form.formState.errors.description.message}</p>}
         </div>
 
-        <div>
+        <div className="grid gap-2">
           <Label htmlFor="dueDate">Due Date</Label>
           <Controller
-            control={form.control}
+            control={control}
             name="dueDate"
             render={({ field }) => (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !field.value && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <DatePicker
+                selected={field.value}
+                onChange={field.onChange}
+                placeholderText="Select due date"
+              />
             )}
           />
-          {form.formState.errors.dueDate && <p className="text-red-500 text-xs mt-1">{form.formState.errors.dueDate.message}</p>}
+          {form.formState.errors.dueDate && (
+            <p className="text-red-500 text-xs mt-1">
+              {form.formState.errors.dueDate.message}
+            </p>
+          )}
         </div>
-        <div>
+
+        <div className="grid gap-2">
           <Label htmlFor="status">Status</Label>
           <Controller
-            control={form.control}
+            control={control}
             name="status"
             render={({ field }) => (
               <Select onValueChange={field.onChange} value={field.value}>
@@ -150,27 +135,29 @@ export default function EditTaskForm({ projectId, task, onTaskUpdated, setOpen }
               </Select>
             )}
           />
-          {form.formState.errors.status && <p className="text-red-500 text-xs mt-1">{form.formState.errors.status.message}</p>}
+          {form.formState.errors.status && <p className="text--500 text-xs mt-1">{form.formState.errors.status.message}</p>}
         </div>
 
         {!isClientProfile && (
-          <div className="flex items-center space-x-2">
-            <Controller
-              control={form.control}
-              name="visibleToClient"
-              render={({ field }) => (
-                <Switch
-                  id="visibleToClient"
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              )}
-            />
-            <Label htmlFor="visibleToClient">Visible to Client</Label>
+          <div className="border-t pt-4">
+            <div className="flex items-center space-x-2">
+              <Controller
+                control={control}
+                name="visibleToClient"
+                render={({ field }) => (
+                  <Switch
+                    id="visibleToClient"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                )}
+              />
+              <Label htmlFor="visibleToClient">Visible to Client</Label>
+            </div>
           </div>
         )}
 
-        <div className="flex gap-2 justify-end">
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
           <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
           <Button type="submit" disabled={isLoading}>
             {isLoading ? 'Updating Task...' : 'Update Task'}

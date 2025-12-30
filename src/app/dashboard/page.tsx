@@ -15,6 +15,7 @@ import {
   LatestTasksCard,
   LatestDocumentsCard,
   LatestInvoicesCard,
+  TopTenantsCard,
 } from "./components";
 import { getDashboardWidgets, getDashboardOverview } from '@/lib/api';
 import type { DashboardWidgetsResponse, DashboardOverviewResponse } from '@/models/dashboard';
@@ -26,15 +27,15 @@ export default function DashboardPage() {
   const [dashboardWidgetsData, setDashboardWidgetsData] = useState<DashboardWidgetsResponse | null>(null);
   const [dashboardOverviewData, setDashboardOverviewData] = useState<DashboardOverviewResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const { activeProfileId, token } = useAuth();
+  const { activeProfileId, token, activeProfile } = useAuth();
 
   useEffect(() => {
     const fetchData = async () => {
       if (!token || !activeProfileId) return;
       try {
         const [widgetsResponse, overviewResponse] = await Promise.all([
-          getDashboardWidgets(token, activeProfileId as string),
-          getDashboardOverview(token, activeProfileId as string)
+          getDashboardWidgets(token, activeProfileId as string, activeProfile as string),
+          getDashboardOverview(token, activeProfileId as string, activeProfile as string)
         ]);
 
         if (widgetsResponse.success && widgetsResponse.data) {
@@ -54,12 +55,14 @@ export default function DashboardPage() {
     fetchData();
   }, [token, activeProfileId]);
 
+  const isClient = activeProfile === 'client';
+
   const dashboardWidgets = [
     {
-      title: "Total Clients",
-      value: dashboardWidgetsData?.totalClients?.toLocaleString(),
+      title: isClient ? "Total Tenants" : "Total Clients",
+      value: isClient ? dashboardWidgetsData?.totalTenants?.toLocaleString() : dashboardWidgetsData?.totalClients?.toLocaleString(),
       icon: Users,
-      href: "/dashboard/clients",
+      href: "/dashboard",
     },
     {
       title: "Active Projects",
@@ -73,7 +76,7 @@ export default function DashboardPage() {
       icon: CheckSquare,
     },
     {
-      title: "Outstanding Invoices",
+      title: isClient ? "Outstanding Payments" : "Outstanding Invoices",
       value: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(dashboardWidgetsData?.outstandingInvoices || 0),
       icon: LineChart,
     }
@@ -126,10 +129,11 @@ export default function DashboardPage() {
           ) : (
             <div key={widget.title}>{cardContent}</div>
           );
-        })}
+        })
+        }
       </div>
       <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-        <TopClientsCard data={dashboardOverviewData?.topClients} />
+        {isClient ? <TopTenantsCard data={dashboardOverviewData?.topTenants} /> : <TopClientsCard data={dashboardOverviewData?.topClients} />}
         <TopProjectsCard data={dashboardOverviewData?.topProjects} />
         <LatestTasksCard data={dashboardOverviewData?.latestTasks} />
         <LatestDocumentsCard data={dashboardOverviewData?.latestDocuments} />

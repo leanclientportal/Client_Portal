@@ -1,4 +1,5 @@
 export * from './top-clients-card';
+export * from './top-tenants-card';
 export * from './top-projects-card';
 export * from './latest-tasks-card';
 export * from './latest-documents-card';

@@ -12,8 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X, File, UploadCloud } from 'lucide-react';
 import { uploadFile } from '@/lib/storage';
-import type { NewInvoice, CommonApiResponse, ApiAddResponseData } from '@/lib/types'; // Updated imports
-import { format } from 'date-fns';
+import type { NewInvoice, CommonApiResponse, ApiAddResponseData } from '@/lib/types';
+import { DatePicker } from '@/components/ui/date-picker';
 
 interface FileWithPreview extends File {
   preview: string;
@@ -29,25 +29,24 @@ interface AddInvoiceDialogProps {
 const AddInvoiceDialog: FC<AddInvoiceDialogProps> = ({ isOpen, onClose, onInvoiceAdded, projectId }) => {
   const { token } = useAuth();
   const { toast } = useToast();
-  const today = format(new Date(), 'yyyy-MM-dd');
 
   const [title, setTitle] = useState('');
   const [status, setStatus] = useState('pending');
   const [amount, setAmount] = useState('');
-  const [dueDate, setDueDate] = useState('');
-  const [invoiceDate, setInvoiceDate] = useState(today);
-  const [paidDate, setPaidDate] = useState<string | undefined>(undefined);
+  const [dueDate, setDueDate] = useState<Date | null>(null);
+  const [invoiceDate, setInvoiceDate] = useState<Date | null>(new Date());
+  const [paidDate, setPaidDate] = useState<Date | null>(null);
   const [paymentLink, setPaymentLink] = useState('');
   const [files, setFiles] = useState<FileWithPreview[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (status === 'paid') {
-      setPaidDate(today);
+      setPaidDate(new Date());
     } else {
-      setPaidDate(undefined);
+      setPaidDate(null);
     }
-  }, [status, today]);
+  }, [status]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const filesWithPreview = acceptedFiles.map(file => Object.assign(file, {
@@ -93,9 +92,9 @@ const AddInvoiceDialog: FC<AddInvoiceDialogProps> = ({ isOpen, onClose, onInvoic
         title,
         status,
         amount: parseFloat(amount),
-        dueDate,
-        invoiceDate,
-        paidDate: status === 'paid' ? paidDate : undefined,
+        dueDate: dueDate.toISOString(),
+        invoiceDate: invoiceDate.toISOString(),
+        paidDate: status === 'paid' && paidDate ? paidDate.toISOString() : undefined,
         paymentLink: paymentLink || undefined,
       };
 
@@ -134,25 +133,25 @@ const AddInvoiceDialog: FC<AddInvoiceDialogProps> = ({ isOpen, onClose, onInvoic
         <DialogHeader>
           <DialogTitle>Add Invoice</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="title" className="text-right">Title*</Label>
-            <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} className="col-span-3" required />
+        <div className="flex flex-col gap-4 py-4 max-h-[70vh] overflow-y-auto">
+          <div className="grid gap-2">
+            <Label htmlFor="title">Title*</Label>
+            <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
           </div>
 
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="amount" className="text-right">Amount*</Label>
-            <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="col-span-3" required />
+          <div className="grid gap-2">
+            <Label htmlFor="amount">Amount*</Label>
+            <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} required />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="invoiceDate" className="text-right">Invoice Date*</Label>
-            <Input id="invoiceDate" type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} className="col-span-3" required />
+          <div className="grid gap-2">
+            <Label htmlFor="invoiceDate">Invoice Date*</Label>
+            <DatePicker selected={invoiceDate} onChange={setInvoiceDate} />
           </div>
 
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="status" className="text-right">Status*</Label>
+          <div className="grid gap-2">
+            <Label htmlFor="status">Status*</Label>
             <Select onValueChange={setStatus} value={status} required>
-              <SelectTrigger className="col-span-3">
+              <SelectTrigger>
                 <SelectValue placeholder="Select a status" />
               </SelectTrigger>
               <SelectContent>
@@ -162,18 +161,18 @@ const AddInvoiceDialog: FC<AddInvoiceDialogProps> = ({ isOpen, onClose, onInvoic
             </Select>
           </div>
           {status === 'paid' && (
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="paidDate" className="text-right">Paid Date*</Label>
-              <Input id="paidDate" type="date" value={paidDate} onChange={(e) => setPaidDate(e.target.value)} className="col-span-3" required />
+            <div className="grid gap-2">
+              <Label htmlFor="paidDate">Paid Date*</Label>
+              <DatePicker selected={paidDate} onChange={setPaidDate} />
             </div>
           )}
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="dueDate" className="text-right">Due Date*</Label>
-            <Input id="dueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="col-span-3" required />
+          <div className="grid gap-2">
+            <Label htmlFor="dueDate">Due Date*</Label>
+            <DatePicker selected={dueDate} onChange={setDueDate} />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="paymentLink" className="text-right">Payment Link (Optional)</Label>
-            <Input id="paymentLink" value={paymentLink} onChange={(e) => setPaymentLink(e.target.value)} className="col-span-3" />
+          <div className="grid gap-2">
+            <Label htmlFor="paymentLink">Payment Link (Optional)</Label>
+            <Input id="paymentLink" value={paymentLink} onChange={(e) => setPaymentLink(e.target.value)} />
           </div>
           <div {...getRootProps()} className={`p-10 border-2 border-dashed rounded-lg text-center cursor-pointer ${isDragActive ? 'border-blue-500' : 'border-gray-300'}`}>
             <input {...getInputProps()} />
@@ -206,7 +205,7 @@ const AddInvoiceDialog: FC<AddInvoiceDialogProps> = ({ isOpen, onClose, onInvoic
             </div>
           )}
         </div>
-        <DialogFooter>
+        <DialogFooter className="flex flex-col-reverse sm:flex-row sm:gap-2">
           <Button onClick={onClose} variant="outline">Cancel</Button>
           <Button onClick={handleSubmit} disabled={isSubmitting}>
             {isSubmitting ? 'Adding...' : 'Add Invoice'}

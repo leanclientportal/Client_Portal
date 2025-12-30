@@ -1,6 +1,13 @@
 // src/lib/api/http-client.ts
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from "axios";
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError, InternalAxiosRequestConfig } from "axios";
 import { CommonApiResponse, Pagination } from '../types'; // Import CommonApiResponse and Pagination
+import { logout } from '../auth'; // Import the logout function
+
+declare module 'axios' {
+    export interface AxiosRequestConfig {
+        _token?: string;
+    }
+}
 
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
@@ -11,14 +18,9 @@ const axiosInstance: AxiosInstance = axios.create({
 
 // Request interceptor for adding authorization token
 axiosInstance.interceptors.request.use(
-  (config: AxiosRequestConfig) => {
-    const token = (config as any)._token;
-
-    if (token) {
-      config.headers = {
-        ...config.headers,
-        Authorization: `Bearer ${token}`,
-      };
+  (config: InternalAxiosRequestConfig) => {
+    if (config._token) {
+      config.headers.Authorization = `Bearer ${config._token}`;
     }
     return config;
   },
@@ -67,6 +69,14 @@ axiosInstance.interceptors.response.use(
   (error: AxiosError) => {
     if (error.response) {
       const errorData = error.response.data as CommonApiResponse<any>;
+
+      if (error.response.status === 401 && errorData.message === 'Not authorized to access this route: jwt expired') {
+        logout();
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
+      }
+
       // If the API response already conforms to CommonApiResponse, use its message
       return Promise.reject(new Error(errorData?.message || `API request failed with status ${error.response.status}`));
     }

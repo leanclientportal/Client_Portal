@@ -17,7 +17,7 @@ export async function getTemplates(tenantId: string, token: string, page: number
   return httpClient<GetTemplatesResponse>(`/email-templates/${tenantId}?${params.toString()}`, { token });
 }
 
-export async function getTemplateById(tenantId: string, templateId: string, token: string): Promise<CommonApiResponse<Template>> {
+export async function getTemplate(tenantId: string, templateId: string, token: string): Promise<CommonApiResponse<Template>> {
   return httpClient<Template>(`/email-templates/${tenantId}/${templateId}`, { token });
 }
 
@@ -35,8 +35,4 @@ export async function deleteTemplate(tenantId: string, templateId: string, token
 
 export async function getTemplateVariables(token: string): Promise<CommonApiResponse<EmailTemplateType[]>> {
     return httpClient<EmailTemplateType[]>(`/email-templates/types`, { token });
-}
-
-export async function preloadTemplate(tenantId: string, templateTypeCode: string, token: string): Promise<CommonApiResponse<Template>> {
-  return httpClient<Template>(`/email-templates/${tenantId}/preload/${templateTypeCode}`, { token });
 }

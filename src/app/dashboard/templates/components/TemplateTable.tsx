@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, FC } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -14,8 +15,6 @@ import { getTemplates, deleteTemplate } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import type { Template } from '@/lib/types';
-import { AddTemplateDialog } from './AddTemplateDialog';
-import { EditTemplateDialog } from './EditTemplateDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,6 +28,7 @@ import {
 import { Edit, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from "@/components/ui/skeleton";
+import { useRouter } from 'next/navigation';
 
 interface ActionButtonProps {
   onClick: (e: React.MouseEvent) => void;
@@ -62,11 +62,9 @@ const ActionButton: FC<ActionButtonProps> = ({ onClick, children, label, classNa
 export function TemplateTable() {
   const { activeProfileId: tenantId, token } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAddOpen, setAddOpen] = useState(false);
-  const [isEditOpen, setEditOpen] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [deleteTemplateId, setDeleteTemplateId] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
@@ -114,18 +112,7 @@ export function TemplateTable() {
   };
 
   const handleEdit = (template: Template) => {
-    setSelectedTemplate(template);
-    setEditOpen(true);
-  };
-
-  const handleAddSuccess = () => {
-    setAddOpen(false);
-    fetchTemplates();
-  };
-
-  const handleEditSuccess = () => {
-    setEditOpen(false);
-    fetchTemplates();
+    router.push(`/dashboard/templates/edit/${template._id}`);
   };
 
   const handleActionClick = (e: React.MouseEvent, action: () => void) => {
@@ -142,11 +129,15 @@ export function TemplateTable() {
       </div>
     );
   }
-
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button onClick={() => setAddOpen(true)}>Add Template</Button>
+        <Link href="/dashboard/templates/token-glossary">
+          <Button variant="outline" className="mr-2">Token Glossary</Button>
+        </Link>
+        <Link href="/dashboard/templates/add">
+          <Button>Add Template</Button>
+        </Link>
       </div>
       <Table>
         <TableHeader>
@@ -154,7 +145,6 @@ export function TemplateTable() {
             <TableHead className="w-[150px]">Name</TableHead>
             <TableHead>Template Type</TableHead>
             <TableHead>Subject</TableHead>
-            <TableHead>Body</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -165,7 +155,6 @@ export function TemplateTable() {
                 <TableCell className="font-medium">{template.name}</TableCell>
                 <TableCell>{template.templateTypeName}</TableCell>
                 <TableCell>{template.subject}</TableCell>
-                <TableCell className="max-w-md truncate">{template.body}</TableCell>
                 <TableCell className="text-right">
                   <div
                     className="inline-flex justify-end items-center gap-1 rounded-full bg-muted p-1"
@@ -193,25 +182,12 @@ export function TemplateTable() {
               </TableRow>
             ))
           ) : (
-             <TableRow>
+            <TableRow>
               <TableCell colSpan={4} className="text-center">No templates found.</TableCell>
             </TableRow>
           )}
         </TableBody>
       </Table>
-      <AddTemplateDialog
-        isOpen={isAddOpen}
-        onOpenChange={setAddOpen}
-        onSuccess={handleAddSuccess}
-      />
-      {selectedTemplate && (
-        <EditTemplateDialog
-          isOpen={isEditOpen}
-          onOpenChange={setEditOpen}
-          template={selectedTemplate}
-          onSuccess={handleEditSuccess}
-        />
-      )}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

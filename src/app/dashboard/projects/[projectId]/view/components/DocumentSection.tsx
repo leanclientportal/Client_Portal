@@ -32,6 +32,8 @@ import { useToast } from '@/hooks/use-toast';
 import { deleteDocument } from '@/lib/api'; // getDocuments might not be needed if passed as prop
 import type { Documents, CommonApiResponse, ApiAddResponseData } from '@/lib/types'; // Added CommonApiResponse, ApiAddResponseData
 import { ActionButton } from './ActionButton'; // Assuming ActionButton is also extracted
+import { format } from 'date-fns';
+import { formatDate } from '@/lib/utils';
 
 interface DocumentSectionProps {
     projectId: string;
@@ -177,7 +179,7 @@ const DocumentSection: FC<DocumentSectionProps> = ({ projectId, projectFiles, is
                                 <TableRow key={file._id || index}> {/* Use file._id for key if available, fallback to index */}
                                     <TableCell>{file.name}</TableCell>
                                     <TableCell>{file.uploadedBy}<br />{file.uploaderId.email}</TableCell>
-                                    <TableCell>{new Date(file.createdDate).toLocaleDateString()}</TableCell>
+                                    <TableCell>{formatDate(file.createdDate)}</TableCell>
                                     <TableCell className="text-right">
                                         <div className="inline-flex justify-end items-center gap-1 rounded-full bg-muted p-1">
                                             <ActionButton

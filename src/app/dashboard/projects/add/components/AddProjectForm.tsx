@@ -55,9 +55,9 @@ export default function AddProjectForm({ onBack }: AddProjectFormProps) {
     const fetchOwners = async () => {
       try {
         if (activeProfile === 'client') {
-          const response: CommonApiResponse<{ count: number, data: SelectListItem[] }> = await getTenantsByClient(activeProfileId, token);
+          const response: CommonApiResponse<SelectListItem[]> = await getTenantsByClient(activeProfileId, token);
           if (response.success && response.data) {
-            setOwners(response.data.data.map(tenant => ({ id: tenant.value, name: tenant.label })));
+            setOwners(response.data.map(tenant => ({ id: tenant.value, name: tenant.label })));
           } else {
             toast({ title: "Error", description: response.message || "Failed to fetch tenants.", variant: "destructive" });
             setOwners([]);
@@ -96,7 +96,7 @@ export default function AddProjectForm({ onBack }: AddProjectFormProps) {
 
     try {
       const response: CommonApiResponse<ApiAddResponseData> = await addProject(tenantId, token, clientId, newProjectPayload);
-      
+
       if (response.success) {
         toast({ title: "Success", description: response.message || "Project added successfully." });
         router.push('/dashboard/projects');

@@ -12,8 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X, File, UploadCloud } from 'lucide-react';
 import { uploadFile } from '@/lib/storage';
-import type { NewInvoice, Invoice, CommonApiResponse, ApiAddResponseData } from '@/lib/types'; // Updated imports
-import { format } from 'date-fns';
+import type { NewInvoice, Invoice, CommonApiResponse, ApiAddResponseData } from '@/lib/types';
+import { DatePicker } from '@/components/ui/date-picker';
 
 interface FileWithPreview extends File {
   preview: string;
@@ -27,42 +27,35 @@ interface EditInvoiceDialogProps {
   invoice: Invoice;
 }
 
-const safeFormatDate = (dateString?: string): string => {
-    if (dateString) {
-        const date = new Date(dateString);
-        if (date instanceof Date && !isNaN(date.getTime())) {
-            return format(date, 'yyyy-MM-dd');
-        }
-    }
-    return '';
+const safeParseDate = (date: string | undefined): Date | null => {
+  if (!date) return null;
+  const parsedDate = new Date(date);
+  return isNaN(parsedDate.getTime()) ? null : parsedDate;
 };
 
 export default function EditInvoiceDialog({ projectId, invoice, onInvoiceUpdated, isOpen, onClose }: EditInvoiceDialogProps) {
 
   const { token, activeProfile } = useAuth();
   const { toast } = useToast();
-  const today = format(new Date(), 'yyyy-MM-dd');
   const isClient = activeProfile === 'client';
 
   const [title, setTitle] = useState(invoice.title);
   const [status, setStatus] = useState(invoice.status);
   const [amount, setAmount] = useState(invoice.amount.toString());
-  const [dueDate, setDueDate] = useState(safeFormatDate(invoice.dueDate));
-  const [invoiceDate, setInvoiceDate] = useState(safeFormatDate(invoice.invoiceDate));
-  const [paidDate, setPaidDate] = useState<string | undefined>(
-    safeFormatDate(invoice.paidDate) || undefined
-  );
+  const [dueDate, setDueDate] = useState<Date | null>(safeParseDate(invoice.dueDate));
+  const [invoiceDate, setInvoiceDate] = useState<Date | null>(safeParseDate(invoice.invoiceDate));
+  const [paidDate, setPaidDate] = useState<Date | null>(safeParseDate(invoice.paidDate));
   const [paymentLink, setPaymentLink] = useState(invoice.paymentLink || '');
   const [files, setFiles] = useState<FileWithPreview[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (status === 'paid') {
-      setPaidDate(today);
+        setPaidDate(new Date());
     } else {
-      setPaidDate(undefined);
+      setPaidDate(null);
     }
-  }, [status, paidDate, today]);
+  }, [status, paidDate]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const filesWithPreview = acceptedFiles.map(file => Object.assign(file, {
@@ -109,13 +102,13 @@ export default function EditInvoiceDialog({ projectId, invoice, onInvoiceUpdated
         title,
         status,
         amount: parseFloat(amount),
-        dueDate,
-        invoiceDate,
-        paidDate: status === 'paid' ? paidDate : undefined,
+        dueDate: dueDate.toISOString(),
+        invoiceDate: invoiceDate.toISOString(),
+        paidDate: status === 'paid' && paidDate ? paidDate.toISOString() : undefined,
         paymentLink: paymentLink || undefined,
       };
 
-      const response: CommonApiResponse<ApiAddResponseData> = await updateInvoice(token, projectId, invoice._id, invoiceData); // Explicitly type the response
+      const response: CommonApiResponse<ApiAddResponseData> = await updateInvoice(token, projectId, invoice._id, invoiceData);
 
       if (response.success) {
         toast({ title: "Success", description: response.message || "Invoice updated successfully" });
@@ -150,25 +143,25 @@ export default function EditInvoiceDialog({ projectId, invoice, onInvoiceUpdated
         <DialogHeader>
           <DialogTitle>{isClient ? 'View Invoice' : 'Edit Invoice'}</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="title" className="text-right">Title*</Label>
-            <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} className="col-span-3" required disabled={isClient} />
+        <div className="flex flex-col gap-4 py-4 max-h-[70vh] overflow-y-auto">
+          <div className="grid gap-2">
+            <Label htmlFor="title">Title*</Label>
+            <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} required disabled={isClient} />
           </div>
          
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="amount" className="text-right">Amount*</Label>
-            <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="col-span-3" required disabled={isClient} />
+          <div className="grid gap-2">
+            <Label htmlFor="amount">Amount*</Label>
+            <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} required disabled={isClient} />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="invoiceDate" className="text-right">Invoice Date*</Label>
-            <Input id="invoiceDate" type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} className="col-span-3" required disabled={isClient} />
+          <div className="grid gap-2">
+            <Label htmlFor="invoiceDate">Invoice Date*</Label>
+            <DatePicker selected={invoiceDate} onChange={setInvoiceDate} disabled={isClient} />
           </div>
           
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="status" className="text-right">Status*</Label>
+          <div className="grid gap-2">
+            <Label htmlFor="status">Status*</Label>
             <Select onValueChange={setStatus} value={status} required disabled={isClient}>
-              <SelectTrigger className="col-span-3">
+              <SelectTrigger>
                 <SelectValue placeholder="Select a status" />
               </SelectTrigger>
               <SelectContent>
@@ -178,18 +171,18 @@ export default function EditInvoiceDialog({ projectId, invoice, onInvoiceUpdated
             </Select>
           </div>
           {status === 'paid' && (
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="paidDate" className="text-right">Paid Date*</Label>
-              <Input id="paidDate" type="date" value={paidDate} onChange={(e) => setPaidDate(e.target.value)} className="col-span-3" required disabled={isClient} />
+            <div className="grid gap-2">
+              <Label htmlFor="paidDate">Paid Date*</Label>
+              <DatePicker selected={paidDate} onChange={setPaidDate} disabled={isClient} />
             </div>
           )}
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="dueDate" className="text-right">Due Date*</Label>
-            <Input id="dueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="col-span-3" required disabled={isClient} />
+          <div className="grid gap-2">
+            <Label htmlFor="dueDate">Due Date*</Label>
+            <DatePicker selected={dueDate} onChange={setDueDate} disabled={isClient} />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="paymentLink" className="text-right">Payment Link (Optional)</Label>
-            <Input id="paymentLink" value={paymentLink} onChange={(e) => setPaymentLink(e.target.value)} className="col-span-3" disabled={isClient} />
+          <div className="grid gap-2">
+            <Label htmlFor="paymentLink">Payment Link (Optional)</Label>
+            <Input id="paymentLink" value={paymentLink} onChange={(e) => setPaymentLink(e.target.value)} disabled={isClient} />
           </div>
           {!isClient && (
             <div {...getRootProps()} className={`p-10 border-2 border-dashed rounded-lg text-center cursor-pointer ${isDragActive ? 'border-blue-500' : 'border-gray-300'}`}>
@@ -232,7 +225,7 @@ export default function EditInvoiceDialog({ projectId, invoice, onInvoiceUpdated
             </div>
           )}
         </div>
-        <DialogFooter>
+        <DialogFooter className="flex flex-col-reverse sm:flex-row sm:gap-2">
           <Button onClick={onClose} variant="outline">Cancel</Button>
           {!isClient && (
             <Button onClick={handleSubmit} disabled={isSubmitting}>

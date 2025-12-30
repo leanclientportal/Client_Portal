@@ -26,7 +26,7 @@ export async function sendOtp(email: string, type: 'registration' | 'login'): Pr
     }
 }
 
-export async function verifyOtp(email: string, otp: string, type: 'registration' | 'login', options?: { name?: string; phone?: string; activeProfile?: string;}): Promise<VerifyOtpResponseData> {
+export async function verifyOtp(email: string, otp: string, type: 'registration' | 'login', options?: { name?: string; phone?: string; activeProfile?: string; }): Promise<VerifyOtpResponseData> {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (!baseUrl) {
         throw new Error("API base URL is not configured.");
@@ -51,3 +51,14 @@ export async function verifyOtp(email: string, otp: string, type: 'registration'
     }
 }
 
+
+export function logout(): void {
+    if (typeof window !== 'undefined') {
+        localStorage.removeItem('clientverse_jwt');
+        localStorage.removeItem('clientverse_user_id');
+        localStorage.removeItem('user_activeProfile');
+        localStorage.removeItem('user_activeProfileId');
+        localStorage.removeItem('user_activeProfileImage');
+        localStorage.removeItem('user_profileName');
+    }
+}

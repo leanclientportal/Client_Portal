@@ -35,7 +35,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { deleteTask } from '@/lib/api';
 import type { Task, CommonApiResponse, ApiAddResponseData } from '@/lib/types'; // Added CommonApiResponse, ApiAddResponseData
-import { capitalizeFirstLetter, cn } from '@/lib/utils';
+import { capitalizeFirstLetter, cn, formatDate } from '@/lib/utils';
 import { ActionButton } from './ActionButton'; // Assuming ActionButton is also extracted
 
 interface TaskSectionProps {
@@ -217,7 +217,7 @@ const TaskSection: FC<TaskSectionProps> = ({ projectId, tasks, isLoadingTasks, f
                         {capitalizeFirstLetter(task.status)}
                       </span>
                     </TableCell>
-                    <TableCell>{new Date(task.dueDate).toLocaleDateString()}</TableCell>
+                    <TableCell>{formatDate(task.dueDate)}</TableCell>
                     <TableCell className="text-right">
                       <div className="inline-flex justify-end items-center gap-1 rounded-full bg-muted p-1">
                         <ActionButton

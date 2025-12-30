@@ -1,11 +1,19 @@
 export interface DashboardWidgetsResponse {
   totalClients: number;
+  totalTenants: number;
   activeProjects: number;
   pendingTasks: number;
   outstandingInvoices: number;
 }
 
 export interface TopClient {
+  _id: string;
+  name: string;
+  email: string;
+  phone: string;
+}
+
+export interface TopTenant {
   _id: string;
   name: string;
   email: string;
@@ -45,6 +53,7 @@ export interface LatestNotification {
 
 export interface DashboardOverviewResponse {
   topClients: TopClient[];
+  topTenants: TopTenant[];
   topProjects: TopProject[];
   latestTasks: LatestTask[];
   latestDocuments: LatestDocument[];

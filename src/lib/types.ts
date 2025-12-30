@@ -364,3 +364,8 @@ export interface ChatConversation {
     unreadCount: number;
     type: 'client' | 'tenant';
 }
+
+export interface GeneralSettings {
+    dateFormat?: string;
+    amountFormat?: string;
+}

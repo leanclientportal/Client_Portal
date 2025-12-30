@@ -35,6 +35,7 @@ import Logo from "@/components/Logo";
 import { ModeToggle } from "@/components/ui/theme-toggle";
 import { useUserRole } from "@/hooks/use-user-role";
 import { menuConfig } from "@/lib/menu-config";
+import { SettingsProvider } from "@/providers/SettingsProvider";
 
 const quickLinks = [
   {
@@ -86,99 +87,103 @@ export default function DashboardLayout({
   }
 
   return (
-    <SidebarProvider>
-      <Sidebar role={role}>
-        <SidebarHeader>
-          <div className="p-2">
-            <Logo />
-          </div>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarMenu>
-            {navItems.map((item) => (
-              <React.Fragment key={item.href}>
-                <SidebarMenuItem>
-                  <Link href={item.href} passHref>
-                    <SidebarMenuButton
-                      isActive={activeItem?.href === item.href}
-                      tooltip={item.title}
-                    >
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </SidebarMenuButton>
-                  </Link>
-                </SidebarMenuItem>
-              </React.Fragment>
-            ))}
-          </SidebarMenu>
-        </SidebarContent>
-        <SidebarFooter>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <ModeToggle />
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton onClick={logout} tooltip="Logout">
-                <LogOut />
-                <span>Logout</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarFooter>
-      </Sidebar>
-      <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-background sm:px-6 sm:py-4 shadow-md">
-          <SidebarTrigger className="sm:hidden" />
-          <div>
-            <h1 className="text-lg font-semibold">Hello, {profileName}</h1>
-            <p className="text-sm text-muted-foreground">Welcome back, let's get to work!</p>
-          </div>
-          <div className="ml-auto flex items-center gap-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                  <Button variant="link">Quick Link</Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {quickLinks.map((link) => {
-                  const Icon = link.icon;
-                  return (
-                    <DropdownMenuItem key={link.title} asChild>
-                      <Link href={link.href}>
-                        <Icon className="h-4 w-4 mr-2" />
-                        {link.title}
-                      </Link>
-                    </DropdownMenuItem>
-                  );
-                })}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="overflow-hidden rounded-full">
-                  <Avatar>
-                    <AvatarImage
-                      src={activeProfileImage || `https://ui-avatars.com/api/?name=${(profileName || activeProfile || '').replace(/\s/g, '+')}&background=random`}
-                      alt={activeProfile || 'Profile'}
-                    />
-                    <AvatarFallback>{profileName ? getInitials(profileName) : ''}</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>{activeProfile || 'My Account'}</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard/switch-profile">Switch Profile</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>Support</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </header>
-        <main className="flex-1 p-4 sm:px-6 sm:py-4">{children}</main>
-      </SidebarInset>
-    </SidebarProvider>
+    <SettingsProvider>
+      <SidebarProvider>
+        <Sidebar role={role}>
+          <SidebarHeader>
+            <div className="p-2">
+              <Logo />
+            </div>
+          </SidebarHeader>
+          <SidebarContent>
+            <SidebarMenu>
+              {navItems.map((item) => (
+                <React.Fragment key={item.href}>
+                  <SidebarMenuItem>
+                    <Link href={item.href} passHref>
+                      <SidebarMenuButton
+                        isActive={activeItem?.href === item.href}
+                        tooltip={item.title}
+                      >
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </Link>
+                  </SidebarMenuItem>
+                </React.Fragment>
+              ))}
+            </SidebarMenu>
+          </SidebarContent>
+          <SidebarFooter>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <ModeToggle />
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton onClick={logout} tooltip="Logout">
+                  <LogOut />
+                  <span>Logout</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarFooter>
+        </Sidebar>
+        <SidebarInset>
+          <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-background sm:px-6 sm:py-4 shadow-md">
+            <SidebarTrigger className="sm:hidden" />
+            <div>
+              <h1 className="text-lg font-semibold">Hello, {profileName}</h1>
+              <p className="text-sm text-muted-foreground">Welcome back, let's get to work!</p>
+            </div>
+            <div className="ml-auto flex items-center gap-4">
+              {activeProfile == "tenant" &&
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="link">Quick Link</Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {activeProfile == "tenant" && quickLinks.map((link) => {
+                      const Icon = link.icon;
+                      return (
+                        <DropdownMenuItem key={link.title} asChild>
+                          <Link href={link.href}>
+                            <Icon className="h-4 w-4 mr-2" />
+                            {link.title}
+                          </Link>
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              }
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="overflow-hidden rounded-full">
+                    <Avatar>
+                      <AvatarImage
+                        src={activeProfileImage || `https://ui-avatars.com/api/?name=${(profileName || activeProfile || '').replace(/\s/g, '+')}&background=random`}
+                        alt={activeProfile || 'Profile'}
+                      />
+                      <AvatarFallback>{profileName ? getInitials(profileName) : ''}</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>{activeProfile || 'My Account'}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/switch-profile">Switch Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>Support</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </header>
+          <main className="flex-1 p-4 sm:px-6 sm:py-4">{children}</main>
+        </SidebarInset>
+      </SidebarProvider>
+    </SettingsProvider>
   );
 }
