@@ -40,15 +40,18 @@ export default function LoginPage() {
     setEmailOrPhone(emailOrPhoneValue);
     sendOtpMutation({ email: emailOrPhoneValue, type: 'login' }, {
       onSuccess: (response) => {
-        if (response.success) {
-          setStep('otp');
-          toast({ title: 'OTP Sent', description: response.message });
-        } else {
-          toast({ title: 'Error', description: response.message || 'Failed to send OTP. Please try again.', variant: 'destructive' });
-        }
+        setStep('otp');
+        toast({
+          title: 'OTP Sent',
+          description: response.message,
+        });
       },
-      onError: () => {
-        toast({ title: 'Error', description: 'Failed to send OTP. Please try again.', variant: 'destructive' });
+      onError: (error: any) => {
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to send OTP',
+          variant: 'destructive',
+        });
       },
     });
   };
@@ -114,12 +117,12 @@ export default function LoginPage() {
                 {isVerifyingOtp ? 'Verifying...' : 'Login'}
               </Button>
             )}
-            <p className="text-center text-sm mt-4">
+            {/* <p className="text-center text-sm mt-4">
               Don't have an account?{' '}
               <Link href="/register" className="text-primary hover:underline">
                 Register
               </Link>
-            </p>
+            </p> */}
           </form>
         </div>
       </div>
