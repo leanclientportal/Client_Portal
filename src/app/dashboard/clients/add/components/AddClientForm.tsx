@@ -125,63 +125,65 @@ export default function AddClientForm() {
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>Client Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <FormProvider {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="flex items-center space-x-4">
-                <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                  {imagePreview ? (
-                    <Image src={imagePreview} alt="Profile Preview" width={96} height={96} className="object-cover" />
-                  ) : (
-                    <span className="text-xs text-gray-500">Image Preview</span>
-                  )}
+      <div className="rounded-3xl dark:shadow-dark-md shadow-md bg-background p-6 relative w-full break-words">
+        <Card className='p-0'>
+          <CardHeader>
+            <CardTitle>Client Details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <FormProvider {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                    {imagePreview ? (
+                      <Image src={imagePreview} alt="Profile Preview" width={96} height={96} className="object-cover" />
+                    ) : (
+                      <span className="text-xs text-gray-500">Image Preview</span>
+                    )}
+                  </div>
+                  <div>
+                    <Input type="file" onChange={handleFileChange} accept="image/*" />
+                    {form.formState.errors.profileImageBinary && <p className="text-red-500 text-xs mt-1">{form.formState.errors.profileImageBinary.message}</p>}
+                  </div>
                 </div>
+
                 <div>
-                  <Input type="file" onChange={handleFileChange} accept="image/*" />
-                  {form.formState.errors.profileImageBinary && <p className="text-red-500 text-xs mt-1">{form.formState.errors.profileImageBinary.message}</p>}
+                  <Input placeholder="Name" {...form.register("name")} />
+                  {form.formState.errors.name && <p className="text-red-500 text-xs mt-1">{form.formState.errors.name.message}</p>}
                 </div>
-              </div>
 
-              <div>
-                <Input placeholder="Name" {...form.register("name")} />
-                {form.formState.errors.name && <p className="text-red-500 text-xs mt-1">{form.formState.errors.name.message}</p>}
-              </div>
+                <div>
+                  <Input placeholder="Email" {...form.register("email")} />
+                  {form.formState.errors.email && <p className="text-red-500 text-xs mt-1">{form.formState.errors.email.message}</p>}
+                </div>
 
-              <div>
-                <Input placeholder="Email" {...form.register("email")} />
-                {form.formState.errors.email && <p className="text-red-500 text-xs mt-1">{form.formState.errors.email.message}</p>}
-              </div>
+                <div>
+                  <Controller
+                    name="phone"
+                    control={form.control}
+                    render={({ field }) => (
+                      <PhoneNumberInput
+                        {...field}
+                        placeholder="Phone number"
+                      />
+                    )}
+                  />
+                  {form.formState.errors.phone && <p className="text-red-500 text-xs mt-1">{form.formState.errors.phone.message}</p>}
+                </div>
 
-              <div>
-                <Controller
-                  name="phone"
-                  control={form.control}
-                  render={({ field }) => (
-                    <PhoneNumberInput
-                      {...field}
-                      placeholder="Phone number"
-                    />
-                  )}
-                />
-                {form.formState.errors.phone && <p className="text-red-500 text-xs mt-1">{form.formState.errors.phone.message}</p>}
-              </div>
-
-              <div className="flex gap-2">
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? 'Sending Invitation...' : 'Send Invitation'}
-                </Button>
-                <Button type="button" variant="outline" onClick={handleBackClick}>
-                  Back
-                </Button>
-              </div>
-            </form>
-          </FormProvider>
-        </CardContent>
-      </Card>
+                <div className="flex gap-2">
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? 'Sending Invitation...' : 'Send Invitation'}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={handleBackClick}>
+                    Back
+                  </Button>
+                </div>
+              </form>
+            </FormProvider>
+          </CardContent>
+        </Card>
+      </div>
       <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>

@@ -25,7 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Eye, Filter, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from 'next/navigation';
@@ -130,64 +130,80 @@ export function TemplateTable() {
     );
   }
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
-        <Link href="/dashboard/templates/token-glossary">
-          <Button variant="outline" className="mr-2">Token Glossary</Button>
-        </Link>
+    <div className="rounded-3xl dark:shadow-dark-md shadow-md bg-background p-6 relative w-full break-words">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        {/* Left side: Search + Filter */}
+        <div className="flex items-center gap-2">
+
+          <Link href="/dashboard/templates/token-glossary">
+            <Button variant="outline" className="mr-2">
+          <Eye className="mr-2 h-4 w-4" />
+              View Token Glossary</Button>
+          </Link>
+        </div>
         <Link href="/dashboard/templates/add">
           <Button>Add Template</Button>
         </Link>
       </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[150px]">Name</TableHead>
-            <TableHead>Template Type</TableHead>
-            <TableHead>Subject</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {templates.length > 0 ? (
-            templates.map((template) => (
-              <TableRow key={template._id}>
-                <TableCell className="font-medium">{template.name}</TableCell>
-                <TableCell>{template.templateTypeName}</TableCell>
-                <TableCell>{template.subject}</TableCell>
-                <TableCell className="text-right">
-                  <div
-                    className="inline-flex justify-end items-center gap-1 rounded-full bg-muted p-1"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <ActionButton
-                      onClick={(e) => handleActionClick(e, () => handleEdit(template))}
-                      label="Edit"
-                      className="text-yellow-500 hover:bg-yellow-500"
-                    >
-                      <Edit className="h-[22px] w-[22px]" />
-                    </ActionButton>
-                    <ActionButton
-                      onClick={(e) => handleActionClick(e, () => {
-                        setDeleteTemplateId(template._id);
-                        setIsDeleteDialogOpen(true);
-                      })}
-                      label="Trash"
-                      className="text-red-500 hover:bg-red-500"
-                    >
-                      <Trash2 className="h-[22px] w-[22px]" />
-                    </ActionButton>
-                  </div>
-                </TableCell>
+
+
+
+      <div className="mt-3 overflow-x-auto">
+        <div className="space-y-4">
+          <div className="flex justify-end">
+
+          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[150px]">Name</TableHead>
+                <TableHead>Template Type</TableHead>
+                <TableHead>Subject</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={4} className="text-center">No templates found.</TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+            </TableHeader>
+            <TableBody>
+              {templates.length > 0 ? (
+                templates.map((template) => (
+                  <TableRow key={template._id}>
+                    <TableCell className="font-medium">{template.name}</TableCell>
+                    <TableCell>{template.templateTypeName}</TableCell>
+                    <TableCell>{template.subject}</TableCell>
+                    <TableCell className="text-right">
+                      <div
+                        className="inline-flex justify-end items-center gap-1 rounded-full bg-muted p-1"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <ActionButton
+                          onClick={(e) => handleActionClick(e, () => handleEdit(template))}
+                          label="Edit"
+                          className="text-yellow-500 hover:bg-yellow-500"
+                        >
+                          <Edit className="h-[22px] w-[22px]" />
+                        </ActionButton>
+                        <ActionButton
+                          onClick={(e) => handleActionClick(e, () => {
+                            setDeleteTemplateId(template._id);
+                            setIsDeleteDialogOpen(true);
+                          })}
+                          label="Trash"
+                          className="text-red-500 hover:bg-red-500"
+                        >
+                          <Trash2 className="h-[22px] w-[22px]" />
+                        </ActionButton>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center">No templates found.</TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

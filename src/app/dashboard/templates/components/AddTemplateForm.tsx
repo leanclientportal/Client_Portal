@@ -98,42 +98,45 @@ export function AddTemplateForm() {
   };
 
   return (
-    <div className="space-y-6">
-        <div className="grid grid-cols-1 gap-y-4 gap-x-6 sm:grid-cols-2">
-            <div className="space-y-2">
-                <Label htmlFor="name">Template Name</Label>
-                <Input id="name" placeholder="Template Name" value={name} onChange={(e) => setName(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="templateType">Template Type</Label>
-                <Select value={selectedTemplateType} onValueChange={setSelectedTemplateType}>
-                    <SelectTrigger id="templateType">
-                        <SelectValue placeholder="Select template type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {templateTypes.map((type) => (
-                          <SelectItem key={type.code} value={type.code.toString()}>
-                            {type.displayName}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-            <div className="sm:col-span-2 space-y-2">
-                <Label htmlFor="subject">Subject</Label>
-                <Input id="subject" placeholder="Subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
-            </div>
-            <div className="sm:col-span-2 space-y-2">
-                <Label htmlFor="body">Body</Label>
-                <RichTextEditor value={body} onChange={setBody} />
-            </div>
+
+    <div className="rounded-3xl dark:shadow-dark-md shadow-md bg-background p-6 relative w-full break-words">
+      <div className="flex flex-col sm:items-center sm:justify-between gap-4 mb-6 mt-5">
+        <div className="grid grid-cols-1 gap-y-8 gap-x-10 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="name">Template Name</Label>
+            <Input id="name" placeholder="Template Name" value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="templateType">Template Type</Label>
+            <Select value={selectedTemplateType} onValueChange={setSelectedTemplateType}>
+              <SelectTrigger id="templateType">
+                <SelectValue placeholder="Select template type" />
+              </SelectTrigger>
+              <SelectContent>
+                {templateTypes.map((type) => (
+                  <SelectItem key={type.code} value={type.code.toString()}>
+                    {type.displayName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="sm:col-span-2 space-y-2">
+            <Label htmlFor="subject">Subject</Label>
+            <Input id="subject" placeholder="Subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
+          </div>
+          <div className="sm:col-span-2 space-y-2">
+            <Label htmlFor="body">Body</Label>
+            <RichTextEditor value={body} onChange={setBody} />
+          </div>
         </div>
-        <div className="flex justify-end space-x-2">
-          <Button onClick={() => router.back()} variant="outline">Cancel</Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? 'Adding...' : 'Add'}
-          </Button>
-        </div>
+      </div>
+      <div className="flex justify-end space-x-2">
+        <Button onClick={() => router.back()} variant="outline">Cancel</Button>
+        <Button onClick={handleSubmit} disabled={isSubmitting}>
+          {isSubmitting ? 'Adding...' : 'Add'}
+        </Button>
+      </div>
     </div>
   );
 }

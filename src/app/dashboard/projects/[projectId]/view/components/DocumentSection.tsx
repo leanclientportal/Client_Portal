@@ -121,30 +121,7 @@ const DocumentSection: FC<DocumentSectionProps> = ({ projectId, projectFiles, is
 
     return (
         <Card>
-            <CardHeader>
-                <div className="flex justify-between items-center">
-                    <CardTitle>Documents</CardTitle>
-                    <Dialog open={isAddFileOpen} onOpenChange={setAddFileOpen}>
-                        <DialogTrigger asChild>
-                            <Button className="bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-700 transition duration-300 ease-in-out">
-                                <Paperclip className="mr-2 h-4 w-4" />
-                                Add Documents
-                            </Button>
-                        </DialogTrigger>
-                        <AddDocumentDialog
-                            isOpen={isAddFileOpen}
-                            onClose={() => setAddFileOpen(false)}
-                            onFileUploaded={() => {
-                                fetchFiles();
-                                setAddFileOpen(false);
-                            }}
-                            projectId={projectId}
-                            documents={projectFiles}
-                        />
-                    </Dialog>
-                </div>
-            </CardHeader>
-            <CardContent>
+            <CardContent className='p-0'>
                 {isLoadingFiles ? (
                     <div className="flex justify-center items-center h-40">
                         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

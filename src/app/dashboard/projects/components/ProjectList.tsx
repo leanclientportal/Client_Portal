@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DateRange } from 'react-day-picker';
-import { format } from 'date-fns';
+import Link from 'next/link';
 
 interface ActionButtonProps {
   onClick: (e: React.MouseEvent) => void;
@@ -341,179 +341,192 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeP
 
   return (
     <>
-      <div className="flex flex-wrap items-center gap-4 mb-4 p-4 bg-muted/50 rounded-lg">
-        <Input
-          placeholder="Search projects..."
-          value={searchTermInput}
-          onChange={(e) => setSearchTermInput(e.target.value)}
-          className="max-w-sm"
-        />
-        <Select onValueChange={setSelectedClientInput} value={selectedClientInput}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder={activeProfile === 'client' ? "Select Tenant" : "Select Client"} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all" key="all">All</SelectItem>
-
-            {activeProfile === 'client'
-              ? <> {tenants.length > 0 && tenants.map((tenant, index) => (
-                <SelectItem
-                  key={tenant?.value ?? `tenant-${index}`}
-                  value={tenant?.value}
-                >
-                  {tenant?.label}
-                </SelectItem>
-              ))
-              }
-              </>
-              : <>
-                {clients.length > 0 && clients.map((client, index) => (
-                  <SelectItem
-                    key={client?.value ?? `client-${index}`}
-                    value={client?.value}
-                  >
-                    {client?.label}
-                  </SelectItem>
-                ))
-                }
-              </>
-            }
-          </SelectContent>
-
-        </Select>
-
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              id="date"
-              variant={"outline"}
-              className={cn(
-                "w-[300px] justify-start text-left font-normal",
-                !dateInput && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {dateInput?.from ? (
-                dateInput.to ? (
-                  <>{formatDate(dateInput.from)} - {formatDate(dateInput.to)}</>
-                ) : (
-                  formatDate(dateInput.from)
-                )
-              ) : (
-                <span>Pick a date range</span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              initialFocus
-              mode="range"
-              defaultMonth={dateInput?.from}
-              selected={dateInput}
-              onSelect={setDateInput}
-              numberOfMonths={2}
+      <div className="rounded-3xl dark:shadow-dark-md shadow-md bg-background p-6 relative w-full break-words">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="Search projects..."
+              value={searchTermInput}
+              onChange={(e) => setSearchTermInput(e.target.value)}
+              className="max-w-sm"
             />
-          </PopoverContent>
-        </Popover>
-        <Button onClick={handleFilter} disabled={isFiltering} className="bg-blue-500 text-white">
-          {isFiltering ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Filter className="mr-2 h-4 w-4" />}
-          Filter
-        </Button>
-        <Button onClick={handleClear} variant="outline"><X className="mr-2 h-4 w-4" />Clear</Button>
-      </div>
+            <Select onValueChange={setSelectedClientInput} value={selectedClientInput}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder={activeProfile === 'client' ? "Select Tenant" : "Select Client"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" key="all">All</SelectItem>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <SortableHeader column="name" label="Project Title" />
-            <SortableHeader column="clientName" label={activeProfile === 'client' ? 'Tenant Name' : 'Client Name'} />
-            <SortableHeader column="status" label="Status" />
-            <SortableHeader column="updatedAt" label="Last Activity Date" />
-            <TableHead className="text-right w-[240px]">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredAndSortedProjects.map((project) => (
-            <TableRow
-              key={project._id}
-              onClick={() => handleRowClick(project)}
-              className="cursor-pointer transition-colors hover:bg-muted/50"
-            >
-              <TableCell>{project.name}</TableCell>
-              <TableCell>
-                {activeProfile === 'client' ? getTenantName(project) : getClientName(project)}
-              </TableCell>
-              <TableCell>
-                <Badge
+                {activeProfile === 'client'
+                  ? <> {tenants.length > 0 && tenants.map((tenant, index) => (
+                    <SelectItem
+                      key={tenant?.value ?? `tenant-${index}`}
+                      value={tenant?.value}
+                    >
+                      {tenant?.label}
+                    </SelectItem>
+                  ))
+                  }
+                  </>
+                  : <>
+                    {clients.length > 0 && clients.map((client, index) => (
+                      <SelectItem
+                        key={client?.value ?? `client-${index}`}
+                        value={client?.value}
+                      >
+                        {client?.label}
+                      </SelectItem>
+                    ))
+                    }
+                  </>
+                }
+              </SelectContent>
+
+            </Select>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  id="date"
+                  variant={"outline"}
                   className={cn(
-                    "text-white text-xs font-medium px-2.5 py-0.5 rounded-full capitalize",
-                    getStatusBadgeClasses(project.status)
+                    "w-[300px] justify-start text-left font-normal",
+                    !dateInput && "text-muted-foreground"
                   )}
                 >
-                  {project.status}
-                </Badge>
-              </TableCell>
-              <TableCell>{formatDate(project.updatedAt)}</TableCell>
-              <TableCell className="text-right">
-                <div className="inline-flex justify-end items-center gap-1 rounded-full bg-muted p-1" onClick={(e) => e.stopPropagation()}>
-                  <ActionButton onClick={(e) => handleActionClick(e, () => router.push(`/dashboard/projects/${project._id}/view`))} label="View" className="text-blue-500 hover:bg-blue-500"><Eye className="h-[22px] w-[22px]" /></ActionButton>
-                  {activeProfile !== 'client' ?
-                    <>
-                      <ActionButton onClick={(e) => handleActionClick(e, () => router.push(`/dashboard/projects/${project._id}`))} label="Edit" className="text-yellow-500 hover:bg-yellow-500"><Edit className="h-[22px] w-[22px]" /></ActionButton>
-                      <ActionButton onClick={(e) => handleDeleteClick(e, project)} label="Delete" className="text-red-500 hover:bg-red-500"><Trash2 className="h-[22px] w-[22px]" /></ActionButton>
-                    </>
-                    : ""}
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-
-      <Dialog open={!!tasksToShow} onOpenChange={(isOpen) => !isOpen && setTasksToShow(null)}>
-        <DialogContent className="sm:max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Tasks for {tasksToShow?.name}</DialogTitle>
-            <DialogDescription>Here are all the tasks associated with this item.</DialogDescription>
-          </DialogHeader>
-          <div className="mt-4">
-            {isLoadingTasks ? (
-              <div className="flex justify-center items-center h-40"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
-            ) : (
-              <>
-                <div className="flex items-center space-x-4 pb-4">
-                  {Object.entries(taskStatusCounts).map(([status, count]) => (
-                    <div key={status} className="flex items-center">
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getTaskStatusClasses(status as Task['status'])}`}>{status}: {count}</span>
-                    </div>
-                  ))}
-                </div>
-                <Table>
-                  <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Status</TableHead><TableHead>Due Date</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
-                  <TableBody>
-                    {tasks.length > 0 ? tasks.map((task) => (
-                      <TableRow key={task._id}>
-                        <TableCell>{task.title}</TableCell>
-                        <TableCell><span className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getTaskStatusClasses(task.status)}`}>{task.status}</span></TableCell>
-                        <TableCell>{formatDate(task.dueDate)}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="inline-flex gap-1">
-                            <ActionButton onClick={(e) => handleEditTaskClick(e, task)} label="Edit" className="text-yellow-500 hover:bg-yellow-500"><Edit className="h-[22px] w-[22px]" /></ActionButton>
-                            <ActionButton onClick={(e) => handleDeleteTaskClick(e, task)} label="Delete" className="text-red-500 hover:bg-red-500"><Trash2 className="h-[22px] w-[22px]" /></ActionButton>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )) : (
-                      <TableRow><TableCell colSpan={4} className="text-center">No tasks found for this item.</TableCell></TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </>
-            )}
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateInput?.from ? (
+                    dateInput.to ? (
+                      <>{formatDate(dateInput.from)} - {formatDate(dateInput.to)}</>
+                    ) : (
+                      formatDate(dateInput.from)
+                    )
+                  ) : (
+                    <span>Pick a date range</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={dateInput?.from}
+                  selected={dateInput}
+                  onSelect={setDateInput}
+                  numberOfMonths={2}
+                />
+              </PopoverContent>
+            </Popover>
+            <Button onClick={handleFilter} disabled={isFiltering} className="bg-blue-500 text-white">
+              {isFiltering ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Filter className="mr-2 h-4 w-4" />}
+              Filter
+            </Button>
+            <Button onClick={handleClear} variant="outline"><X className="mr-2 h-4 w-4" />Clear</Button>
           </div>
-        </DialogContent>
-      </Dialog>
-
+          {/* Right side: Add Client */}
+          <Link href="/dashboard/projects/add">
+            <Button>
+              Create Project
+            </Button>
+          </Link>
+        </div>
+        <div className="mt-3 overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <SortableHeader column="name" label="Project Title" />
+                <SortableHeader column="clientName" label={activeProfile === 'client' ? 'Tenant Name' : 'Client Name'} />
+                <SortableHeader column="status" label="Status" />
+                <SortableHeader column="updatedAt" label="Last Activity Date" />
+                <TableHead className="text-right w-[240px]">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredAndSortedProjects && filteredAndSortedProjects.length > 0 ? (filteredAndSortedProjects.map((project) => (
+                <TableRow
+                  key={project._id}
+                  onClick={() => handleRowClick(project)}
+                  className="cursor-pointer transition-colors hover:bg-muted/50"
+                >
+                  <TableCell>{project.name}</TableCell>
+                  <TableCell>
+                    {activeProfile === 'client' ? getTenantName(project) : getClientName(project)}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      className={cn(
+                        "text-white text-xs font-medium px-2.5 py-0.5 rounded-full capitalize",
+                        getStatusBadgeClasses(project.status)
+                      )}
+                    >
+                      {project.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{formatDate(project.updatedAt)}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="inline-flex justify-end items-center gap-1 rounded-full bg-muted p-1" onClick={(e) => e.stopPropagation()}>
+                      <ActionButton onClick={(e) => handleActionClick(e, () => router.push(`/dashboard/projects/${project._id}/view`))} label="View" className="text-blue-500 hover:bg-blue-500"><Eye className="h-[22px] w-[22px]" /></ActionButton>
+                      {activeProfile !== 'client' ?
+                        <>
+                          <ActionButton onClick={(e) => handleActionClick(e, () => router.push(`/dashboard/projects/${project._id}`))} label="Edit" className="text-yellow-500 hover:bg-yellow-500"><Edit className="h-[22px] w-[22px]" /></ActionButton>
+                          <ActionButton onClick={(e) => handleDeleteClick(e, project)} label="Delete" className="text-red-500 hover:bg-red-500"><Trash2 className="h-[22px] w-[22px]" /></ActionButton>
+                        </>
+                        : ""}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+              ) : (
+                <TableRow><TableCell colSpan={4} className="text-center">No projects found.</TableCell></TableRow>
+              )
+              }
+            </TableBody>
+          </Table>
+        </div>
+        <Dialog open={!!tasksToShow} onOpenChange={(isOpen) => !isOpen && setTasksToShow(null)}>
+          <DialogContent className="sm:max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Tasks for {tasksToShow?.name}</DialogTitle>
+              <DialogDescription>Here are all the tasks associated with this item.</DialogDescription>
+            </DialogHeader>
+            <div className="mt-4">
+              {isLoadingTasks ? (
+                <div className="flex justify-center items-center h-40"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+              ) : (
+                <>
+                  <div className="flex items-center space-x-4 pb-4">
+                    {Object.entries(taskStatusCounts).map(([status, count]) => (
+                      <div key={status} className="flex items-center">
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getTaskStatusClasses(status as Task['status'])}`}>{status}: {count}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <Table>
+                    <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Status</TableHead><TableHead>Due Date</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                    <TableBody>
+                      {tasks.length > 0 ? tasks.map((task) => (
+                        <TableRow key={task._id}>
+                          <TableCell>{task.title}</TableCell>
+                          <TableCell><span className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getTaskStatusClasses(task.status)}`}>{task.status}</span></TableCell>
+                          <TableCell>{formatDate(task.dueDate)}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="inline-flex gap-1">
+                              <ActionButton onClick={(e) => handleEditTaskClick(e, task)} label="Edit" className="text-yellow-500 hover:bg-yellow-500"><Edit className="h-[22px] w-[22px]" /></ActionButton>
+                              <ActionButton onClick={(e) => handleDeleteTaskClick(e, task)} label="Delete" className="text-red-500 hover:bg-red-500"><Trash2 className="h-[22px] w-[22px]" /></ActionButton>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )) : (
+                        <TableRow><TableCell colSpan={4} className="text-center">No tasks found for this item.</TableCell></TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
       {taskToEdit && (
         <Dialog open={!!taskToEdit} onOpenChange={(isOpen) => !isOpen && setTaskToEdit(null)}>
           <DialogContent className="sm:max-w-[425px]">

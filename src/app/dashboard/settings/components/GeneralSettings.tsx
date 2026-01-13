@@ -114,62 +114,67 @@ export function GeneralSettings() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>General Settings</CardTitle>
-        <CardDescription>Configure your general settings.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {isLoading ? (
-          <p>Loading...</p>
-        ) : (
-          <>
-            <div className="space-y-2">
-              <Label htmlFor="date-format">Date Format</Label>
-              <Select value={settings.dateFormat} onValueChange={handleSelectChange('dateFormat')}>
-                <SelectTrigger id="date-format">
-                  <SelectValue placeholder="Select a date format" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="dd/MM/yyyy">DD/MM/YYYY</SelectItem>
-                  <SelectItem value="MM/dd/yyyy">MM/DD/YYYY</SelectItem>
-                  <SelectItem value="yyyy/MM/dd">YYYY/MM/DD</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="amount-format">Amount Format</Label>
-              <Select value={settings.amountFormat} onValueChange={handleSelectChange('amountFormat')}>
-                <SelectTrigger id="amount-format">
-                  <SelectValue placeholder="Select an amount format" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1,234.56">1,234.56</SelectItem>
-                  <SelectItem value="1.234,56">1.234,56</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {activeProfile !== 'client' && (
-              <div className="space-y-2 mt-5">
-                <div className="flex items-center gap-4">
-                  {settings.logoUrl && (
-                    <img src={settings.logoUrl} alt="Logo Preview" className="h-20 w-20 rounded-full object-cover" />
-                  )}
-                  <div>
-                    <Label htmlFor="logoUrl">Logo</Label>
-                    <Input className='mt-3' id="logoUrl" type="file" onChange={handleLogoUpload} disabled={isUploadingLogo} />
+      <div className="rounded-3xl dark:shadow-dark-md shadow-md bg-background p-6 relative w-full break-words">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          {/* Left side: Search + Filter */}
+          <div className="flex items-center gap-2">
+            <CardHeader>
+              <CardTitle>General Settings</CardTitle>
+              <CardDescription>Configure your general settings.</CardDescription>
+            </CardHeader>
+          </div>
+        </div>
+        <CardContent className="space-y-4">
+          {isLoading ? (
+            <p>Loading...</p>
+          ) : (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="date-format">Date Format</Label>
+                <Select value={settings.dateFormat} onValueChange={handleSelectChange('dateFormat')}>
+                  <SelectTrigger id="date-format">
+                    <SelectValue placeholder="Select a date format" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="dd/MM/yyyy">DD/MM/YYYY</SelectItem>
+                    <SelectItem value="MM/dd/yyyy">MM/DD/YYYY</SelectItem>
+                    <SelectItem value="yyyy/MM/dd">YYYY/MM/DD</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="amount-format">Amount Format</Label>
+                <Select value={settings.amountFormat} onValueChange={handleSelectChange('amountFormat')}>
+                  <SelectTrigger id="amount-format">
+                    <SelectValue placeholder="Select an amount format" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1,234.56">1,234.56</SelectItem>
+                    <SelectItem value="1.234,56">1.234,56</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {activeProfile !== 'client' && (
+                <div className="space-y-2 mt-5">
+                  <div className="flex items-center gap-4">
+                    {settings.logoUrl && (
+                      <img src={settings.logoUrl} alt="Logo Preview" className="h-20 w-20 rounded-full object-cover" />
+                    )}
+                    <div>
+                      <Label htmlFor="logoUrl">Logo</Label>
+                      <Input className='mt-3' id="logoUrl" type="file" onChange={handleLogoUpload} disabled={isUploadingLogo} />
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </>
-        )}
-      </CardContent>
-      <div className="flex justify-end p-6">
-        <Button onClick={handleSave} disabled={isSaving || isUploadingLogo}>
-          {isSaving ? 'Saving...' : isUploadingLogo ? 'Uploading Logo...' : 'Save'}
-        </Button>
+              )}
+            </>
+          )}
+        </CardContent>
+        <div className="flex justify-end p-6">
+          <Button onClick={handleSave} disabled={isSaving || isUploadingLogo}>
+            {isSaving ? 'Saving...' : isUploadingLogo ? 'Uploading Logo...' : 'Save'}
+          </Button>
+        </div>
       </div>
-    </Card>
   );
 }

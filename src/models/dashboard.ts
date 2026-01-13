@@ -11,6 +11,7 @@ export interface TopClient {
   name: string;
   email: string;
   phone: string;
+  profileImageUrl: string;
 }
 
 export interface TopTenant {
@@ -30,6 +31,7 @@ export interface LatestTask {
   _id: string;
   title: string;
   status: string;
+  projectId: string;
 }
 
 export interface LatestDocument {
@@ -44,6 +46,8 @@ export interface LatestInvoice {
   title: string;
   status: string;
   amount: number;
+  projectId: string;
+
 }
 
 export interface LatestNotification {

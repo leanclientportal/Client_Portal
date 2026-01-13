@@ -1,12 +1,17 @@
 'use client';
 
+import BreadcrumbComp from '../layout/shared/breadcrumb/BreadcrumbComp';
 import { TemplateTable } from './components/TemplateTable';
 
 export default function TemplatesPage() {
+  const BCrumb = [
+    { to: "/", title: "Home" },
+    { title: "Email Templates" },
+  ];
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Email Templates</h1>
+    <>
+      <BreadcrumbComp title="Email Templates" items={BCrumb} />
       <TemplateTable />
-    </div>
+    </>
   );
 }

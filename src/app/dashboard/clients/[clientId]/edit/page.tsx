@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { getClient } from '@/lib/api';
 import type { Client, CommonApiResponse } from '@/lib/types';
 import EditClientForm from "./components/EditClientForm";
+import BreadcrumbComp from '@/app/dashboard/layout/shared/breadcrumb/BreadcrumbComp';
 
 // This component now receives the resolved clientId directly
 function EditClientPageContent({ clientId }: { clientId: string }) {
@@ -50,8 +51,18 @@ function EditClientPageContent({ clientId }: { clientId: string }) {
   if (!client) {
     return <div className="text-center text-muted-foreground">Client not found.</div>;
   }
+  const BCrumb = [
+    { to: "/", title: "Home" },
+    { title: "Edit Client" },
+  ];
 
-  return <EditClientForm client={client} />;
+  return (
+    <>
+      <BreadcrumbComp title="Edit Client" items={BCrumb} />
+      <EditClientForm client={client} />
+    </>
+  );
+
 }
 
 // The top-level page component resolves the promise and passes the string clientId

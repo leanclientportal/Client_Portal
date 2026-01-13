@@ -11,6 +11,9 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import FullLogo from '@/app/dashboard/layout/shared/logo/FullLogo';
+import CardBox from '@/components/ui/CardBox';
+import { Label } from '@/components/ui/label';
 
 const schema = z.object({
   emailOrPhone: z.string().min(1, { message: 'Please enter a valid email address or phone number' }),
@@ -81,32 +84,44 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="h-screen w-screen grid grid-cols-2">
-      <div className="bg-primary flex flex-col items-start justify-center p-20 text-white">
+    <div className="h-screen w-full flex justify-center items-center bg-lightprimary">
+      {/* <div className="bg-primary flex flex-col items-start justify-center p-20 text-white">
         <h1 className="text-5xl font-bold">ClientVerse</h1>
         <p className="text-xl mt-4">A modern portal for client management.</p>
-      </div>
-      <div className="flex items-center justify-center">
-        <div className="w-full max-w-sm">
+      </div> */}
+      <div className='md:min-w-[450px] min-w-max'>
+        <CardBox>
+          <div className='flex justify-center mt-8'>
+            <FullLogo width={120} height={110} />
+          </div>
+          <p className='text-sm text-charcoal text-center'>
+            Your Social Campaigns
+          </p>
+
           <form onSubmit={form.handleSubmit(onOtpSubmit)}>
             <h2 className="text-3xl font-bold mb-8 text-center">Login</h2>
-            <div className="mb-4 space-y-2">
-              <Input {...form.register('emailOrPhone')} placeholder="Email or Phone" disabled={step === 'otp'} />
-              {form.formState.errors.emailOrPhone && <p className="text-red-500 text-sm mt-1">{form.formState.errors.emailOrPhone.message}</p>}
+            <div className='mb-2 block mb-4'>
+              <Label htmlFor='password1' className='font-medium'>
+                Email
+              </Label>
             </div>
+            <Input {...form.register('emailOrPhone')} placeholder="Enter your email" disabled={step === 'otp'} />
+            {form.formState.errors.emailOrPhone && <p className="text-red-500 text-sm mt-1">{form.formState.errors.emailOrPhone.message}</p>}
 
-            {step === 'otp' && (
-              <div className="mb-4">
-                <Input {...form.register('otp')} placeholder="Enter OTP" />
-                {form.formState.errors.otp && <p className="text-red-500 text-sm mt-1">{form.formState.errors.otp.message}</p>}
-                <div className="flex justify-between items-center mt-2">
-                  <Button variant="link" size="sm" onClick={handleSendOtp} disabled={isSendingOtp}>
-                    {isSendingOtp ? 'Resending...' : 'Resend OTP'}
-                  </Button>
-                  <Button variant="link" size="sm" onClick={handleEditEmail}>Edit Email</Button>
+            <div className='mb-2 block mt-5 mb-4'>
+              {step === 'otp' && (
+                <div className="mb-4">
+                  <Input {...form.register('otp')} placeholder="Enter OTP" />
+                  {form.formState.errors.otp && <p className="text-red-500 text-sm mt-1">{form.formState.errors.otp.message}</p>}
+                  <div className="flex justify-between items-center mt-2">
+                    <Button variant="link" size="sm" onClick={handleSendOtp} disabled={isSendingOtp}>
+                      {isSendingOtp ? 'Resending...' : 'Resend OTP'}
+                    </Button>
+                    <Button variant="link" size="sm" onClick={handleEditEmail}>Edit Email</Button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {step === 'email' ? (
               <Button type="button" className="w-full" onClick={handleSendOtp} disabled={isSendingOtp}>
@@ -124,8 +139,8 @@ export default function LoginPage() {
               </Link>
             </p> */}
           </form>
-        </div>
+        </CardBox>
       </div>
-    </main>
+    </div>
   );
 }

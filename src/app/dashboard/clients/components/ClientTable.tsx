@@ -29,10 +29,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Edit, Eye, ArrowUpDown, Trash2, MessageSquare } from 'lucide-react';
+import { Edit, Eye, ArrowUpDown, Trash2, MessageSquare, X, Filter } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { HiOutlineDotsVertical } from "react-icons/hi";
+import { Icon } from "@iconify/react";
 
 interface ActionButtonProps {
   onClick: (e: React.MouseEvent) => void;
@@ -117,7 +125,7 @@ export default function ClientTable() {
 
   useEffect(() => {
     fetchClients(filterValue);
-  }, [tenantId, token, currentPage, filterValue]); 
+  }, [tenantId, token, currentPage, filterValue]);
 
   const handleDeleteClient = async () => {
     if (!tenantId || !token || !deleteClientId) return;
@@ -147,10 +155,10 @@ export default function ClientTable() {
 
   const handleFilter = () => {
     if (searchTerm.length > 0 && searchTerm.length <= 2) {
-        toast({ title: 'Please enter at least 3 characters to search.' });
+      toast({ title: 'Please enter at least 3 characters to search.' });
     } else {
-        setCurrentPage(1);
-        setFilterValue(searchTerm);
+      setCurrentPage(1);
+      setFilterValue(searchTerm);
     }
   };
 
@@ -249,130 +257,164 @@ export default function ClientTable() {
 
   return (
     <>
-      <div className="flex items-center mb-4 space-x-2">
-        <Input
-          placeholder="Search by name, email, or phone..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
-        />
-        <Button onClick={handleFilter}>Filter</Button>
-      </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Profile</TableHead>
-            <SortableHeader sortKey="name">Name</SortableHeader>
-            <SortableHeader sortKey="email">Email</SortableHeader>
-            <SortableHeader sortKey="phone">Phone</SortableHeader>
-            <SortableHeader sortKey="totalProjects">Total Projects</SortableHeader>
-            <SortableHeader sortKey="lastActivityDate">Last Activity</SortableHeader>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sortedClients.length > 0 ? (
-            sortedClients.map(client => (
-              <TableRow key={client._id}>
-                <TableCell>
-                  <Avatar>
-                    <AvatarImage src={client.profileImageUrl} alt={client.name} />
-                    <AvatarFallback>{client.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                </TableCell>
-                <TableCell>
-                  {client.name}
-                  {client.invitationToken && (
-                    <div className="text-xs text-red-500">Invitation Acceptance Pending</div>
-                  )}
-                </TableCell>
-                <TableCell>{client.email}</TableCell>
-                <TableCell>{client.phone || 'N/A'}</TableCell>
-                <TableCell>
-                  <Badge className={cn(
-                    "h-6 w-6 rounded-full flex items-center justify-center p-0",
-                    getProjectCountBadgeClasses(client.totalProjects)
-                  )}>
-                    {client.totalProjects}
-                  </Badge>
-                </TableCell>
-                <TableCell>{formatDate(client.lastActivityDate)}</TableCell>
-                <TableCell className="text-right">
-                  <div
-                    className="inline-flex justify-end items-center gap-1 rounded-full bg-muted p-1"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <ActionButton
-                      onClick={(e) => handleActionClick(e, () => handleStartChat(client))}
-                      label="Chat"
-                      className="text-green-500 hover:bg-green-500"
-                    >
-                      <MessageSquare className="h-[22px] w-[22px]" />
-                    </ActionButton>
-                    <ActionButton
-                      onClick={(e) => handleActionClick(e, () => router.push(`/dashboard/projects?clientId=${client._id}`))}
-                      label="Projects"
-                      className="text-blue-500 hover:bg-blue-500"
-                    >
-                      <Eye className="h-[22px] w-[22px]" />
-                    </ActionButton>
-                    <ActionButton
-                      onClick={(e) => handleActionClick(e, () => router.push(`/dashboard/clients/${client._id}/edit`))}
-                      label="Edit"
-                      className="text-yellow-500 hover:bg-yellow-500"
-                    >
-                      <Edit className="h-[22px] w-[22px]" />
-                    </ActionButton>
-                    <ActionButton
-                      onClick={(e) => handleActionClick(e, () => {
-                        setDeleteClientId(client._id);
-                        setIsDeleteDialogOpen(true);
-                      })}
-                      label="Trash"
-                      className="text-red-500 hover:bg-red-500"
-                    >
-                      <Trash2 className="h-[22px] w-[22px]" />
-                    </ActionButton>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={7} className="text-center">No clients found.</TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-
-      {pagination && (
-        <div className="flex items-center justify-between mt-4">
-          <div>
-            <p className="text-sm text-muted-foreground">
-              Page {pagination.current} of {pagination.total}
-            </p>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePreviousPage}
-              disabled={pagination.current <= 1}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleNextPage}
-              disabled={pagination.current >= pagination.total}
-            >
-              Next
+      <div className="rounded-3xl dark:shadow-dark-md shadow-md bg-background p-6 relative w-full break-words">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          {/* Left side: Search + Filter */}
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="Search by name, email, or phone..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-72"
+            />
+            <Button variant="outline" className="bg-blue-500 text-white" onClick={handleFilter}>
+              <Filter className="mr-2 h-4 w-4" />
+              Filter
             </Button>
           </div>
+          {/* Right side: Add Client */}
+          <Link href="/dashboard/clients/add">
+            <Button>
+              Create Client
+            </Button>
+          </Link>
         </div>
-      )}
 
+
+
+        <div className="mt-3 overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Profile</TableHead>
+                <SortableHeader sortKey="name">Name</SortableHeader>
+                <SortableHeader sortKey="email">Email</SortableHeader>
+                <SortableHeader sortKey="phone">Phone</SortableHeader>
+                <SortableHeader sortKey="totalProjects">Total Projects</SortableHeader>
+                <SortableHeader sortKey="lastActivityDate">Last Activity</SortableHeader>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedClients.length > 0 ? (
+                sortedClients.map(client => (
+                  <TableRow key={client._id}>
+                    <TableCell className="whitespace-nowrap ps-6">
+                      <Avatar>
+                        <AvatarImage src={client.profileImageUrl} alt={client.name} />
+                        <AvatarFallback>{client.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                    </TableCell>
+                    <TableCell>
+                      <h6 className="text-sm">{client.name}</h6>
+                      {client.invitationToken && (
+                        <div className="text-xs text-red-500">Invitation Acceptance Pending</div>
+                      )}
+                    </TableCell>
+                    <TableCell>{client.email}</TableCell>
+                    <TableCell>{client.phone || 'N/A'}</TableCell>
+                    <TableCell>
+                      <Badge className={cn(
+                        "h-6 w-6 rounded-full flex items-center justify-center p-0",
+                        getProjectCountBadgeClasses(client.totalProjects)
+                      )}>
+                        {client.totalProjects}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{formatDate(client.lastActivityDate)}</TableCell>
+                    <TableCell className="text-right">
+                      <div
+                        className="inline-flex justify-end items-center gap-1 rounded-full bg-muted p-1"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <ActionButton
+                          onClick={(e) => handleActionClick(e, () => handleStartChat(client))}
+                          label="Chat"
+                          className="text-green-500 hover:bg-green-500"
+                        >
+                          <MessageSquare className="h-[22px] w-[22px]" />
+                        </ActionButton>
+
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <span className="h-9 w-9 flex items-center justify-center rounded-full cursor-pointer hover:bg-lightprimary hover:text-primary">
+                              <HiOutlineDotsVertical size={22} />
+                            </span>
+                          </DropdownMenuTrigger>
+
+                          <DropdownMenuContent align="end" className="w-44">
+                            <DropdownMenuItem
+                              className="flex gap-3 cursor-pointer text-yellow-500"
+                              onClick={() => router.push(`/dashboard/clients/${client._id}/edit`)}
+                            >
+                              <Icon icon="solar:pen-new-square-broken" height={18} />
+                              Edit
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem
+                              className="flex gap-3 cursor-pointer text-blue-500"
+                              onClick={() =>
+                                router.push(`/dashboard/projects?clientId=${client._id}`)
+                              }
+                            >
+                              <Icon icon="solar:rocket-outline" height={18} />
+                              Projects
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem
+                              className="flex gap-3 cursor-pointer text-red-500"
+                              onClick={() => {
+                                setDeleteClientId(client._id);
+                                setIsDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Icon icon="solar:trash-bin-minimalistic-outline" height={18} />
+                              Trash
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center">No clients found.</TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+
+          {pagination && (
+            <div className="flex items-center justify-between mt-4">
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  Page {pagination.current} of {pagination.total}
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePreviousPage}
+                  disabled={pagination.current <= 1}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleNextPage}
+                  disabled={pagination.current >= pagination.total}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

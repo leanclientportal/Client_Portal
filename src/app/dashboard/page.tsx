@@ -21,7 +21,9 @@ import { getDashboardWidgets, getDashboardOverview } from '@/lib/api';
 import type { DashboardWidgetsResponse, DashboardOverviewResponse } from '@/models/dashboard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/use-auth';
-
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Icon } from "@iconify/react";
+import { HiOutlineDotsVertical } from "react-icons/hi";
 export default function DashboardPage() {
 
   const [dashboardWidgetsData, setDashboardWidgetsData] = useState<DashboardWidgetsResponse | null>(null);
@@ -62,23 +64,31 @@ export default function DashboardPage() {
       title: isClient ? "Total Tenants" : "Total Clients",
       value: isClient ? dashboardWidgetsData?.totalTenants?.toLocaleString() : dashboardWidgetsData?.totalClients?.toLocaleString(),
       icon: Users,
-      href: "/dashboard",
+      href: isClient ? "/dashboard" : "/dashboard/clients",
+      bg: "bg-secondary",
+      light_bg: "bg-lightsecondary",
     },
     {
       title: "Active Projects",
       value: dashboardWidgetsData?.activeProjects?.toLocaleString(),
       icon: Rocket,
       href: "/dashboard/projects",
+      bg: "bg-primary",
+      light_bg: "bg-lightprimary",
     },
     {
       title: "To Do Tasks",
       value: dashboardWidgetsData?.pendingTasks?.toLocaleString(),
       icon: CheckSquare,
+      bg: "bg-warning",
+      light_bg: "bg-lightwarning",
     },
     {
       title: isClient ? "Outstanding Payments" : "Outstanding Invoices",
       value: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(dashboardWidgetsData?.outstandingInvoices || 0),
       icon: LineChart,
+      bg: "bg-error",
+      light_bg: "bg-lighterror",
     }
   ];
 
@@ -109,17 +119,26 @@ export default function DashboardPage() {
         {dashboardWidgets.map((widget) => {
           const Icon = widget.icon;
           const cardContent = (
-            <Card className="group overflow-hidden card-shadow-hover transition-all h-full">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  {widget.title}
-                </CardTitle>
-                <Icon className="h-5 w-5 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{widget.value}</div>
-              </CardContent>
-            </Card>
+            <>
+              <div className={`${widget.light_bg} rounded-3xl p-6 relative w-full break-words`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className={`w-14 h-10 rounded-full flex items-center justify-center text-white ${widget.bg}`}>
+                      <Icon icon="solar:users-group-rounded-bold-duotone" height={24} />
+                    </span>
+                    <h5 className="text-base opacity-70">{widget.title}</h5>
+                  </div>
+                </div>
+                <div className="grid grid-cols-12 gap-[24px] items-end mt-3">
+                  <div className="col-span-12 flex items-center justify-between">
+                    <h2 className="text-3xl mb-3">{widget.value}</h2>
+                    {/* <span className="font-semibold border rounded-full border-black/5 dark:border-white/10 py-0.5 px-[10px] leading-[normal] text-xs text-dark dark:text-darklink">
+                      <span className="opacity-70">+23% last month</span>
+                    </span> */}
+                  </div>
+                </div>
+              </div>
+            </>
           );
 
           return widget.href ? (

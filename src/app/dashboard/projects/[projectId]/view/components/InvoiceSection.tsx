@@ -176,31 +176,7 @@ const InvoiceSection: FC<InvoiceSectionProps> = ({ projectId, projectInvoices, i
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle>Invoices</CardTitle>
-          <Dialog open={isAddInvoiceOpen} onOpenChange={setAddInvoiceOpen}>
-            <DialogTrigger asChild>
-              {activeProfile !== "client" && (
-                <Button className="bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-700 transition duration-300 ease-in-out">
-                  <Paperclip className="mr-2 h-4 w-4" />
-                  Add Invoice
-                </Button>
-              )}
-            </DialogTrigger>
-            <AddInvoiceDialog
-              isOpen={isAddInvoiceOpen}
-              onClose={() => setAddInvoiceOpen(false)}
-              onInvoiceAdded={() => {
-                fetchInvoices();
-                setAddInvoiceOpen(false);
-              }}
-              projectId={projectId}
-            />
-          </Dialog>
-        </div>
-      </CardHeader>
-      <CardContent>
+      <CardContent className='p-0'>
         {isLoadingInvoices ? (
           <div className="flex justify-center items-center h-40">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

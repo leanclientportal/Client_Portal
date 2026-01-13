@@ -1,10 +1,16 @@
+import BreadcrumbComp from "../../layout/shared/breadcrumb/BreadcrumbComp";
 import AddClientForm from "./components/AddClientForm";
 
 export default function AddClientPage() {
+  const BCrumb = [
+    { to: "/", title: "Home" },
+    { title: "Add New Client" },
+  ];
+
   return (
-    <div>
-      <h1 className="text-2xl font-semibold mb-6">Add New Client</h1>
-      <AddClientForm />
-    </div>
+    <>
+      <BreadcrumbComp title="Add New Client" items={BCrumb} />
+        <AddClientForm />
+    </>
   );
 }

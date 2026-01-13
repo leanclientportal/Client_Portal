@@ -125,7 +125,7 @@ export default function EditClientForm({ client }: EditClientFormProps) {
       };
 
       const response: CommonApiResponse<ApiAddResponseData> = await updateClient(tenantId, token, client._id, updatedClientData);
-      
+
       if (response.success) {
         if (data.email !== client.email) {
           await handleResendInvitation();
@@ -144,76 +144,78 @@ export default function EditClientForm({ client }: EditClientFormProps) {
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between mb-6">
-            <CardTitle>Client Details</CardTitle>
-            {client && client.invitationToken && (
-              <div className="text-sm text-white-500 bg-yellow-500 py-1 px-4 rounded-full">
-                Invitation Acceptance Pending
-              </div>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          <FormProvider {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="flex items-center space-x-4">
-                <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                  {imagePreview ? (
-                    <Image src={imagePreview} alt="Profile Preview" width={96} height={96} className="object-cover" />
-                  ) : (
-                    <Avatar>
-                      <AvatarImage src={client.profileImageUrl || '/images/default-profile.png'} alt="Profile Preview" width={96} height={96} className="object-cover" />
-                    </Avatar>
-                  )}
+      <div className="rounded-3xl dark:shadow-dark-md shadow-md bg-background p-6 relative w-full break-words">
+        <Card className='p-0'>
+          <CardHeader>
+            <div className="flex justify-between">
+              <CardTitle>Client Details</CardTitle>
+              {client && client.invitationToken && (
+                <div className="text-sm text-white-500 bg-yellow-500 py-1 px-4 rounded-full">
+                  Invitation Acceptance Pending
                 </div>
-                <Input type="file" onChange={handleFileChange} accept="image/*" />
-              </div>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <FormProvider {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <div className="w-25 h-25 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                    {imagePreview ? (
+                      <Image src={imagePreview} alt="Profile Preview" width={96} height={96} className="object-cover" />
+                    ) : (
+                      <Avatar>
+                        <AvatarImage src={client.profileImageUrl || '/images/default-profile.png'} alt="Profile Preview" width={96} height={96} className="object-cover" />
+                      </Avatar>
+                    )}
+                  </div>
+                  <Input type="file" onChange={handleFileChange} accept="image/*" />
+                </div>
 
-              <div>
-                <Input placeholder="Name" {...form.register("name")} />
-                {form.formState.errors.name && <p className="text-red-500 text-xs mt-1">{form.formState.errors.name.message}</p>}
-              </div>
+                <div>
+                  <Input placeholder="Name" {...form.register("name")} />
+                  {form.formState.errors.name && <p className="text-red-500 text-xs mt-1">{form.formState.errors.name.message}</p>}
+                </div>
 
-              <div>
-                <Input placeholder="Email" {...form.register("email")} disabled={!client.invitationToken} />
-                {form.formState.errors.email && <p className="text-red-500 text-xs mt-1">{form.formState.errors.email.message}</p>}
-              </div>
+                <div>
+                  <Input placeholder="Email" {...form.register("email")} disabled={!client.invitationToken} />
+                  {form.formState.errors.email && <p className="text-red-500 text-xs mt-1">{form.formState.errors.email.message}</p>}
+                </div>
 
-              <div>
-                <Controller
-                  name="phone"
-                  control={form.control}
-                  render={({ field }) => (
-                    <PhoneNumberInput
-                      {...field}
-                      defaultCountry="US"
-                      placeholder="Phone number"
-                    />
+                <div>
+                  <Controller
+                    name="phone"
+                    control={form.control}
+                    render={({ field }) => (
+                      <PhoneNumberInput
+                        {...field}
+                        defaultCountry="US"
+                        placeholder="Phone number"
+                      />
+                    )}
+                  />
+                  {form.formState.errors.phone && <p className="text-red-500 text-xs mt-1">{form.formState.errors.phone.message}</p>}
+                </div>
+
+                <div className="flex gap-3">
+                  {client.invitationToken && (
+                    <Button type="button" className='bg-yellow-600' variant="outline" onClick={handleResendInvitation}>
+                      Resend Invitation
+                    </Button>
                   )}
-                />
-                {form.formState.errors.phone && <p className="text-red-500 text-xs mt-1">{form.formState.errors.phone.message}</p>}
-              </div>
-
-              <div className="flex gap-3">
-                {client.invitationToken && (
-                  <Button type="button" className='bg-yellow-600' variant="outline" onClick={handleResendInvitation}>
-                    Resend Invitation
+                  <Button type="submit" className='text-white-500 bg-blue-600' variant="outline" disabled={isLoading}>
+                    {isLoading ? 'Updating Client...' : 'Update Client'}
                   </Button>
-                )}
-                <Button type="submit" className='text-white-500 bg-blue-600' variant="outline" disabled={isLoading}>
-                  {isLoading ? 'Updating Client...' : 'Update Client'}
-                </Button>
 
-                <Button type="button" variant="outline" onClick={handleBackClick}>
-                  Back
-                </Button>
-              </div>
-            </form>
-          </FormProvider>
-        </CardContent>
-      </Card>
+                  <Button type="button" variant="outline" onClick={handleBackClick}>
+                    Back
+                  </Button>
+                </div>
+              </form>
+            </FormProvider>
+          </CardContent>
+        </Card>
+      </div>
       <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>

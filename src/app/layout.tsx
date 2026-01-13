@@ -1,16 +1,17 @@
-import type { Metadata } from 'next';
-import './globals.css';
-import { Toaster } from '@/components/ui/toaster';
-import { ThemeProvider } from '@/components/ui/theme-provider';
-import { ModeToggle } from '@/components/ui/theme-toggle';
-import QueryProvider from '@/providers/query-provider';
-import { ChatProvider } from '@/providers/chat-provider';
-import { ChatPopup } from '@/components/ChatPopup';
+import { SettingsProvider } from "@/providers/SettingsProvider";
+import type { Metadata } from "next";
+import { Toaster } from "@/components/ui/toaster";
+import { ThemeProvider } from "@/components/ui/theme-provider";
+import QueryProvider from "@/providers/query-provider";
+import { ChatProvider } from "@/providers/chat-provider";
+import { ChatPopup } from "@/components/ChatPopup";
+import './css/globals.css'
 
 export const metadata: Metadata = {
-  title: 'ClientVerse',
-  description: 'A modern portal for client management.',
+  title: "ClientVerse",
+  description: "A modern portal for client management.",
 };
+
 
 export default function RootLayout({
   children,
@@ -34,16 +35,16 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="system" 
           enableSystem
           disableTransitionOnChange
         >
+           {/* {children} */}
           <QueryProvider>
             <ChatProvider>
-              <div className="absolute top-4 right-4">
-                <ModeToggle />
-              </div>
-              {children}
+              <SettingsProvider>
+                {children}
+              </SettingsProvider>
               <ChatPopup />
               <Toaster />
             </ChatProvider>

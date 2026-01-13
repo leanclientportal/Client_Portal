@@ -16,6 +16,7 @@ import type { CommonApiResponse, Template } from '@/lib/types';
 import { Skeleton } from "@/components/ui/skeleton";
 import { TokenGlossary, TokenGlossaryResponse } from '@/models/tokenglossary';
 import { Input } from '@/components/ui/input';
+import BreadcrumbComp from '../../layout/shared/breadcrumb/BreadcrumbComp';
 
 export default function TokenGlossaryPage() {
   const { activeProfileId: tenantId, token } = useAuth();
@@ -73,37 +74,43 @@ export default function TokenGlossaryPage() {
       </div>
     );
   }
+  const BCrumb = [
+    { to: "/", title: "Home" },
+    { title: "Email Templates" },
+  ];
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Token Glossary</h1>
-        <div className="flex space-x-2">
-          <Input
-            placeholder="Filter..."
-            value={filter}
-            onChange={e => setFilter(e.target.value)}
-            className="max-w-xs"
-          />
+    <>
+      <BreadcrumbComp title="Token Glossary" items={BCrumb} />
+      <div className="rounded-3xl dark:shadow-dark-md shadow-md bg-background p-6 relative w-full break-words">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div className="flex space-x-2">
+            <Input
+              placeholder="Filter..."
+              value={filter}
+              onChange={e => setFilter(e.target.value)}
+              className="max-w-xs"
+            />
+          </div>
         </div>
-      </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Category</TableHead>
-            <TableHead>Token name</TableHead>
-            <TableHead>Description</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredTokenGlossary.map((item, index) => (
-            <TableRow key={index}>
-              <TableCell>{item.category}</TableCell>
-              <TableCell>{item.token}</TableCell>
-              <TableCell>{item.description}</TableCell>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Category</TableHead>
+              <TableHead>Token name</TableHead>
+              <TableHead>Description</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody>
+            {filteredTokenGlossary.map((item, index) => (
+              <TableRow key={index}>
+                <TableCell>{item.category}</TableCell>
+                <TableCell>{item.token}</TableCell>
+                <TableCell>{item.description}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </>
   );
 }

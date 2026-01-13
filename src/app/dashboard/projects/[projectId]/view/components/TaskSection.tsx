@@ -142,33 +142,7 @@ const TaskSection: FC<TaskSectionProps> = ({ projectId, tasks, isLoadingTasks, f
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle>Tasks</CardTitle>
-          <Dialog open={isAddTaskOpen} onOpenChange={setAddTaskOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-700 transition duration-300 ease-in-out">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add Task
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Add New Task</DialogTitle>
-              </DialogHeader>
-              <AddTaskForm
-                projectId={projectId}
-                onTaskAdded={() => {
-                  fetchTasks();
-                  setAddTaskOpen(false);
-                }}
-                setOpen={setAddTaskOpen}
-              />
-            </DialogContent>
-          </Dialog>
-        </div>
-      </CardHeader>
-      <CardContent>
+      <CardContent className='p-0'>
         {isLoadingTasks ? (
           <div className="flex justify-center items-center h-40">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

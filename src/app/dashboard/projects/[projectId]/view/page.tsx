@@ -7,14 +7,19 @@ import { useAuth } from '@/hooks/use-auth';
 import { getProject, getTasks, getDocuments, getInvoices } from '@/lib/api';
 import type { Project, Task, Invoice, Documents, CommonApiResponse, GetTasksResponse, GetDocumentsResponse, GetInvoicesResponse } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft } from 'lucide-react'; // Only keeping ArrowLeft for general navigation
+import { ArrowLeft, Paperclip, PlusCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-// Import the new section components
 import ProjectDetailsSection from './components/ProjectDetailsSection';
 import TaskSection from './components/TaskSection';
 import DocumentSection from './components/DocumentSection';
 import InvoiceSection from './components/InvoiceSection';
+import AddDocumentDialog from './components/AddDocumentDialog';
+import AddInvoiceDialog from './components/AddInvoiceDialog';
+import AddTaskForm from './components/AddTaskForm';
+import BreadcrumbComp from '@/app/dashboard/layout/shared/breadcrumb/BreadcrumbComp';
 
 interface ViewProjectDetailsProps {
   params: Promise<{
@@ -22,9 +27,6 @@ interface ViewProjectDetailsProps {
     projectId: string;
   }>
 }
-
-// ActionButton is assumed to be extracted into its own file or not needed directly in page.tsx
-// If it's still needed globally, ensure it's imported or defined elsewhere.
 
 function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, projectId: string }) {
   const { toast } = useToast();
@@ -38,6 +40,9 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
   const [isLoadingFiles, setIsLoadingFiles] = useState(false);
   const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
   const [activeTab, setActiveTab] = useState("details");
+  const [isAddFileOpen, setAddFileOpen] = useState(false);
+  const [isAddTaskOpen, setAddTaskOpen] = useState(false);
+  const [isAddInvoiceOpen, setAddInvoiceOpen] = useState(false);
 
   const fetchProject = useCallback(async () => {
     if (!activeProfileId || !token || !projectId) {
@@ -173,62 +178,129 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
       </Card>
     );
   }
+  const BCrumb = [
+    { to: "/", title: "Home" },
+    { title: project.name },
+  ];
 
   return (
     <>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold">{project.name}</h1>
+      <BreadcrumbComp title={project.name} items={BCrumb} />
+      <div className="rounded-3xl dark:shadow-dark-md shadow-md bg-background p-6 relative w-full break-words">
+
+        <Tabs defaultValue="details" onValueChange={setActiveTab}>
+          <div className="flex justify-between items-center">
+            <TabsList className='w-1/2 flex justify-between items-center gap-2 bg-lightprimary'>
+              <TabsTrigger value="details" className='data-[state=active]:bg-primary data-[state=active]:text-white'>Details</TabsTrigger>
+              <TabsTrigger value="tasks" className=' data-[state=active]:bg-primary data-[state=active]:text-white'>Tasks</TabsTrigger>
+              <TabsTrigger value="files" className='   data-[state=active]:bg-primary data-[state=active]:text-white'>Documents</TabsTrigger>
+              <TabsTrigger value="invoices" className='  data-[state=active]:bg-primary data-[state=active]:text-white'>Invoices</TabsTrigger>
+
+            </TabsList>
+
+            {activeTab === 'tasks' && (
+              <Dialog open={isAddTaskOpen} onOpenChange={setAddTaskOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Task
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add New Task</DialogTitle>
+                  </DialogHeader>
+                  <AddTaskForm
+                    projectId={projectId}
+                    onTaskAdded={() => {
+                      fetchTasks();
+                      setAddTaskOpen(false);
+                    }}
+                  />
+                </DialogContent>
+              </Dialog>
+            )}
+
+            {activeTab === 'files' && (
+              <Dialog open={isAddFileOpen} onOpenChange={setAddFileOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Paperclip className="mr-2 h-4 w-4" />
+                    Add Document
+                  </Button>
+                </DialogTrigger>
+                <AddDocumentDialog
+                  isOpen={isAddFileOpen}
+                  onClose={() => setAddFileOpen(false)}
+                  onFileUploaded={() => {
+                    fetchFiles();
+                    setAddFileOpen(false);
+                  }}
+                  projectId={projectId}
+                  documents={projectFiles}
+                />
+              </Dialog>
+            )}
+
+            {activeTab === 'invoices' && (
+              <Dialog open={isAddInvoiceOpen} onOpenChange={setAddInvoiceOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Invoice
+                  </Button>
+                </DialogTrigger>
+                <AddInvoiceDialog
+                  isOpen={isAddInvoiceOpen}
+                  onClose={() => setAddInvoiceOpen(false)}
+                  onInvoiceAdded={() => {
+                    fetchInvoices();
+                    setAddInvoiceOpen(false);
+                  }}
+                  projectId={projectId}
+                />
+              </Dialog>
+            )}
+          </div>
+
+          <TabsContent value="details">
+            <ProjectDetailsSection
+              project={project}
+              activeProfile={activeProfile}
+              projectId={projectId}
+            />
+          </TabsContent>
+
+          <TabsContent value="tasks">
+            <TaskSection
+              projectId={projectId}
+              tasks={tasks}
+              isLoadingTasks={isLoadingTasks}
+              fetchTasks={fetchTasks}
+              activeProfile={activeProfile}
+            />
+          </TabsContent>
+
+          <TabsContent value="files">
+            <DocumentSection
+              projectId={projectId}
+              projectFiles={projectFiles}
+              isLoadingFiles={isLoadingFiles}
+              fetchFiles={fetchFiles}
+            />
+          </TabsContent>
+
+          <TabsContent value="invoices">
+            <InvoiceSection
+              projectId={projectId}
+              projectInvoices={projectInvoices}
+              isLoadingInvoices={isLoadingInvoices}
+              fetchInvoices={fetchInvoices}
+              activeProfile={activeProfile}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
-
-      <Tabs defaultValue="details" className="mt-6" onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="details">Details</TabsTrigger>
-          <TabsTrigger value="tasks">Tasks</TabsTrigger>
-          <TabsTrigger value="files">Documents</TabsTrigger>
-          <TabsTrigger value="invoices">Invoices</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="details">
-          <ProjectDetailsSection
-            project={project}
-            activeProfile={activeProfile}
-            projectId={projectId}
-          />
-        </TabsContent>
-
-        <TabsContent value="tasks">
-          <TaskSection
-            projectId={projectId}
-            tasks={tasks}
-            isLoadingTasks={isLoadingTasks}
-            fetchTasks={fetchTasks}
-            activeProfile={activeProfile}
-          />
-        </TabsContent>
-
-        <TabsContent value="files">
-          <DocumentSection
-            projectId={projectId}
-            projectFiles={projectFiles}
-            isLoadingFiles={isLoadingFiles}
-            fetchFiles={fetchFiles}
-          />
-        </TabsContent>
-
-        <TabsContent value="invoices">
-          <InvoiceSection
-            projectId={projectId}
-            projectInvoices={projectInvoices}
-            isLoadingInvoices={isLoadingInvoices}
-            fetchInvoices={fetchInvoices}
-            activeProfile={activeProfile}
-          />
-        </TabsContent>
-
-        <TabsContent value="updates">
-          {/* <UpdatesTimeline projectId={projectId} /> */}
-        </TabsContent>
-      </Tabs>
     </>
   );
 }

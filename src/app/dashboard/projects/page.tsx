@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/use-auth';
 import type { Project, ProjectFilterParams, CommonApiResponse, GetProjectsResponse } from '@/lib/types';
 import ProjectList from './components/ProjectList';
 import { useSearchParams } from 'next/navigation';
+import BreadcrumbComp from '../layout/shared/breadcrumb/BreadcrumbComp';
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -31,7 +32,7 @@ export default function ProjectsPage() {
         }
 
         const response: CommonApiResponse<GetProjectsResponse> = await getProjects(activeProfile as string, token, activeProfileId, filters);
-        
+
         if (response.success && response.data) {
           setProjects(response.data.projects);
           setError(null);
@@ -54,32 +55,31 @@ export default function ProjectsPage() {
     setProjects(currentProjects => currentProjects.filter(p => p._id !== projectId));
   };
 
+  const BCrumb = [
+    { to: "/", title: "Home" },
+    { title: "Projects" },
+  ];
   return (
-    <div className="w-full">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Projects</h1>
-        {activeProfile !== 'client' && (
-          <Link href="/dashboard/projects/add">
-            <Button>Create Project</Button>
-          </Link>
+    <>
+      <BreadcrumbComp title="Projects" items={BCrumb} />
+      <div className="w-full">
+        {loading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+        ) : error ? (
+          <div className="text-red-500 text-center">Error: {error}</div>
+        ) : (
+          <ProjectList
+            projects={projects}
+            onProjectDeleted={handleProjectDeleted}
+            activeProfile={activeProfile as string}
+            initialClientId={initialClientId || undefined} // Pass initialClientId
+          />
         )}
       </div>
-      {loading ? (
-        <div className="space-y-2">
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-        </div>
-      ) : error ? (
-        <div className="text-red-500 text-center">Error: {error}</div>
-      ) : (
-        <ProjectList 
-          projects={projects} 
-          onProjectDeleted={handleProjectDeleted} 
-          activeProfile={activeProfile as string} 
-          initialClientId={initialClientId || undefined} // Pass initialClientId
-        />
-      )}
-    </div>
+    </>
   );
 }

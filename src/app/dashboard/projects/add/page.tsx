@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import AddProjectForm from './components/AddProjectForm';
+import BreadcrumbComp from '../../layout/shared/breadcrumb/BreadcrumbComp';
 
 export default function AddProjectPage() {
   const router = useRouter();
@@ -12,12 +13,14 @@ export default function AddProjectPage() {
     router.back();
   };
 
+  const BCrumb = [
+    { to: "/", title: "Home" },
+    { title: "Add New Project" },
+  ];
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="flex items-center gap-4 mb-6">
-        <h1 className="text-2xl font-semibold">Add New Project</h1>
-      </div>
+    <>
+      <BreadcrumbComp title="Add New Project" items={BCrumb} />
       <AddProjectForm onBack={handleBackClick} />
-    </div>
+    </>
   );
 }

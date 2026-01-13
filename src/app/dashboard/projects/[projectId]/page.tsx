@@ -14,6 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import BreadcrumbComp from '../../layout/shared/breadcrumb/BreadcrumbComp';
 
 function EditProjectPageContent({ params }: { params: Promise<{ clientId: string, projectId: string }> }) {
   const router = useRouter();
@@ -27,11 +28,13 @@ function EditProjectPageContent({ params }: { params: Promise<{ clientId: string
     router.back();
   };
 
+  const BCrumb = [
+    { to: "/", title: "Home" },
+    { title: "Edit Project" },
+  ];
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">Edit Project</h1>
-      </div>
+    <>
+      <BreadcrumbComp title="Edit Project" items={BCrumb} />
       {/* Removed the back button from here */}
       <EditProjectForm
         clientId={resolvedParams.clientId}
@@ -52,7 +55,7 @@ function EditProjectPageContent({ params }: { params: Promise<{ clientId: string
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 }
 
