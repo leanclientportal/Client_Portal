@@ -26,7 +26,6 @@ export function LatestDocumentsCard({ data }: LatestDocumentsCardProps) {
 
   return (
     <>
-
       <div className="rounded-3xl dark:shadow-dark-md shadow-md bg-background py-3 px-0 relative w-full break-words">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-0 p-6">
           {/* Left side: Search + Filter */}

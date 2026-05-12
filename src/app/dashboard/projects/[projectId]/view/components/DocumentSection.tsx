@@ -106,11 +106,11 @@ const DocumentSection: FC<DocumentSectionProps> = ({ projectId, projectFiles, is
         try {
             const response: CommonApiResponse<ApiAddResponseData> = await deleteDocument(token, projectId, fileToDelete._id);
             if (response.success) {
-              toast({ title: "Success", description: response.message || "Document deleted successfully" });
-              fetchFiles();
-              setFileToDelete(null);
+                toast({ title: "Success", description: response.message || "Document deleted successfully" });
+                fetchFiles();
+                setFileToDelete(null);
             } else {
-              toast({ title: "Error", description: response.message || "Failed to delete document.", variant: "destructive" });
+                toast({ title: "Error", description: response.message || "Failed to delete document.", variant: "destructive" });
             }
         } catch (error: any) {
             toast({ title: "Error", description: error.message || "Failed to delete file.", variant: "destructive" });
@@ -120,7 +120,7 @@ const DocumentSection: FC<DocumentSectionProps> = ({ projectId, projectFiles, is
     };
 
     return (
-        <Card>
+        <>
             <CardContent className='p-0'>
                 {isLoadingFiles ? (
                     <div className="flex justify-center items-center h-40">
@@ -202,7 +202,7 @@ const DocumentSection: FC<DocumentSectionProps> = ({ projectId, projectFiles, is
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </Card>
+        </>
     );
 };
 

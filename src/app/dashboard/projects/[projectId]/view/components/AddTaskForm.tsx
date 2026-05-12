@@ -160,8 +160,8 @@ export default function AddTaskForm({ projectId, onTaskAdded, setOpen }: AddTask
         )}
 
         <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
-          <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button type="submit" disabled={isLoading}>
+          <Button className='mt-2' type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button className='mt-2' type="submit" disabled={isLoading}>
             {isLoading ? 'Adding Task...' : 'Add Task'}
           </Button>
         </div>

@@ -129,7 +129,7 @@ const AddInvoiceDialog: FC<AddInvoiceDialogProps> = ({ isOpen, onClose, onInvoic
       }
       onClose();
     }}>
-      <DialogContent>
+      <DialogContent className="rounded-3xl dark:shadow-dark-md shadow-md bg-background p-6">
         <DialogHeader>
           <DialogTitle>Add Invoice</DialogTitle>
         </DialogHeader>
@@ -206,8 +206,8 @@ const AddInvoiceDialog: FC<AddInvoiceDialogProps> = ({ isOpen, onClose, onInvoic
           )}
         </div>
         <DialogFooter className="flex flex-col-reverse sm:flex-row sm:gap-2">
-          <Button onClick={onClose} variant="outline">Cancel</Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting}>
+          <Button className='mt-2' onClick={onClose} variant="outline">Cancel</Button>
+          <Button className='mt-2' variant="secondary" onClick={handleSubmit} disabled={isSubmitting}>
             {isSubmitting ? 'Adding...' : 'Add Invoice'}
           </Button>
         </DialogFooter>

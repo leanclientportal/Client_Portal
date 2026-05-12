@@ -11,9 +11,11 @@ import FullLogo from '../shared/logo/FullLogo'
 import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { useAuth } from '@/hooks/use-auth';
 
 const Header = () => {
   const { theme, setTheme } = useTheme()
+  const { profileName } = useAuth();
   const [isSticky, setIsSticky] = useState(false)
   const [mobileMenu, setMobileMenu] = useState('')
   const [isOpen, setIsOpen] = useState(false)
@@ -77,7 +79,7 @@ const Header = () => {
             <div className='xl:block '>
               <div className='flex gap-0 items-center relative'>
                 {/* Chat */}
-                <Notifications />
+                {/* <Notifications /> */}
               </div>
             </div>
 
@@ -86,23 +88,11 @@ const Header = () => {
           </div>
 
           <div className='hidden xl:flex items-center justify-between w-full'>
-            <div className='flex items-center gap-2'>
-              {/* Search Icon */}
-
-              <div className='relative'>
-                <Icon
-                  icon='solar:magnifer-linear'
-                  width={18}
-                  height={18}
-                  className='absolute left-3 top-1/2 -translate-y-1/2'
-                />
-                <Input
-                  type='text'
-                  placeholder='Search...'
-                  className='rounded-xl pl-10'
-                />
-              </div>
-            </div>
+            {/* <div className='flex items-center gap-2'>
+              <h5 className="card-title">
+                Welcome, <span className="text-primary">{profileName}</span>!
+              </h5>
+            </div> */}
             <div className='flex w-full justify-end items-end'>
               <div className='flex gap-0 items-center '>
 
@@ -126,7 +116,7 @@ const Header = () => {
                 <div className='xl:block '>
                   <div className='flex gap-0 items-center relative'>
                     {/* Chat */}
-                    <Notifications />
+                    {/* <Notifications /> */}
                   </div>
                 </div>
 

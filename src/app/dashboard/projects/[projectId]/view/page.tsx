@@ -186,84 +186,89 @@ function ViewProjectDetailsContent({ clientId, projectId }: { clientId: string, 
   return (
     <>
       <BreadcrumbComp title={project.name} items={BCrumb} />
-      <div className="rounded-3xl dark:shadow-dark-md shadow-md bg-background p-6 relative w-full break-words">
-
+      <div className="bg-background relative w-full break-words py-3 px-3 sm:px-4 md:px-6 rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-sm sm:shadow-md dark:shadow-none dark:sm:shadow-dark-md">
         <Tabs defaultValue="details" onValueChange={setActiveTab}>
-          <div className="flex justify-between items-center">
-            <TabsList className='w-1/2 flex justify-between items-center gap-2 bg-lightprimary'>
-              <TabsTrigger value="details" className='data-[state=active]:bg-primary data-[state=active]:text-white'>Details</TabsTrigger>
-              <TabsTrigger value="tasks" className=' data-[state=active]:bg-primary data-[state=active]:text-white'>Tasks</TabsTrigger>
-              <TabsTrigger value="files" className='   data-[state=active]:bg-primary data-[state=active]:text-white'>Documents</TabsTrigger>
-              <TabsTrigger value="invoices" className='  data-[state=active]:bg-primary data-[state=active]:text-white'>Invoices</TabsTrigger>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
+
+            <TabsList className="w-full sm:w-auto flex gap-2 bg-lightprimary rounded-lg overflow-x-auto overflow-y-hidden whitespace-nowrap px-1 py-1 sm:overflow-visible">
+
+              <TabsTrigger value="details" className="min-w-max ml-20 sm:ml-0 data-[state=active]:bg-primary data-[state=active]:text-white">Details</TabsTrigger>
+              <TabsTrigger value="tasks" className="min-w-max data-[state=active]:bg-primary data-[state=active]:text-white">Tasks</TabsTrigger>
+              <TabsTrigger value="files" className="min-w-max data-[state=active]:bg-primary data-[state=active]:text-white">Documents</TabsTrigger>
+              <TabsTrigger value="invoices" className="min-w-max data-[state=active]:bg-primary data-[state=active]:text-white">Invoices</TabsTrigger>
 
             </TabsList>
 
-            {activeTab === 'tasks' && (
-              <Dialog open={isAddTaskOpen} onOpenChange={setAddTaskOpen}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Task
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add New Task</DialogTitle>
-                  </DialogHeader>
-                  <AddTaskForm
-                    projectId={projectId}
-                    onTaskAdded={() => {
-                      fetchTasks();
-                      setAddTaskOpen(false);
+            <div>
+
+              {activeTab === 'tasks' && (
+                <Dialog open={isAddTaskOpen} onOpenChange={setAddTaskOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm">
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Add Task
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Add New Task</DialogTitle>
+                    </DialogHeader>
+                    <AddTaskForm
+                      projectId={projectId}
+                      onTaskAdded={() => {
+                        fetchTasks();
+                        setAddTaskOpen(false);
+                      }}
+                    />
+                  </DialogContent>
+                </Dialog>
+              )}
+
+              {activeTab === 'files' && (
+                <Dialog open={isAddFileOpen} onOpenChange={setAddFileOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm">
+                      <Paperclip className="mr-2 h-4 w-4" />
+                      Add Document
+                    </Button>
+                  </DialogTrigger>
+                  <AddDocumentDialog
+                    isOpen={isAddFileOpen}
+                    onClose={() => setAddFileOpen(false)}
+                    onFileUploaded={() => {
+                      fetchFiles();
+                      setAddFileOpen(false);
                     }}
+                    projectId={projectId}
+                    documents={projectFiles}
                   />
-                </DialogContent>
-              </Dialog>
-            )}
+                </Dialog>
+              )}
 
-            {activeTab === 'files' && (
-              <Dialog open={isAddFileOpen} onOpenChange={setAddFileOpen}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Paperclip className="mr-2 h-4 w-4" />
-                    Add Document
-                  </Button>
-                </DialogTrigger>
-                <AddDocumentDialog
-                  isOpen={isAddFileOpen}
-                  onClose={() => setAddFileOpen(false)}
-                  onFileUploaded={() => {
-                    fetchFiles();
-                    setAddFileOpen(false);
-                  }}
-                  projectId={projectId}
-                  documents={projectFiles}
-                />
-              </Dialog>
-            )}
-
-            {activeTab === 'invoices' && (
-              <Dialog open={isAddInvoiceOpen} onOpenChange={setAddInvoiceOpen}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Invoice
-                  </Button>
-                </DialogTrigger>
-                <AddInvoiceDialog
-                  isOpen={isAddInvoiceOpen}
-                  onClose={() => setAddInvoiceOpen(false)}
-                  onInvoiceAdded={() => {
-                    fetchInvoices();
-                    setAddInvoiceOpen(false);
-                  }}
-                  projectId={projectId}
-                />
-              </Dialog>
-            )}
+              {activeTab === 'invoices' && (
+                <Dialog open={isAddInvoiceOpen} onOpenChange={setAddInvoiceOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm">
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Add Invoice
+                    </Button>
+                  </DialogTrigger>
+                  <AddInvoiceDialog
+                    isOpen={isAddInvoiceOpen}
+                    onClose={() => setAddInvoiceOpen(false)}
+                    onInvoiceAdded={() => {
+                      fetchInvoices();
+                      setAddInvoiceOpen(false);
+                    }}
+                    projectId={projectId}
+                  />
+                </Dialog>
+              )}
+            </div>
           </div>
 
-          <TabsContent value="details">
+          <TabsContent value="details" className=''>
             <ProjectDetailsSection
               project={project}
               activeProfile={activeProfile}

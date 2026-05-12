@@ -1,18 +1,18 @@
-import Link from 'next/link'
-import { useTheme } from 'next-themes'
-import { usePathname } from 'next/navigation'
-import SidebarContent from './Sidebaritems'
-import SimpleBar from 'simplebar-react'
-import { Icon } from '@iconify/react'
-import FullLogo from '../shared/logo/FullLogo'
+import Link from 'next/link';
+import { useTheme } from 'next-themes';
+import { usePathname } from 'next/navigation';
+import SidebarContent from './Sidebaritems';
+import SimpleBar from 'simplebar-react';
+import { Icon } from '@iconify/react';
+import FullLogo from '../shared/logo/FullLogo';
 import {
   AMLogo,
   AMMenu,
   AMMenuItem,
   AMSidebar,
   AMSubmenu,
-} from 'tailwind-sidebar'
-import 'tailwind-sidebar/styles.css'
+} from 'tailwind-sidebar';
+import 'tailwind-sidebar/styles.css';
 
 const renderSidebarItems = (
   items: any[],
@@ -21,16 +21,15 @@ const renderSidebarItems = (
   isSubItem: boolean = false
 ) => {
   return items.map((item, index) => {
-    const isSelected = currentPath === item?.url
-    const IconComp = item.icon || null
+    const isSelected = currentPath === item?.url;
+    const IconComp = item.icon || null;
 
     const iconElement = IconComp ? (
       <Icon icon={IconComp} height={21} width={21} />
     ) : (
       <Icon icon={'ri:checkbox-blank-circle-line'} height={9} width={9} />
-    )
+    );
 
-    // Heading
     if (item.heading) {
       return (
         <div className='mb-1' key={item.heading}>
@@ -39,10 +38,9 @@ const renderSidebarItems = (
             ClassName='hide-menu leading-21 text-charcoal font-bold uppercase text-xs dark:text-darkcharcoal'
           />
         </div>
-      )
+      );
     }
 
-    // Submenu
     if (item.children?.length) {
       return (
         <AMSubmenu
@@ -52,17 +50,18 @@ const renderSidebarItems = (
           ClassName='mt-0.5 text-link dark:text-darklink !rounded-3xl'>
           {renderSidebarItems(item.children, currentPath, onClose, true)}
         </AMSubmenu>
-      )
+      );
     }
 
-    // Regular menu item
-    const linkTarget = item.url?.startsWith('https') ? '_blank' : '_self'
+    const linkTarget = item.url?.startsWith('https') ? '_blank' : '_self';
 
     const itemClassNames = isSubItem
       ? `mt-0.5 text-link dark:text-darklink !hover:bg-transparent ${
           isSelected ? '!bg-transparent !text-primary' : ''
         } !px-1.5 `
-      : `hover:bg-lightprimary! hover:text-primary! mt-0.5 text-link dark:text-darklink ${isSelected ? '!bg-lightprimary !text-primary !hover-bg-lightprimary' : ' ' } !rounded-3xl`
+      : `hover:bg-lightprimary! hover:text-primary! mt-0.5 text-link dark:text-darklink ${
+          isSelected ? '!bg-lightprimary !text-primary !hover-bg-lightprimary' : ' '
+        } !rounded-3xl`;
 
     return (
       <div onClick={onClose} key={index}>
@@ -82,34 +81,36 @@ const renderSidebarItems = (
           <span className='truncate flex-1'>{item.title || item.name}</span>
         </AMMenuItem>
       </div>
-    )
-  })
+    );
+  });
+};
+
+interface SidebarLayoutProps {
+  isCollapsed?: boolean;
+  onToggle?: () => void;
+  onClose?: () => void;
 }
 
-const SidebarLayout = ({ onClose }: { onClose?: () => void }) => {
-  const pathname = usePathname()
-  const { theme } = useTheme()
+const SidebarLayout = ({ isCollapsed, onToggle, onClose }: SidebarLayoutProps) => {
+  const pathname = usePathname();
+  const { theme } = useTheme();
 
-  // Only allow "light" or "dark" for AMSidebar
-  const sidebarMode = theme === 'light' || theme === 'dark' ? theme : undefined
+  const sidebarMode = theme === 'light' || theme === 'dark' ? theme : undefined;
 
   return (
     <AMSidebar
       collapsible='none'
+      showTrigger={false}
       animation={true}
       showProfile={false}
       width={'270px'}
-      showTrigger={false}
       mode={sidebarMode}
       className='fixed left-0 top-0 border-none shadow-boxShadow bg-background z-10 h-screen'>
-      {/* Logo */}
-      <div className='px-4 flex items-center brand-logo overflow-hidden'>
-        <AMLogo component={Link} href='/'>
-          <FullLogo height={30} width={30} />
-        </AMLogo>
+      <div className='px-4 flex items-center brand-logo overflow-hidden mt-5 ml-3 mb-5'>
+          <FullLogo height={100} width={160} />
+        {/* <AMLogo component={Link} href='/'>
+        </AMLogo>  */}
       </div>
-
-      {/* Sidebar items */}
 
       <SimpleBar className='h-[calc(100vh-100px)]'>
         <div className='px-6'>
@@ -128,7 +129,7 @@ const SidebarLayout = ({ onClose }: { onClose?: () => void }) => {
         </div>
       </SimpleBar>
     </AMSidebar>
-  )
-}
+  );
+};
 
-export default SidebarLayout
+export default SidebarLayout;

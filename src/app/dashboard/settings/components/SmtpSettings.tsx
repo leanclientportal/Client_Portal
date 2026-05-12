@@ -73,18 +73,18 @@ export function SmtpSettings() {
   };
 
   return (
-    <div className="rounded-3xl dark:shadow-dark-md shadow-md bg-background p-6 relative w-full break-words">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mt-15">
         {/* Left side: Search + Filter */}
         <div className="flex items-center gap-2">
-          <CardHeader>
+          <CardHeader className='p-0'>
             <CardTitle>SMTP Settings</CardTitle>
             <CardDescription>
               Configure your SMTP settings for sending emails.
             </CardDescription>
           </CardHeader>
         </div> </div>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 p-0">
         {isLoading ? (
           <p>Loading...</p>
         ) : (
@@ -113,6 +113,6 @@ export function SmtpSettings() {
           {isSaving ? 'Saving...' : 'Save'}
         </Button>
       </div>
-    </div>
+    </>
   );
 }

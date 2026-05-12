@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { Suspense, useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import {
   getConversations,
@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Send, MessageSquare, Search, MoreVertical, ChevronDown } from 'lucide-react';
+import { Loader2, Send, MessageSquare, Search, MoreVertical, ChevronDown, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -29,7 +29,7 @@ import { useSearchParams } from 'next/navigation';
 import BreadcrumbComp from '../layout/shared/breadcrumb/BreadcrumbComp';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
-export default function ChatPage() {
+function Chat() {
   const { token, activeProfileId, activeProfile, profileName, activeProfileImage } = useAuth();
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<ChatConversation | null>(null);
@@ -39,6 +39,7 @@ export default function ChatPage() {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isChatVisible, setIsChatVisible] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const searchParams = useSearchParams();
@@ -56,16 +57,7 @@ export default function ChatPage() {
           );
 
           if (record) {
-            const chatConversation: ChatConversation = {
-              id: record.id,
-              name: record.name,
-              lastMessage: record.lastMessage,
-              profileImageUrl: record.profileImageUrl,
-              type: record.type,
-              lastMessageDate: record.lastMessageDate,
-              unreadCount: record.unreadCount,
-            };
-            setSelectedConversation(chatConversation);
+            handleConversationSelect(record);
           }
         }
       }
@@ -139,15 +131,6 @@ export default function ChatPage() {
       .toUpperCase()
       .slice(0, 2);
 
-  const formatMessageDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), 'p'); // 12:00 PM
-    } catch (e) {
-      return '';
-    }
-  };
-
-
   useEffect(() => {
     fetchConversations();
     const interval = setInterval(fetchConversations, 30000);
@@ -174,8 +157,6 @@ export default function ChatPage() {
     }
   }, [selectedConversation, token, activeProfileId]);
 
-
-
   const BCrumb = [
     { to: "/", title: "Home" },
     { title: "Messages" },
@@ -185,17 +166,21 @@ export default function ChatPage() {
     conv.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleConversationSelect = (conv: ChatConversation) => {
+    setSelectedConversation(conv);
+    setIsChatVisible(true);
+  };
+
   return (
     <>
       <BreadcrumbComp title="Messages" items={BCrumb} />
       <div className="rounded-3xl dark:shadow-dark-md shadow-md bg-background relative w-full break-words">
-        <div className="flex gap-0 h-[calc(100vh-210px)]  p-6">
-          {/* Conversations Sidebar */}
-          <Card className="w-[380px] flex flex-col gap-0 p-0">
+        <div className="flex h-[calc(100vh-210px)]">
+          <div className={cn("w-full md:w-[380px] flex flex-col gap-0 p-0 md:flex", isChatVisible ? "hidden" : "flex")}>
             <CardHeader className="p-4 border-b">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-16 w-16">
+                  <Avatar className="h-12 w-12">
                     <AvatarImage src={activeProfileImage || `https://ui-avatars.com/api/?name=${(profileName || activeProfile || '').replace(/\s/g, '+')}&background=random`} />
                     <AvatarFallback>{getInitials(profileName || activeProfile || '')}</AvatarFallback>
                   </Avatar>
@@ -212,7 +197,7 @@ export default function ChatPage() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
                 <Input
                   placeholder="Search"
-                  className="pl-10 h-11 bg-muted/50 focus-visible:ring-0 focus-visible:ring-offset-0 border-transparent focus:border-transparent"
+                  className="pl-10 h-11 bg-lightprimary! focus-visible:ring-0 focus-visible:ring-offset-0 border-transparent focus:border-transparent"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -247,16 +232,15 @@ export default function ChatPage() {
                     {filteredConversations.map((conv) => (
                       <button
                         key={conv.id}
-                        onClick={() => setSelectedConversation(conv)}
+                        onClick={() => handleConversationSelect(conv)}
                         className={cn(
-                          "flex items-start gap-4 p-4 text-left transition-colors hover:bg-muted/50",
+                          "flex items-start gap-4 p-4 text-left transition-colors hover:bg-lightprimary!",
                           selectedConversation?.id === conv.id && "bg-muted"
                         )}
                       >
-                        <Avatar className="relative h-15 w-15 shrink-0">
+                        <Avatar className="relative h-12 w-12 shrink-0">
                           <AvatarImage src={conv.profileImageUrl} />
                           <AvatarFallback>{getInitials(conv.name)}</AvatarFallback>
-                          {/* <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 border-2 border-background"></span> */}
                         </Avatar>
                         <div className="flex-1 overflow-hidden">
                           <div className="flex justify-between items-baseline mb-1">
@@ -284,25 +268,25 @@ export default function ChatPage() {
                 </ScrollArea>
               )}
             </CardContent>
-          </Card>
-          <Separator orientation="vertical" className="mx-0" />
-          {/* Chat Area */}
-          <Card className="flex-1 flex flex-col p-0">
+          </div>
+          <Separator orientation="vertical" className={cn("mx-0", isChatVisible ? "hidden" : "md:block")}/>
+          <div className={cn("flex-1 flex-col p-0", isChatVisible ? "flex" : "hidden md:flex")}>
             {selectedConversation ? (
               <>
-                <CardHeader className="py-3 px-6 border-b flex flex-row items-center gap-4">
-                  <Avatar className="relative h-13 w-13">
+                <CardHeader className="py-3 px-4 md:px-6 border-b flex flex-row items-center gap-4">
+                  <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsChatVisible(false)}>
+                    <ArrowLeft className="w-5 h-5" />
+                  </Button>
+                  <Avatar className="relative h-10 w-10 md:h-12 md:w-12">
                     <AvatarImage src={selectedConversation.profileImageUrl} />
                     <AvatarFallback>{getInitials(selectedConversation.name)}</AvatarFallback>
-                    {/* <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-card"></span> */}
                   </Avatar>
                   <div>
-                    <p className="font-semibold text-base mb-4">{selectedConversation.name}</p>
-                    {/* <p className="text-sm text-green-500">Online</p> */}
+                    <p className="font-semibold text-base">{selectedConversation.name}</p>
                   </div>
                 </CardHeader>
                 <CardContent className="flex-1 p-0 overflow-hidden relative">
-                  <ScrollArea className="h-full p-6 bg-muted/20">
+                  <ScrollArea className="h-full p-4 md:p-6">
                     {isLoadingMessages ? (
                       <div className="flex justify-center items-center h-full">
                         <Loader2 className="w-6 h-6 animate-spin" />
@@ -346,7 +330,7 @@ export default function ChatPage() {
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
                       disabled={isSending}
-                      className="pr-12 h-12 rounded-full bg-muted/50 border-transparent focus:border-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+                      className="pr-12 h-12 bg-lightprimary!  rounded-full border-transparent focus:border-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
                     <Button type="submit" size="icon" disabled={isSending || !newMessage.trim()} className="absolute top-1/2 right-3 -translate-y-1/2 rounded-full w-9 h-9">
                       {isSending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
@@ -356,15 +340,27 @@ export default function ChatPage() {
                 </div>
               </>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground bg-muted/20">
+              <div className="flex-1 flex-col items-center justify-center text-muted-foreground bg-muted/20 hidden md:flex">
                 <MessageSquare className="w-16 h-16 mb-4 opacity-30" />
                 <p className="text-lg font-medium">Select a conversation</p>
                 <p className="text-sm">Choose a person from the list to start chatting.</p>
               </div>
             )}
-          </Card>
+          </div>
         </div>
       </div>
     </>
   );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={
+        <div className="flex justify-center items-center h-full p-6">
+            <Loader2 className="w-6 h-6 animate-spin" />
+        </div>
+    }>
+      <Chat />
+    </Suspense>
+  )
 }

@@ -92,7 +92,7 @@ export default function RegisterPage() {
   return (
     <main className="h-screen w-screen grid grid-cols-2">
       <div className="bg-primary flex flex-col items-start justify-center p-20 text-white">
-        <h1 className="text-5xl font-bold">ClientVerse</h1>
+        <h1 className="text-5xl font-bold">Udyami Hub</h1>
         <p className="text-xl mt-4">A modern portal for client management.</p>
       </div>
       <div className="flex items-center justify-center">

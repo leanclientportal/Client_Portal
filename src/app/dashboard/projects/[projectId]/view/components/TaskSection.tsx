@@ -141,7 +141,7 @@ const TaskSection: FC<TaskSectionProps> = ({ projectId, tasks, isLoadingTasks, f
   };
 
   return (
-    <Card>
+    <>
       <CardContent className='p-0'>
         {isLoadingTasks ? (
           <div className="flex justify-center items-center h-40">
@@ -275,7 +275,7 @@ const TaskSection: FC<TaskSectionProps> = ({ projectId, tasks, isLoadingTasks, f
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Card>
+      </>
   );
 };
 

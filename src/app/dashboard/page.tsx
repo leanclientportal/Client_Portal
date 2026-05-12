@@ -1,12 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Users, LineChart, CheckSquare, Rocket } from "lucide-react";
 import Link from "next/link";
 import {
@@ -21,9 +15,6 @@ import { getDashboardWidgets, getDashboardOverview } from '@/lib/api';
 import type { DashboardWidgetsResponse, DashboardOverviewResponse } from '@/models/dashboard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/use-auth';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Icon } from "@iconify/react";
-import { HiOutlineDotsVertical } from "react-icons/hi";
 export default function DashboardPage() {
 
   const [dashboardWidgetsData, setDashboardWidgetsData] = useState<DashboardWidgetsResponse | null>(null);
@@ -85,7 +76,7 @@ export default function DashboardPage() {
     },
     {
       title: isClient ? "Outstanding Payments" : "Outstanding Invoices",
-      value: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(dashboardWidgetsData?.outstandingInvoices || 0),
+      value: new Intl.NumberFormat().format(dashboardWidgetsData?.outstandingInvoices || 0),
       icon: LineChart,
       bg: "bg-error",
       light_bg: "bg-lighterror",
@@ -114,8 +105,8 @@ export default function DashboardPage() {
   }
 
   return (
-    <div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <>
+      <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-1 md:grid-cols-4">
         {dashboardWidgets.map((widget) => {
           const Icon = widget.icon;
           const cardContent = (
@@ -151,13 +142,13 @@ export default function DashboardPage() {
         })
         }
       </div>
-      <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-1 md:grid-cols-2">
         {isClient ? <TopTenantsCard data={dashboardOverviewData?.topTenants} /> : <TopClientsCard data={dashboardOverviewData?.topClients} />}
         <TopProjectsCard data={dashboardOverviewData?.topProjects} />
         <LatestTasksCard data={dashboardOverviewData?.latestTasks} />
         <LatestDocumentsCard data={dashboardOverviewData?.latestDocuments} />
         <LatestInvoicesCard data={dashboardOverviewData?.latestInvoices} />
       </div>
-    </div>
+    </>
   );
 }

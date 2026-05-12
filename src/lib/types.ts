@@ -126,6 +126,19 @@ export interface NewInvoice {
     paymentLink?: string;
 }
 
+export interface Plan {
+    _id: string;
+    name: string;
+    monthlyPrice: string;
+    annualPrice: string;
+    annualSavings: string;
+    features: Features[];
+}
+export interface Features {
+    name: string;
+    available: boolean;
+    detail: string;
+}
 
 export interface User {
     id: string;
@@ -162,6 +175,10 @@ export interface GetDocumentsResponse {
 }
 export interface GetInvoicesResponse {
     invoices: Invoice[];
+}
+
+export interface GetPlansResponse {
+    plans: Plan[];
 }
 
 export interface Pagination {

@@ -72,6 +72,26 @@ const SidebarContent: MenuItem[] = [
       }
     ],
   },
+  {
+    heading: 'Plan Management',
+    children: [
+      {
+        name: 'Free Plan',
+        icon: 'solar:tag-linear',
+        id: uniqueId(),
+        url: '/dashboard/plan/free',
+        badge: true,
+        badgeType: 'success',
+      },
+      {
+        name: 'Upgrade Plan',
+        icon: 'solar:medal-ribbon-linear',
+        id: uniqueId(),
+        url: '/dashboard/plan/upgrade',
+        isPro: true,
+      },
+    ],
+  },
 ]
 
 export default SidebarContent

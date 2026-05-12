@@ -21,6 +21,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DateRange } from 'react-day-picker';
 import Link from 'next/link';
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { HiOutlineDotsVertical } from "react-icons/hi";
+import { Icon } from "@iconify/react";
+
 interface ActionButtonProps {
   onClick: (e: React.MouseEvent) => void;
   children: React.ReactNode;
@@ -343,15 +352,15 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeP
     <>
       <div className="rounded-3xl dark:shadow-dark-md shadow-md bg-background p-6 relative w-full break-words">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
             <Input
               placeholder="Search projects..."
               value={searchTermInput}
               onChange={(e) => setSearchTermInput(e.target.value)}
-              className="max-w-sm"
+              className="w-full sm:w-72"
             />
             <Select onValueChange={setSelectedClientInput} value={selectedClientInput}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-auto">
                 <SelectValue placeholder={activeProfile === 'client' ? "Select Tenant" : "Select Client"} />
               </SelectTrigger>
               <SelectContent>
@@ -386,11 +395,11 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeP
 
             <Popover>
               <PopoverTrigger asChild>
-                <Button
+                <Button  size="default"
                   id="date"
                   variant={"outline"}
                   className={cn(
-                    "w-[300px] justify-start text-left font-normal",
+                    "w-[300px] justify-start text-left font-normal w-full sm:w-auto",
                     !dateInput && "text-muted-foreground"
                   )}
                 >
@@ -417,15 +426,15 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeP
                 />
               </PopoverContent>
             </Popover>
-            <Button onClick={handleFilter} disabled={isFiltering} className="bg-blue-500 text-white">
+            <Button size="sm"  onClick={handleFilter} disabled={isFiltering} className="bg-blue-500 text-white">
               {isFiltering ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Filter className="mr-2 h-4 w-4" />}
               Filter
             </Button>
-            <Button onClick={handleClear} variant="outline"><X className="mr-2 h-4 w-4" />Clear</Button>
+            <Button size="sm"  onClick={handleClear} variant="outline"><X className="mr-2 h-4 w-4" />Clear</Button>
           </div>
           {/* Right side: Add Client */}
-          <Link href="/dashboard/projects/add">
-            <Button>
+          <Link href="/dashboard/projects/add" className="w-full sm:w-auto">
+            <Button size="sm" className="w-full sm:w-auto" >
               Create Project
             </Button>
           </Link>
@@ -464,12 +473,41 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeP
                   </TableCell>
                   <TableCell>{formatDate(project.updatedAt)}</TableCell>
                   <TableCell className="text-right">
-                    <div className="inline-flex justify-end items-center gap-1 rounded-full bg-muted p-1" onClick={(e) => e.stopPropagation()}>
+                    <div className="inline-flex justify-end items-center gap-1 rounded-full p-1" onClick={(e) => e.stopPropagation()}>
                       <ActionButton onClick={(e) => handleActionClick(e, () => router.push(`/dashboard/projects/${project._id}/view`))} label="View" className="text-blue-500 hover:bg-blue-500"><Eye className="h-[22px] w-[22px]" /></ActionButton>
                       {activeProfile !== 'client' ?
                         <>
-                          <ActionButton onClick={(e) => handleActionClick(e, () => router.push(`/dashboard/projects/${project._id}`))} label="Edit" className="text-yellow-500 hover:bg-yellow-500"><Edit className="h-[22px] w-[22px]" /></ActionButton>
-                          <ActionButton onClick={(e) => handleDeleteClick(e, project)} label="Delete" className="text-red-500 hover:bg-red-500"><Trash2 className="h-[22px] w-[22px]" /></ActionButton>
+                          {/* <ActionButton onClick={(e) => handleActionClick(e, () => router.push(`/dashboard/projects/${project._id}`))} label="Edit" className="text-yellow-500 hover:bg-yellow-500"><Edit className="h-[22px] w-[22px]" /></ActionButton> */}
+                          {/* <ActionButton onClick={(e) => handleDeleteClick(e, project)} label="Delete" className="text-red-500 hover:bg-red-500"><Trash2 className="h-[22px] w-[22px]" /></ActionButton> */}
+
+
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <span className="h-9 w-9 flex items-center justify-center rounded-full cursor-pointer hover:bg-lightprimary hover:text-primary">
+                                <HiOutlineDotsVertical size={22} />
+                              </span>
+                            </DropdownMenuTrigger>
+
+                            <DropdownMenuContent align="end" className="w-44">
+                              <DropdownMenuItem
+                                className="flex gap-3 cursor-pointer text-yellow-500"
+                                onClick={() => router.push(`/dashboard/projects/${project._id}`)}
+                              >
+                                <Icon icon="solar:pen-new-square-broken" height={18} />
+                                Edit
+                              </DropdownMenuItem>
+
+                              <DropdownMenuItem
+                                className="flex gap-3 cursor-pointer text-red-500"
+                                onClick={(e) => {
+                                  handleDeleteClick(e, project)
+                                }}
+                              >
+                                <Icon icon="solar:trash-bin-minimalistic-outline" height={18} />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </>
                         : ""}
                     </div>
@@ -477,7 +515,7 @@ const ProjectList: FC<ProjectListProps> = ({ projects, onProjectDeleted, activeP
                 </TableRow>
               ))
               ) : (
-                <TableRow><TableCell colSpan={4} className="text-center">No projects found.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="text-center">No projects found.</TableCell></TableRow>
               )
               }
             </TableBody>

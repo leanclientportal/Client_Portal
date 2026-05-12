@@ -53,7 +53,7 @@ const Profile = () => {
           <SimpleBar>
             <DropdownMenuItem asChild>
               <Link
-                href="/images/svgs/icon-account.svg"
+                href="/dashboard/switch-profile"
                 className='px-4 py-2 flex justify-between items-center group/link w-full hover:bg-lightprimary hover:text-primary'>
                 <div className='flex items-center gap-3 w-full'>
                   <Icon

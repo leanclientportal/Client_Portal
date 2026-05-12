@@ -260,21 +260,21 @@ export default function ClientTable() {
       <div className="rounded-3xl dark:shadow-dark-md shadow-md bg-background p-6 relative w-full break-words">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           {/* Left side: Search + Filter */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
             <Input
               placeholder="Search by name, email, or phone..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-72"
+              className="w-full sm:w-72"
             />
-            <Button variant="outline" className="bg-blue-500 text-white" onClick={handleFilter}>
+            <Button size="sm" variant="outline" className="bg-blue-500 text-white w-full sm:w-auto" onClick={handleFilter}>
               <Filter className="mr-2 h-4 w-4" />
               Filter
             </Button>
           </div>
           {/* Right side: Add Client */}
-          <Link href="/dashboard/clients/add">
-            <Button>
+          <Link href="/dashboard/clients/add" className="w-full sm:w-auto">
+            <Button size="sm" className="w-full sm:w-auto">
               Create Client
             </Button>
           </Link>
@@ -324,7 +324,7 @@ export default function ClientTable() {
                     <TableCell>{formatDate(client.lastActivityDate)}</TableCell>
                     <TableCell className="text-right">
                       <div
-                        className="inline-flex justify-end items-center gap-1 rounded-full bg-muted p-1"
+                        className="inline-flex justify-end items-center gap-1 rounded-full p-1"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <ActionButton
@@ -335,7 +335,13 @@ export default function ClientTable() {
                           <MessageSquare className="h-[22px] w-[22px]" />
                         </ActionButton>
 
-
+                        <ActionButton
+                          onClick={(e) => handleActionClick(e, () => router.push(`/dashboard/projects?clientId=${client._id}`))}
+                          label="Projects"
+                          className="text-blue-500 hover:bg-blue-500"
+                        >
+                          <Eye className="h-[22px] w-[22px]" />
+                        </ActionButton>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <span className="h-9 w-9 flex items-center justify-center rounded-full cursor-pointer hover:bg-lightprimary hover:text-primary">
@@ -352,15 +358,6 @@ export default function ClientTable() {
                               Edit
                             </DropdownMenuItem>
 
-                            <DropdownMenuItem
-                              className="flex gap-3 cursor-pointer text-blue-500"
-                              onClick={() =>
-                                router.push(`/dashboard/projects?clientId=${client._id}`)
-                              }
-                            >
-                              <Icon icon="solar:rocket-outline" height={18} />
-                              Projects
-                            </DropdownMenuItem>
 
                             <DropdownMenuItem
                               className="flex gap-3 cursor-pointer text-red-500"
@@ -370,7 +367,7 @@ export default function ClientTable() {
                               }}
                             >
                               <Icon icon="solar:trash-bin-minimalistic-outline" height={18} />
-                              Trash
+                              Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

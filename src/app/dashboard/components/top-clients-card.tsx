@@ -1,13 +1,5 @@
 import { TopClient } from "@/models/dashboard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { HiOutlineDotsVertical } from "react-icons/hi";
-import { Icon } from "@iconify/react";
 import SimpleBar from "simplebar-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AvatarImage } from "@radix-ui/react-avatar";
@@ -35,7 +27,7 @@ export function TopClientsCard({ data }: TopClientsCardProps) {
   return (
     <>
       <div className="rounded-3xl dark:shadow-dark-md shadow-md bg-background py-3 px-0 relative w-full break-words">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-0 p-6">
+        <div className="flex flex-row items-center justify-between sm:items-center sm:justify-between gap-2 p-6">
           {/* Left side: Search + Filter */}
           <div className="flex items-center gap-2">
             <h5 className="card-title">Top Clients </h5>
@@ -81,24 +73,6 @@ export function TopClientsCard({ data }: TopClientsCardProps) {
                       <TableCell>
                         {client.phone}
                       </TableCell>
-
-                      {/* <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <span className="h-9 w-9 flex justify-center items-center rounded-full hover:bg-lightprimary hover:text-primary cursor-pointer">
-                              <HiOutlineDotsVertical size={22} />
-                            </span>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            {tableActionData.map((items, index) => (
-                              <DropdownMenuItem key={index} className="flex gap-3">
-                                <Icon icon={items.icon} height={18} />
-                                <span>{items.listtitle}</span>
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell> */}
                     </TableRow>
                   ))
                 ) : (

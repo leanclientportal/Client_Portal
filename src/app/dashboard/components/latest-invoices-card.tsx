@@ -1,16 +1,8 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LatestInvoice } from "@/models/dashboard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { HiOutlineDotsVertical } from "react-icons/hi";
-import { Icon } from "@iconify/react";
+import { capitalizeFirstLetter } from '@/lib/utils';
 import SimpleBar from "simplebar-react";
 
 interface LatestInvoicesCardProps {
@@ -54,7 +46,7 @@ export function LatestInvoicesCard({ data }: LatestInvoicesCardProps) {
                   data.map((invoice, index) => (
                     <TableRow key={index}>
                       <TableCell className="whitespace-nowrap ps-6">
-                      <div className="truncate line-clamp-2 max-w-56">
+                        <div className="truncate line-clamp-2 max-w-56">
                           <a href={`/dashboard/projects/${invoice.projectId}/view`}>
                             {invoice.title}
                           </a>
@@ -64,27 +56,7 @@ export function LatestInvoicesCard({ data }: LatestInvoicesCardProps) {
                         <Badge variant="outline">{invoice.amount}</Badge>
                       </TableCell>
 
-                      <TableCell>
-                        <Badge>{invoice.status}</Badge>
-                      </TableCell>
-
-                      {/* <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <span className="h-9 w-9 flex justify-center items-center rounded-full hover:bg-lightprimary hover:text-primary cursor-pointer">
-                              <HiOutlineDotsVertical size={22} />
-                            </span>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            {tableActionData.map((items, index) => (
-                              <DropdownMenuItem key={index} className="flex gap-3">
-                                <Icon icon={items.icon} height={18} />
-                                <span>{items.listtitle}</span>
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell> */}
+                      <TableCell><Badge>{capitalizeFirstLetter(invoice.status)}</Badge></TableCell>
                     </TableRow>
                   ))
                 ) : (

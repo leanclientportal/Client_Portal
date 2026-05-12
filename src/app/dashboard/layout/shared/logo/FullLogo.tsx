@@ -2,10 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import darkLogo from "@/store/images/materialm-dark-logo.svg";
-import lightLogo from "@/store/images/materialm-light-logo.svg";
+import lightLogo from "@/store/images/UdyamiHub_Light_logo.svg";
+import darkLogo from "@/store/images/UdyamiHub_Dark_logo.svg";
 
-const FullLogo = (width: number = 152, height: number = 36) => {
+type FullLogoProps = {
+  width: number;
+  height: number;
+};
+
+const FullLogo = ({ width, height }: FullLogoProps) => {
   return (
     <Link href={"/"}>
       {/* Dark Logo */}

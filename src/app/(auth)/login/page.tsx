@@ -86,13 +86,13 @@ export default function LoginPage() {
   return (
     <div className="h-screen w-full flex justify-center items-center bg-lightprimary">
       {/* <div className="bg-primary flex flex-col items-start justify-center p-20 text-white">
-        <h1 className="text-5xl font-bold">ClientVerse</h1>
+        <h1 className="text-5xl font-bold">Udyami Hub</h1>
         <p className="text-xl mt-4">A modern portal for client management.</p>
       </div> */}
       <div className='md:min-w-[450px] min-w-max'>
         <CardBox>
-          <div className='flex justify-center mt-8'>
-            <FullLogo width={120} height={110} />
+          <div className='flex justify-center'>
+            <FullLogo width={220} height={250} />
           </div>
           <p className='text-sm text-charcoal text-center'>
             Your Social Campaigns

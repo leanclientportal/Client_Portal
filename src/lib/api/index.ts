@@ -8,3 +8,4 @@ export * from './tasks';
 export * from './templates';
 export * from './tenants';
 export * from './dashboard';
+export * from './plans'; // Export the new plans API

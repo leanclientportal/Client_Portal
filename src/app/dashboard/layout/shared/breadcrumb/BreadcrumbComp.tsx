@@ -17,7 +17,7 @@ const BreadcrumbComp = ({ items, title }: BreadCrumbType) => {
     <>
       <CardBox
         className={`mb-6 py-4 bg-lightinfo dark:bg-darkinfo overflow-hidden rounded-3xl border-none !shadow-none dark:!shadow-none`}>
-        <div className=' items-center grid grid-cols-12 gap-6'>
+        <div className='grid grid-cols-1 sm:grid-cols-12 gap-3 sm:gap-6 items-center'>
           <div className='col-span-10'>
             <h4 className='font-semibold text-xl text-customdark mb-2 mt-2'>
               {title}
@@ -42,16 +42,6 @@ const BreadcrumbComp = ({ items, title }: BreadCrumbType) => {
               {title}
             </li>
           </ol>
-
-          {/* <div className='col-span-2 flex justify-center -mb-10'>
-            <Image
-              src={chatBc}
-              alt=''
-              className='md:-mb-[31px] -mb-4'
-              width={140}
-              height={150}
-            />
-          </div> */}
         </div>
       </CardBox>
     </>

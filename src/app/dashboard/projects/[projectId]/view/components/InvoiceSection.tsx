@@ -175,7 +175,7 @@ const InvoiceSection: FC<InvoiceSectionProps> = ({ projectId, projectInvoices, i
 
 
   return (
-    <Card>
+    <>
       <CardContent className='p-0'>
         {isLoadingInvoices ? (
           <div className="flex justify-center items-center h-40">
@@ -281,33 +281,34 @@ const InvoiceSection: FC<InvoiceSectionProps> = ({ projectId, projectInvoices, i
                 );
               }) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center">No invoices found for this project.</TableCell>
+                  <TableCell colSpan={6} className="text-center">No invoices found for this project.</TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
         )}
       </CardContent>
-
-      {invoiceToEdit && (
-        <Dialog open={!!invoiceToEdit} onOpenChange={(isOpen) => !isOpen && setInvoiceToEdit(null)}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Edit Invoice</DialogTitle>
-            </DialogHeader>
-            <EditInvoiceDialog
-              projectId={projectId}
-              invoice={invoiceToEdit}
-              onInvoiceUpdated={() => {
-                fetchInvoices();
-                setInvoiceToEdit(null);
-              }}
-              onClose={() => setInvoiceToEdit(null)}
-              isOpen={!!invoiceToEdit}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
+      {
+        invoiceToEdit && (
+          <Dialog open={!!invoiceToEdit} onOpenChange={(isOpen) => !isOpen && setInvoiceToEdit(null)}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Edit Invoice</DialogTitle>
+              </DialogHeader>
+              <EditInvoiceDialog
+                projectId={projectId}
+                invoice={invoiceToEdit}
+                onInvoiceUpdated={() => {
+                  fetchInvoices();
+                  setInvoiceToEdit(null);
+                }}
+                onClose={() => setInvoiceToEdit(null)}
+                isOpen={!!invoiceToEdit}
+              />
+            </DialogContent>
+          </Dialog>
+        )
+      }
 
       <AlertDialog open={!!invoiceToPaid} onOpenChange={(isOpen) => !isOpen && setInvoiceToPaid(null)}>
         <AlertDialogContent>
@@ -342,7 +343,7 @@ const InvoiceSection: FC<InvoiceSectionProps> = ({ projectId, projectInvoices, i
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Card>
+    </>
   );
 };
 

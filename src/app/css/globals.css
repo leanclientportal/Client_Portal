@@ -232,8 +232,6 @@ input[type="time"] {
   -moz-appearance: textfield;
 }
 
-thead {
-  background-color: #f7f7f7;
-  font-size: 15px;
-  font-weight: 600;
+.datepicker-wrapper .react-datepicker__calendar-icon {
+  margin-top: 0.6rem; /* mt-2 */
 }

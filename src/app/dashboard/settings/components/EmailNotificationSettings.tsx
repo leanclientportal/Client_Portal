@@ -78,43 +78,43 @@ export function EmailNotificationSettings() {
   };
 
   return (
-      <div className="rounded-3xl dark:shadow-dark-md shadow-md bg-background p-6 relative w-full break-words">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          {/* Left side: Search + Filter */}
-          <div className="flex items-center gap-2">
-            <CardHeader>
-              <CardTitle>Email notification</CardTitle>
-              <CardDescription>
-                Configure how you receive email notifications.
-              </CardDescription>
-            </CardHeader>
-          </div>
-        </div>
-        <CardContent className="space-y-4">
-          {isLoading ? (
-            <p>Loading...</p>
-          ) : (
-            Object.keys(settings).length > 0 ? (
-              Object.keys(settings).map((key) => (
-                <div key={key} className="flex items-center justify-between">
-                  <Label htmlFor={key}>{toTitleCase(key)}</Label>
-                  <Switch
-                    id={key}
-                    checked={settings[key as keyof EmailSettings] || false}
-                    onCheckedChange={(checked) => handleSwitchChange(key as keyof EmailSettings, checked)}
-                  />
-                </div>
-              ))
-            ) : (
-              <p>No settings available.</p>
-            )
-          )}
-        </CardContent>
-        <div className="flex justify-end p-6">
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? 'Saving...' : 'Save'}
-          </Button>
+    <>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mt-15">
+        {/* Left side: Search + Filter */}
+        <div className="flex items-center gap-2">
+          <CardHeader className='p-0'>
+            <CardTitle>Email notification</CardTitle>
+            <CardDescription>
+              Configure how you receive email notifications.
+            </CardDescription>
+          </CardHeader>
         </div>
       </div>
+      <CardContent className="space-y-4 p-0">
+        {isLoading ? (
+          <p>Loading...</p>
+        ) : (
+          Object.keys(settings).length > 0 ? (
+            Object.keys(settings).map((key) => (
+              <div key={key} className="flex items-center justify-between">
+                <Label htmlFor={key}>{toTitleCase(key)}</Label>
+                <Switch
+                  id={key}
+                  checked={settings[key as keyof EmailSettings] || false}
+                  onCheckedChange={(checked) => handleSwitchChange(key as keyof EmailSettings, checked)}
+                />
+              </div>
+            ))
+          ) : (
+            <p>No settings available.</p>
+          )
+        )}
+      </CardContent>
+      <div className="flex justify-end p-6">
+        <Button onClick={handleSave} disabled={isSaving}>
+          {isSaving ? 'Saving...' : 'Save'}
+        </Button>
+      </div>
+    </>
   );
 }

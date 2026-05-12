@@ -145,24 +145,21 @@ export default function EditClientForm({ client }: EditClientFormProps) {
   return (
     <>
       <div className="rounded-3xl dark:shadow-dark-md shadow-md bg-background p-6 relative w-full break-words">
-        <Card className='p-0'>
-          <CardHeader>
-            <div className="flex justify-between">
-              <CardTitle>Client Details</CardTitle>
-              {client && client.invitationToken && (
-                <div className="text-sm text-white-500 bg-yellow-500 py-1 px-4 rounded-full">
-                  Invitation Acceptance Pending
-                </div>
-              )}
-            </div>
+          <CardHeader className='p-3 sm:p-0'>
+            <CardTitle className='p-0'>Client Details</CardTitle>
+            {client && client.invitationToken && (
+              <div className="text-sm text-white-500 bg-yellow-500 py-1 px-4 rounded-full">
+                Invitation Acceptance Pending
+              </div>
+            )}
           </CardHeader>
-          <CardContent>
+          <CardContent className='p-3 sm:p-0'>
             <FormProvider {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="flex items-center space-x-4">
-                  <div className="w-25 h-25 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  <div className="w-24 h-24 sm:w-16 sm:h-16 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden shrink-0">
                     {imagePreview ? (
-                      <Image src={imagePreview} alt="Profile Preview" width={96} height={96} className="object-cover" />
+                      <Image src={imagePreview} alt="Profile Preview" width={96} height={96} className="object-cover w-full h-full" />
                     ) : (
                       <Avatar>
                         <AvatarImage src={client.profileImageUrl || '/images/default-profile.png'} alt="Profile Preview" width={96} height={96} className="object-cover" />
@@ -214,7 +211,6 @@ export default function EditClientForm({ client }: EditClientFormProps) {
               </form>
             </FormProvider>
           </CardContent>
-        </Card>
       </div>
       <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
         <AlertDialogContent>

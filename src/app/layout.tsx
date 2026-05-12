@@ -8,7 +8,7 @@ import { ChatPopup } from "@/components/ChatPopup";
 import './css/globals.css'
 
 export const metadata: Metadata = {
-  title: "ClientVerse",
+  title: "Udyami Hub",
   description: "A modern portal for client management.",
 };
 

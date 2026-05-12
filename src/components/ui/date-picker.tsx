@@ -21,10 +21,11 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
     return (
       <ReactDatePicker
         showIcon
+        wrapperClassName="datepicker-wrapper"
         dateFormat={generalSettings.dateFormat}
         customInput={<Input ref={ref} />}
         className={cn(
-          "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
+          "flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
           className
         )}
         {...props}

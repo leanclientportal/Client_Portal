@@ -126,23 +126,22 @@ export default function AddClientForm() {
   return (
     <>
       <div className="rounded-3xl dark:shadow-dark-md shadow-md bg-background p-6 relative w-full break-words">
-        <Card className='p-0'>
-          <CardHeader>
-            <CardTitle>Client Details</CardTitle>
+          <CardHeader className='p-3 sm:p-0'>
+            <CardTitle className='p-0'>Client Details</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className='p-3 sm:p-0'>
             <FormProvider {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="flex items-center space-x-4">
-                  <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  <div className="w-24 h-24 sm:w-16 sm:h-16 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden shrink-0">
                     {imagePreview ? (
-                      <Image src={imagePreview} alt="Profile Preview" width={96} height={96} className="object-cover" />
+                      <Image src={imagePreview} alt="Profile Preview" width={96} height={96} className="object-cover w-full h-full" />
                     ) : (
-                      <span className="text-xs text-gray-500">Image Preview</span>
+                      <span className="text-xs text-gray-500 text-center px-2">Image Preview</span>
                     )}
                   </div>
-                  <div>
-                    <Input type="file" onChange={handleFileChange} accept="image/*" />
+                  <div className="w-full sm:w-auto">
+                    <Input type="file" onChange={handleFileChange} accept="image/*" className="w-full sm:w-auto" />
                     {form.formState.errors.profileImageBinary && <p className="text-red-500 text-xs mt-1">{form.formState.errors.profileImageBinary.message}</p>}
                   </div>
                 </div>
@@ -182,7 +181,6 @@ export default function AddClientForm() {
               </form>
             </FormProvider>
           </CardContent>
-        </Card>
       </div>
       <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
         <AlertDialogContent>

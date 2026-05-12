@@ -200,8 +200,8 @@ const AddDocumentDialog: FC<AddDocumentDialogProps> = ({ isOpen, onClose, onFile
           )}
         </div>
         <DialogFooter>
-          <Button onClick={onClose} variant="outline">Cancel</Button>
-          <Button onClick={handleUpload} disabled={isLoading || files.length === 0}>
+          <Button className='mt-2' onClick={onClose} variant="outline">Cancel</Button>
+          <Button className='mt-2' onClick={handleUpload} disabled={isLoading || files.length === 0}>
             {isLoading ? `Processing ${files.length} files...` : 'Upload'}
           </Button>
         </DialogFooter>

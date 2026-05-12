@@ -171,7 +171,7 @@ export function TemplateTable() {
                     <TableCell>{template.subject}</TableCell>
                     <TableCell className="text-right">
                       <div
-                        className="inline-flex justify-end items-center gap-1 rounded-full bg-muted p-1"
+                        className="inline-flex justify-end items-center gap-1 rounded-full p-1"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <ActionButton

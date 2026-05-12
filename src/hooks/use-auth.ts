@@ -3,9 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { logout as clearSession } from '@/lib/auth';
-
-const USER_ID_KEY = 'clientverse_user_id';
-const JWT_TOKEN_KEY = 'clientverse_jwt';
+const USER_ID_KEY = 'udyamihub_user_id';
+const JWT_TOKEN_KEY = 'udyamihub_user_jwt';
 const USER_ACTIVEPROFILE_KEY = 'user_activeProfile';
 const USER_ACTIVEPROFILEID_KEY = 'user_activeProfileId';
 const USER_ACTIVEPROFILEIMAGE_KEY = 'user_activeProfileImage';
